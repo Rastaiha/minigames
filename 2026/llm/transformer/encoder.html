@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>How an Encoder Builds Context</title>
+  <link rel="stylesheet" href="transformer-viz.css" />
+  <script src="transformer-viz.js" defer></script>
+</head>
+<body data-mode="encoder">
+  <main class="shell">
+    <header class="masthead">
+      <div>
+        <div class="eyebrow">Inside a transformer · encoder</div>
+        <h1>One word. Two meanings.</h1>
+      </div>
+      <div class="header-actions">
+        <nav class="mode-switch" aria-label="Visualization mode">
+          <a class="mode-link active" href="encoder.html" aria-current="page">Encoder</a>
+          <a class="mode-link" href="decoder.html">Decoder</a>
+          <a class="mode-link language-link" href="encoder-fa.html" lang="fa" dir="rtl">فا</a>
+        </nav>
+        <div class="controls">
+          <button id="playBtn" type="button">▶ Play</button>
+          <button id="prevBtn" type="button">← Previous</button>
+          <button id="stepBtn" type="button">Next →</button>
+          <button id="resetBtn" type="button">Reset</button>
+        </div>
+      </div>
+    </header>
+
+    <section class="sentence-board" aria-label="Input sentence">
+      <span class="sentence-label">Input sentence</span>
+      <div id="tokenStrip" class="token-strip"></div>
+    </section>
+
+    <section class="stage">
+      <svg id="space" viewBox="0 0 900 500" role="img" aria-label="Encoder token representations moving from word embeddings to contextual embeddings">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+            <path d="M0 0L10 5L0 10Z" fill="var(--muted)" />
+          </marker>
+        </defs>
+        <rect class="stage-bg" x="1" y="1" width="898" height="498" rx="14" />
+        <g id="positionLayer"></g>
+        <g id="vocabLayer"></g>
+        <g id="activeLayer"></g>
+      </svg>
+    </section>
+
+    <footer class="timeline">
+      <div class="meta">
+        <span id="stepLabel" class="badge"></span>
+        <span id="counter" class="counter"></span>
+      </div>
+      <div class="progress-track"><div id="progress" class="progress-fill"></div></div>
+    </footer>
+  </main>
+</body>
+</html>

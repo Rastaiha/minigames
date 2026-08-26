@@ -1,0 +1,1411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Transformer Training in 2D Embedding Space</title>
+
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: #121933;
+      --border: #2a345f;
+      --grid: #24305b;
+      --text: #ecf1ff;
+      --muted: #9da8cb;
+      --blue: #70c7ff;
+      --gold: #d6a62f;
+      --grey: #7d849a;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.45;
+    }
+
+    .container {
+      width: min(1120px, 100%);
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: flex-start;
+      gap: 18px;
+      margin-bottom: 16px;
+    }
+
+    .topbar > :first-child { min-width: 0; }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 1.5rem;
+    }
+
+    .phase-title {
+      font-size: 1.05rem;
+      font-weight: 650;
+      margin-bottom: 4px;
+    }
+
+    .phase-text,
+    .muted,
+    .note {
+      color: var(--muted);
+    }
+
+    .phase-text,
+    .note {
+      font-size: .94rem;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 104px 84px 76px;
+      gap: 10px;
+    }
+
+    button {
+      cursor: pointer;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: transparent;
+      color: var(--text);
+      padding: 10px 14px;
+      font-size: .95rem;
+      transition: border-color .2s ease, background .2s ease;
+    }
+
+    #playBtn,
+    #stepBtn,
+    #resetBtn {
+      width: 100%;
+      white-space: nowrap;
+    }
+
+    button:hover {
+      border-color: var(--blue);
+      background: rgba(112,199,255,.07);
+    }
+
+    button:disabled {
+      cursor: wait;
+      opacity: .58;
+    }
+
+    .token-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .token-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .token-chip {
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: rgba(255,255,255,.02);
+      font-size: .92rem;
+    }
+
+    .token-chip.last {
+      border-color: var(--gold);
+      background: rgba(214,166,47,.1);
+      color: var(--gold);
+    }
+
+    .panel {
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--panel);
+      padding: 10px;
+    }
+
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .bottom {
+      display: grid;
+      grid-template-columns: 1fr 280px;
+      gap: 18px;
+      margin-top: 16px;
+    }
+
+    @media (max-width: 850px) {
+      .bottom { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 720px) {
+      .topbar { grid-template-columns: 1fr; }
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border: 1px solid rgba(112,199,255,.28);
+      border-radius: 999px;
+      background: rgba(112,199,255,.1);
+      color: var(--blue);
+      font-size: .84rem;
+    }
+
+    .progress-track {
+      overflow: hidden;
+      height: 9px;
+      border-radius: 999px;
+      background: var(--border);
+    }
+
+    .progress-fill {
+      width: 0;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--blue);
+      transition: width .35s ease;
+    }
+
+    .prob-panel {
+      opacity: 0;
+      transform: translateY(8px);
+      pointer-events: none;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(255,255,255,.02);
+      padding: 14px;
+      transition: opacity .6s ease, transform .6s ease;
+    }
+
+    .prob-panel.show {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .prob-title {
+      margin-bottom: 10px;
+      font-weight: 650;
+    }
+
+    .prob-item { margin-bottom: 12px; }
+
+    .prob-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 5px;
+      font-size: .91rem;
+    }
+
+    .prob-bar-bg {
+      overflow: hidden;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--border);
+    }
+
+    .prob-bar-fill {
+      width: 0;
+      height: 100%;
+      min-width: 2px;
+      border-radius: inherit;
+      transition:
+        width .9s cubic-bezier(.2,.8,.2,1),
+        background-color .8s ease;
+    }
+
+    /* SVG styling */
+
+    .axis {
+      stroke: var(--border);
+      stroke-width: 1.2;
+    }
+
+    .origin-dot {
+      fill: var(--muted);
+    }
+
+    .origin-label {
+      fill: var(--muted);
+      font-size: 12px;
+      paint-order: stroke;
+      stroke: var(--panel);
+      stroke-width: 4px;
+    }
+
+    .vocab-group {
+      opacity: .76;
+      transition: opacity .58s ease;
+    }
+
+    .vocab-group.hidden {
+      opacity: 0;
+    }
+
+    .vocab-dot {
+      fill: var(--grey);
+      transition:
+        fill .8s ease,
+        opacity .8s ease,
+        r .65s cubic-bezier(.16,1,.3,1);
+    }
+
+    .vocab-label {
+      fill: var(--grey);
+      font-size: 12px;
+      transition: fill .8s ease, opacity .8s ease;
+      paint-order: stroke;
+      stroke: var(--panel);
+      stroke-width: 4px;
+      stroke-linejoin: round;
+    }
+
+    .vocab-group.input-highlight .vocab-dot {
+      fill: var(--blue);
+    }
+
+    .vocab-group.input-highlight .vocab-label {
+      fill: var(--blue);
+    }
+
+    .active-token {
+      opacity: 0;
+      will-change: transform, opacity;
+      transition: opacity .5s ease;
+    }
+
+    .active-token.visible {
+      opacity: 1;
+    }
+
+    .active-circle {
+      fill: var(--blue);
+      stroke: var(--panel);
+      stroke-width: 2.5;
+    }
+
+    .active-token.final .active-circle { fill: var(--gold); }
+
+    .active-token.final .active-label { fill: var(--gold); }
+
+    .active-label {
+      fill: var(--text);
+      font-size: 13px;
+      paint-order: stroke;
+      stroke: var(--panel);
+      stroke-width: 4px;
+      stroke-linejoin: round;
+    }
+
+    .trail {
+      fill: none;
+      stroke: var(--blue);
+      stroke-width: 1.8;
+      stroke-dasharray: 4 4;
+      opacity: .32;
+      transition: opacity .58s ease;
+    }
+
+    .trail.hidden {
+      opacity: 0;
+    }
+
+    .trail.final {
+      stroke: var(--gold);
+      opacity: .46;
+    }
+
+    .pos-vector {
+      stroke: var(--muted);
+      stroke-width: 1.9;
+      marker-end: url(#arrow);
+      opacity: 0;
+      transition: opacity .3s ease;
+    }
+
+    .pos-vector.show {
+      opacity: .95;
+      animation: draw-vector .72s ease both;
+    }
+
+    .pos-label {
+      fill: var(--muted);
+      font-size: 11px;
+      opacity: 0;
+      transition: opacity .4s ease;
+      paint-order: stroke;
+      stroke: var(--panel);
+      stroke-width: 3px;
+    }
+
+    .pos-label.show {
+      opacity: .9;
+    }
+
+    @keyframes draw-vector {
+      from { stroke-dasharray: 130; stroke-dashoffset: 130; }
+      to   { stroke-dasharray: 130; stroke-dashoffset: 0; }
+    }
+
+    .distance-line {
+      stroke: var(--gold);
+      stroke-width: 1;
+      stroke-dasharray: 4 5;
+      opacity: 0;
+      transition: opacity .8s ease;
+    }
+
+    .distance-line.show {
+      opacity: .15;
+    }
+
+    .query-halo {
+      fill: none;
+      stroke: var(--gold);
+      stroke-width: 2;
+      opacity: 0;
+      transition: opacity .7s ease, r .7s cubic-bezier(.16,1,.3,1);
+    }
+
+    .query-halo.show {
+      opacity: .9;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div>
+        <h1>Transformer in a 2D Embedding Space</h1>
+        <div id="phaseTitle" class="phase-title">1. Vocabulary embeddings</div>
+        <div id="phaseText" class="phase-text">
+          Every token in the vocabulary has a fixed learned embedding. They begin as grey points.
+        </div>
+      </div>
+
+      <div class="controls">
+        <button id="playBtn">▶ Play</button>
+        <button id="stepBtn">Step →</button>
+        <button id="resetBtn">Reset</button>
+      </div>
+    </div>
+
+    <div class="token-row">
+      <span class="muted">Input sentence</span>
+      <div id="tokenStrip" class="token-strip"></div>
+    </div>
+
+    <div class="panel">
+      <svg id="space" viewBox="0 0 720 460" role="img" aria-label="Two dimensional transformer embedding visualization">
+        <defs>
+          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="var(--grid)" stroke-width="1" opacity=".58" />
+          </pattern>
+
+          <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--muted)" />
+          </marker>
+        </defs>
+
+        <rect x="1" y="1" width="718" height="458" rx="14" fill="var(--panel)" stroke="var(--border)" />
+        <rect x="18" y="18" width="684" height="424" fill="url(#grid)" />
+
+        <line class="axis" x1="360" y1="28" x2="360" y2="432" />
+        <line class="axis" x1="28" y1="230" x2="692" y2="230" />
+
+        <circle class="origin-dot" cx="360" cy="230" r="4" />
+        <text class="origin-label" x="370" y="224">origin</text>
+
+        <g id="distanceLayer"></g>
+        <g id="trailLayer"></g>
+        <g id="positionLayer"></g>
+        <g id="vocabLayer"></g>
+        <g id="activeLayer"></g>
+      </svg>
+    </div>
+
+    <div class="bottom">
+      <div>
+        <div class="meta">
+          <span id="stepLabel" class="badge">Vocabulary</span>
+          <span id="counter" class="muted">Step 0 / 26</span>
+        </div>
+
+        <div class="progress-track">
+          <div id="progress" class="progress-fill"></div>
+        </div>
+
+        <p class="note">
+          Toy simplification: the final probability is computed from Euclidean distance to vocabulary embeddings. Real transformers use learned output logits rather than literal 2D distance.
+        </p>
+      </div>
+
+      <div id="probPanel" class="prob-panel">
+        <div class="prob-title">Next-token probability</div>
+        <div id="probList"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const SVG_NS = "http://www.w3.org/2000/svg";
+
+      const inputTokens = ["The", "cat", "sat", "on", "the"];
+      const finalTokenIndex = inputTokens.length - 1;
+      const inputTokenSet = new Set(inputTokens);
+      const origin = { x: 360, y: 230 };
+
+      /*
+        Fixed vocabulary embeddings.
+
+        IMPORTANT:
+        The active sentence tokens begin at these exact same coordinates.
+        So the initial "the" point and the grey vocabulary "the" point are
+        literally the same embedding location. The same is true for every
+        other token in the sentence.
+      */
+      const vocabulary = [
+        ["The",      160, 270],
+        ["the",      176, 258],
+        ["cat",      520, 360],
+        ["sat",      198,  82],
+        ["on",       600, 300],
+
+        ["mat",      530, 132],
+        ["bed",      500, 105],
+        ["chair",    565, 180],
+        ["floor",    632, 245],
+        ["table",    606, 344],
+        ["room",     424, 338],
+        ["dog",      356, 386],
+        ["grass",    257, 378],
+        ["door",     268,  73],
+        ["slept",    194, 326],
+        ["quietly",  102, 180],
+        ["under",    645, 104],
+        ["near",     430,  67],
+        ["window",   653, 389],
+        ["outside",   78, 350],
+        ["soft",     347, 110],
+        ["warm",     455, 230],
+        ["house",    110,  83],
+        ["garden",   100, 260]
+      ];
+
+      const embeddingByToken = Object.fromEntries(
+        vocabulary.map(([word, x, y]) => [word, { x, y }])
+      );
+
+      // Active tokens start at the exact fixed vocabulary embeddings.
+      const base = inputTokens.map(token => ({ ...embeddingByToken[token] }));
+
+      /*
+        Previous positional-vector length was 145.
+        145 * 0.7 = 101.5, so we use 102.
+
+        With the embeddings above, this is also roughly half the mean
+        distance of the input embeddings from the origin.
+      */
+      const POSITION_VECTOR_LENGTH = 102;
+      const POSITION_START_ANGLE = -Math.PI / 2;
+      const POSITION_ANGLE_STEP = (2 * Math.PI) / inputTokens.length;
+
+      const positionVectors = inputTokens.map((_, i) => {
+        const angle = POSITION_START_ANGLE + i * POSITION_ANGLE_STEP;
+        return {
+          x: Math.cos(angle) * POSITION_VECTOR_LENGTH,
+          y: Math.sin(angle) * POSITION_VECTOR_LENGTH,
+          angle
+        };
+      });
+
+      // Close enough to compare with mat / bed / chair, with room for labels.
+      const FINAL_TARGET = { x: 500, y: 165 };
+
+      /*
+        States:
+          0     all vocabulary embeddings, grey
+          1     sentence tokens turn blue
+          2     all other vocabulary tokens vanish
+          3     equal-length rotating positional vectors are added
+          4-23  transformer layers 1-20
+          24    remove every active token except the final "the";
+                remove every trajectory except its own
+          25    grey vocabulary reappears at the ORIGINAL embedding locations
+          26    distance-based probability lighting
+      */
+      const TOTAL_STATE = 26;
+      const MOVE_DURATION = 650;
+      const FADE_DURATION = 560;
+      const VOCAB_STAGGER = 32;
+
+      let state = 0;
+      let animationFrame = null;
+      let renderedPositions = base.map(p => ({ ...p }));
+      let stateTransition = null;
+
+      const tokenStrip = document.getElementById("tokenStrip");
+      const vocabLayer = document.getElementById("vocabLayer");
+      const activeLayer = document.getElementById("activeLayer");
+      const trailLayer = document.getElementById("trailLayer");
+      const positionLayer = document.getElementById("positionLayer");
+      const distanceLayer = document.getElementById("distanceLayer");
+
+      const phaseTitle = document.getElementById("phaseTitle");
+      const phaseText = document.getElementById("phaseText");
+      const stepLabel = document.getElementById("stepLabel");
+      const counter = document.getElementById("counter");
+      const progress = document.getElementById("progress");
+
+      const probPanel = document.getElementById("probPanel");
+      const probList = document.getElementById("probList");
+
+      const playBtn = document.getElementById("playBtn");
+      const stepBtn = document.getElementById("stepBtn");
+      const resetBtn = document.getElementById("resetBtn");
+
+      const vocabEls = [];
+      const activeEls = [];
+      const trailEls = [];
+      const posEls = [];
+
+      function createSvg(tag, attrs = {}) {
+        const el = document.createElementNS(SVG_NS, tag);
+        for (const [key, value] of Object.entries(attrs)) {
+          el.setAttribute(key, value);
+        }
+        return el;
+      }
+
+      function buildInputStrip() {
+        tokenStrip.innerHTML = inputTokens.map((token, i) => {
+          const cls = i === finalTokenIndex
+            ? "token-chip last"
+            : "token-chip";
+          return `<span class="${cls}">${token}</span>`;
+        }).join("");
+      }
+
+      function buildVocabulary() {
+        vocabLayer.innerHTML = "";
+        vocabEls.length = 0;
+
+        vocabulary.forEach(([word, x, y], index) => {
+          const group = createSvg("g", {
+            class: "vocab-group",
+            "data-word": word,
+            "data-index": index
+          });
+
+          const dot = createSvg("circle", {
+            class: "vocab-dot",
+            cx: x,
+            cy: y,
+            r: 6
+          });
+
+          const label = createSvg("text", {
+            class: "vocab-label",
+            x: x + 10,
+            y: y + 4
+          });
+          label.textContent = word;
+
+          group.append(dot, label);
+          vocabLayer.appendChild(group);
+
+          vocabEls.push({ group, dot, label, word, x, y });
+        });
+      }
+
+      function buildActiveTokens() {
+        activeLayer.innerHTML = "";
+        activeEls.length = 0;
+
+        inputTokens.forEach((token, i) => {
+          const isFinal = i === finalTokenIndex;
+          const group = createSvg("g", {
+            class: `active-token${isFinal ? " final" : ""}`,
+            "data-token": token
+          });
+
+          const circle = createSvg("circle", {
+            class: "active-circle",
+            cx: 0,
+            cy: 0,
+            r: 9
+          });
+
+          const label = createSvg("text", {
+            class: "active-label",
+            x: isFinal ? -13 : 13,
+            y: 4
+          });
+          if (isFinal) label.setAttribute("text-anchor", "end");
+          label.textContent = token;
+
+          // Halo is only used for the final moved token in the probability stage.
+          if (isFinal) {
+            const halo = createSvg("circle", {
+              class: "query-halo",
+              cx: 0,
+              cy: 0,
+              r: 13
+            });
+            group.appendChild(halo);
+          }
+
+          group.append(circle, label);
+          activeLayer.appendChild(group);
+          activeEls.push(group);
+        });
+      }
+
+      function buildTrails() {
+        trailLayer.innerHTML = "";
+        trailEls.length = 0;
+
+        inputTokens.forEach((_, i) => {
+          const path = createSvg("path", {
+            class: `trail${i === finalTokenIndex ? " final" : ""}`,
+            "data-index": i
+          });
+
+          trailLayer.appendChild(path);
+          trailEls.push(path);
+        });
+      }
+
+      function buildPositionVectors() {
+        positionLayer.innerHTML = "";
+        posEls.length = 0;
+
+        inputTokens.forEach((_, i) => {
+          const start = base[i];
+          const v = positionVectors[i];
+          const end = {
+            x: start.x + v.x,
+            y: start.y + v.y
+          };
+
+          const line = createSvg("line", {
+            class: "pos-vector",
+            x1: start.x,
+            y1: start.y,
+            x2: end.x,
+            y2: end.y
+          });
+
+          const label = createSvg("text", {
+            class: "pos-label",
+            x: start.x + v.x * .52 + 5,
+            y: start.y + v.y * .52 - 5
+          });
+          label.textContent = `p${i + 1}`;
+
+          positionLayer.append(line, label);
+          posEls.push({ line, label });
+        });
+      }
+
+      function buildDistanceLines() {
+        distanceLayer.innerHTML = "";
+
+        vocabulary.forEach(([word, x, y], i) => {
+          const line = createSvg("line", {
+            class: "distance-line",
+            "data-index": i,
+            x1: FINAL_TARGET.x,
+            y1: FINAL_TARGET.y,
+            x2: x,
+            y2: y
+          });
+
+          distanceLayer.appendChild(line);
+        });
+      }
+
+      function positioned(i) {
+        return {
+          x: base[i].x + positionVectors[i].x,
+          y: base[i].y + positionVectors[i].y
+        };
+      }
+
+      function smoothstep(t) {
+        return t * t * (3 - 2 * t);
+      }
+
+      /*
+        Toy transformer trajectory.
+
+        Non-final tokens move in visibly different directions using different
+        phases and drifts.
+
+        The final "the" follows a broad curved path that is guaranteed to end
+        at FINAL_TARGET near mat, bed, and chair.
+      */
+      function trajectory(i, layer) {
+        const p = positioned(i);
+        const t = Math.max(0, Math.min(1, layer / 20));
+
+        if (i === finalTokenIndex) {
+          const s = smoothstep(t);
+          const swirl = 1 - t;
+
+          const x =
+            p.x +
+            (FINAL_TARGET.x - p.x) * s +
+            Math.sin(layer * .82 + .4) * 58 * swirl;
+
+          const y =
+            p.y +
+            (FINAL_TARGET.y - p.y) * s +
+            Math.cos(layer * .67 + .2) * 44 * swirl;
+
+          return {
+            x: Math.max(42, Math.min(678, x)),
+            y: Math.max(42, Math.min(418, y))
+          };
+        }
+
+        const dx =
+          (Math.sin(layer * (.46 + i * .025) + i * 1.8)
+            - Math.sin(i * 1.8)) * (62 + i * 8)
+          + t * [65, -70, 42, -58][i];
+
+        const dy =
+          (Math.cos(layer * (.39 + i * .03) + i * 1.23)
+            - Math.cos(i * 1.23)) * (52 + i * 7)
+          + t * [-52, 48, 76, -68][i];
+
+        return {
+          x: Math.max(42, Math.min(678, p.x + dx)),
+          y: Math.max(42, Math.min(418, p.y + dy))
+        };
+      }
+
+      function targetPosition(i, targetState) {
+        if (targetState <= 2) return base[i];
+        if (targetState === 3) return positioned(i);
+
+        const layer = Math.min(20, Math.max(0, targetState - 3));
+        return trajectory(i, layer);
+      }
+
+      function setActivePosition(group, p) {
+        group.setAttribute("transform", `translate(${p.x} ${p.y})`);
+      }
+
+      function easeInOutCubic(t) {
+        return t < .5
+          ? 4 * t * t * t
+          : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      }
+
+      function animateMovement(
+        fromPositions,
+        toPositions,
+        duration = MOVE_DURATION,
+        onFrame = null
+      ) {
+        if (animationFrame) cancelAnimationFrame(animationFrame);
+
+        return new Promise(resolve => {
+          const startTime = performance.now();
+
+          function frame(now) {
+            const rawT = Math.min(1, (now - startTime) / duration);
+            const t = easeInOutCubic(rawT);
+
+            renderedPositions = fromPositions.map((from, i) => ({
+              x: from.x + (toPositions[i].x - from.x) * t,
+              y: from.y + (toPositions[i].y - from.y) * t
+            }));
+
+            renderedPositions.forEach((p, i) => {
+              setActivePosition(activeEls[i], p);
+            });
+            if (onFrame) onFrame(renderedPositions);
+
+            if (rawT < 1) {
+              animationFrame = requestAnimationFrame(frame);
+            } else {
+              animationFrame = null;
+              resolve();
+            }
+          }
+
+          animationFrame = requestAnimationFrame(frame);
+        });
+      }
+
+      function trajectoryPoints(i, layer) {
+        // A trail is a history, beginning at the original vocabulary point.
+        const points = [base[i], positioned(i)];
+        for (let s = 1; s <= layer; s++) {
+          points.push(trajectory(i, s));
+        }
+        return points;
+      }
+
+      function pathFromPoints(points) {
+        return points.map((p, i) =>
+          `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`
+        ).join(" ");
+      }
+
+      function updateTrails(targetState) {
+        const layer = targetState >= 4
+          ? Math.min(20, targetState - 3)
+          : 0;
+
+        trailEls.forEach((path, i) => {
+          path.classList.remove("hidden");
+
+          if (layer <= 0) {
+            path.setAttribute("d", "");
+          } else {
+            path.setAttribute("d", pathFromPoints(trajectoryPoints(i, layer)));
+          }
+        });
+      }
+
+      function followMovementWithTrails(targetState, currentPositions) {
+        const layer = Math.min(20, targetState - 3);
+
+        trailEls.forEach((path, i) => {
+          const completed = trajectoryPoints(i, Math.max(0, layer - 1));
+          path.classList.remove("hidden");
+          path.setAttribute(
+            "d",
+            pathFromPoints([...completed, currentPositions[i]])
+          );
+        });
+      }
+
+      function showPositionVectors(show) {
+        posEls.forEach(({ line, label }, i) => {
+          line.classList.toggle("show", show);
+          label.classList.toggle("show", show);
+
+          if (show) {
+            line.style.animationDelay = `${i * 85}ms`;
+          } else {
+            line.style.animationDelay = "0ms";
+          }
+        });
+      }
+
+      function resetVocabularyAppearance() {
+        vocabEls.forEach(({ group, dot, label }) => {
+          group.classList.remove("hidden", "input-highlight");
+          group.style.transitionDelay = "0ms";
+
+          dot.style.fill = "";
+          dot.style.opacity = "";
+          dot.setAttribute("r", "6");
+
+          label.style.fill = "";
+          label.style.opacity = "";
+        });
+
+        [...distanceLayer.children].forEach(line => {
+          line.classList.remove("show");
+        });
+
+        probPanel.classList.remove("show");
+        probList.innerHTML = "";
+      }
+
+      function highlightSentenceTokens() {
+        vocabEls.forEach(({ group, word }) => {
+          group.classList.toggle("input-highlight", inputTokenSet.has(word));
+        });
+      }
+
+      async function isolateSentenceTokens() {
+        /*
+          Active copies fade in exactly on top of the highlighted fixed
+          vocabulary points, then every fixed vocabulary point disappears.
+          This makes the hand-off visually seamless.
+        */
+        activeEls.forEach((group, i) => {
+          setActivePosition(group, base[i]);
+          group.classList.add("visible");
+        });
+
+        await sleep(170);
+
+        vocabEls.forEach(({ group }, i) => {
+          group.style.transitionDelay = `${Math.min(i, 10) * 18}ms`;
+          group.classList.add("hidden");
+        });
+
+        await sleep(FADE_DURATION);
+      }
+
+      function showFullVocabularyAnimated() {
+        vocabEls.forEach(({ group, dot, label }, i) => {
+          group.classList.remove("input-highlight");
+          group.style.transitionDelay = `${i * VOCAB_STAGGER}ms`;
+
+          dot.style.fill = "";
+          dot.style.opacity = "";
+          dot.setAttribute("r", "6");
+          label.style.fill = "";
+          label.style.opacity = "";
+
+          requestAnimationFrame(() => {
+            group.classList.remove("hidden");
+          });
+        });
+      }
+
+      function keepOnlyFinalToken() {
+        activeEls.forEach((group, i) => {
+          if (i !== finalTokenIndex) {
+            group.classList.remove("visible");
+          } else {
+            group.classList.add("visible");
+          }
+        });
+
+        trailEls.forEach((path, i) => {
+          if (i !== finalTokenIndex) {
+            path.classList.add("hidden");
+            setTimeout(() => path.setAttribute("d", ""), FADE_DURATION);
+          } else {
+            path.classList.remove("hidden");
+          }
+        });
+      }
+
+      function probabilityValues() {
+        const f = trajectory(finalTokenIndex, 20);
+
+        const values = vocabulary.map(([word, x, y]) => {
+          const distance = Math.hypot(x - f.x, y - f.y);
+
+          return {
+            word,
+            x,
+            y,
+            distance,
+            score: Math.exp(-distance / 60)
+          };
+        });
+
+        const sum = values.reduce((acc, item) => acc + item.score, 0);
+
+        values.forEach(item => {
+          item.p = item.score / sum;
+        });
+
+        return values.sort((a, b) => b.p - a.p);
+      }
+
+      function mixGreyGold(p, maxP) {
+        const t = Math.max(0, Math.min(1, p / maxP));
+
+        const grey = [125, 132, 154];
+        const gold = [214, 166, 47];
+
+        return `rgb(${
+          Math.round(grey[0] + (gold[0] - grey[0]) * t)
+        }, ${
+          Math.round(grey[1] + (gold[1] - grey[1]) * t)
+        }, ${
+          Math.round(grey[2] + (gold[2] - grey[2]) * t)
+        })`;
+      }
+
+      function lightVocabularyAnimated() {
+        const probs = probabilityValues();
+        const maxP = probs[0].p;
+        const lookup = Object.fromEntries(
+          probs.map(item => [item.word, item])
+        );
+
+        vocabEls.forEach(({ dot, label, word }, i) => {
+          const item = lookup[word];
+          const strength = item.p / maxP;
+          const color = mixGreyGold(item.p, maxP);
+
+          setTimeout(() => {
+            dot.style.fill = color;
+            label.style.fill = color;
+            dot.style.opacity = String(.38 + .62 * strength);
+            label.style.opacity = String(.48 + .52 * strength);
+            dot.setAttribute("r", String(5.5 + 7.5 * strength));
+          }, i * 30);
+        });
+
+        [...distanceLayer.children].forEach((line, i) => {
+          setTimeout(() => line.classList.add("show"), i * 22);
+        });
+
+        const finalActive = activeEls[finalTokenIndex];
+        const halo = finalActive.querySelector(".query-halo");
+        if (halo) {
+          halo.setAttribute("r", "18");
+          halo.classList.add("show");
+        }
+
+        renderProbabilityPanel(probs);
+      }
+
+      function renderProbabilityPanel(probs) {
+        const maxP = probs[0].p;
+
+        probList.innerHTML = probs.slice(0, 6).map((item, i) => {
+          const pct = (item.p * 100).toFixed(1);
+          const width = Math.max(2, item.p / maxP * 100);
+          const color = mixGreyGold(item.p, maxP);
+
+          return `
+            <div class="prob-item">
+              <div class="prob-head">
+                <span>${item.word}</span>
+                <span>${pct}%</span>
+              </div>
+              <div class="prob-bar-bg">
+                <div
+                  class="prob-bar-fill"
+                  data-width="${width}"
+                  style="background:${color}; transition-delay:${160 + i * 80}ms"
+                ></div>
+              </div>
+            </div>
+          `;
+        }).join("");
+
+        requestAnimationFrame(() => {
+          probPanel.classList.add("show");
+
+          [...probPanel.querySelectorAll(".prob-bar-fill")].forEach(bar => {
+            requestAnimationFrame(() => {
+              bar.style.width = `${bar.dataset.width}%`;
+            });
+          });
+        });
+      }
+
+      function describe(targetState) {
+        if (targetState === 0) {
+          return [
+            "1. Vocabulary embeddings",
+            "Every vocabulary token begins at its learned embedding location in grey.",
+            "Vocabulary"
+          ];
+        }
+
+        if (targetState === 1) {
+          return [
+            "2. Select the sentence",
+            "The tokens that occur in the input sentence light up blue at those exact same embedding locations.",
+            "Input tokens"
+          ];
+        }
+
+        if (targetState === 2) {
+          return [
+            "3. Keep only the sentence",
+            "The rest of the vocabulary disappears. The sentence remains, with its final token marked in gold.",
+            "Sentence"
+          ];
+        }
+
+        if (targetState === 3) {
+          return [
+            "4. Add positional embeddings",
+            "Each token receives an equal-length positional vector. The vector simply rotates to a different angle for each position.",
+            "+ Position"
+          ];
+        }
+
+        if (targetState >= 4 && targetState <= 23) {
+          return [
+            `5. Transformer layers — ${targetState - 3}/20`,
+            "Each layer updates every token representation, sending the points through different paths in the embedding space.",
+            `Layer ${targetState - 3}`
+          ];
+        }
+
+        if (targetState === 24) {
+          return [
+            "6. Keep the final position",
+            "All active tokens and trajectories except the final “the” representation are removed.",
+            "Final token"
+          ];
+        }
+
+        if (targetState === 25) {
+          return [
+            "7. Restore the vocabulary",
+            "The grey vocabulary reappears at the original embedding locations — including the original grey “the” where it started.",
+            "Vocabulary"
+          ];
+        }
+
+        return [
+          "8. Distance → probability",
+          "Tokens near the moved final representation light up toward gold. The final representation has ended near mat, bed, and chair.",
+          "Probability"
+        ];
+      }
+
+      function updateText(targetState) {
+        const [title, text, badge] = describe(targetState);
+
+        phaseTitle.textContent = title;
+        phaseText.textContent = text;
+        stepLabel.textContent = badge;
+        counter.textContent = `Step ${targetState} / ${TOTAL_STATE}`;
+        progress.style.width = `${targetState / TOTAL_STATE * 100}%`;
+      }
+
+      function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+      }
+
+      async function runNextState() {
+        if (state >= TOTAL_STATE) return;
+
+        const next = state + 1;
+        state = next;
+        updateText(state);
+
+        if (state === 1) {
+          highlightSentenceTokens();
+          await sleep(650);
+          return;
+        }
+
+        if (state === 2) {
+          await isolateSentenceTokens();
+          return;
+        }
+
+        if (state === 3) {
+          showPositionVectors(true);
+
+          const from = renderedPositions.map(p => ({ ...p }));
+          const to = inputTokens.map((_, i) => positioned(i));
+
+          await sleep(180);
+          await animateMovement(from, to, 760);
+          renderedPositions = to.map(p => ({ ...p }));
+          return;
+        }
+
+        if (state >= 4 && state <= 23) {
+          showPositionVectors(false);
+
+          const from = renderedPositions.map(p => ({ ...p }));
+          const to = inputTokens.map((_, i) => targetPosition(i, state));
+
+          // Grow the trail behind each moving dot, never ahead of it.
+          await animateMovement(
+            from,
+            to,
+            MOVE_DURATION,
+            positions => followMovementWithTrails(state, positions)
+          );
+          updateTrails(state);
+          renderedPositions = to.map(p => ({ ...p }));
+          return;
+        }
+
+        if (state === 24) {
+          showPositionVectors(false);
+          keepOnlyFinalToken();
+          await sleep(FADE_DURATION);
+          return;
+        }
+
+        if (state === 25) {
+          showFullVocabularyAnimated();
+          await sleep(
+            (vocabEls.length - 1) * VOCAB_STAGGER + FADE_DURATION
+          );
+          return;
+        }
+
+        if (state === 26) {
+          lightVocabularyAnimated();
+        }
+      }
+
+      function goToNextState() {
+        // One state owns the animation at a time. This prevents rapid clicks
+        // from interleaving two transitions and corrupting their positions.
+        if (stateTransition) return stateTransition;
+
+        stepBtn.disabled = true;
+        resetBtn.disabled = true;
+        stateTransition = runNextState().finally(() => {
+          stateTransition = null;
+          stepBtn.disabled = false;
+          resetBtn.disabled = false;
+        });
+        return stateTransition;
+      }
+
+      let playGeneration = 0;
+      let isPlaying = false;
+
+      function pauseAutoplay() {
+        playGeneration++;
+        isPlaying = false;
+        playBtn.textContent = "▶ Play";
+      }
+
+      function resetAll() {
+        pauseAutoplay();
+
+        if (animationFrame) {
+          cancelAnimationFrame(animationFrame);
+          animationFrame = null;
+        }
+
+        state = 0;
+        renderedPositions = base.map(p => ({ ...p }));
+
+        updateText(0);
+        showPositionVectors(false);
+        resetVocabularyAppearance();
+
+        vocabEls.forEach(({ group }) => {
+          group.classList.remove("hidden", "input-highlight");
+          group.style.transitionDelay = "0ms";
+        });
+
+        activeEls.forEach((group, i) => {
+          group.classList.remove("visible");
+          group.style.opacity = "";
+          setActivePosition(group, base[i]);
+
+          const halo = group.querySelector(".query-halo");
+          if (halo) {
+            halo.classList.remove("show");
+            halo.setAttribute("r", "13");
+          }
+        });
+
+        trailEls.forEach(path => {
+          path.classList.remove("hidden");
+          path.setAttribute("d", "");
+        });
+
+        probPanel.classList.remove("show");
+        probList.innerHTML = "";
+      }
+
+      async function startAutoplay() {
+        const generation = ++playGeneration;
+        isPlaying = true;
+        playBtn.textContent = "❚❚ Pause";
+
+        while (
+          generation === playGeneration &&
+          isPlaying &&
+          state < TOTAL_STATE
+        ) {
+          await goToNextState();
+
+          if (
+            generation !== playGeneration ||
+            !isPlaying ||
+            state >= TOTAL_STATE
+          ) break;
+
+          await sleep(250);
+        }
+
+        if (generation === playGeneration) {
+          isPlaying = false;
+          playBtn.textContent = "▶ Play";
+        }
+      }
+
+      playBtn.addEventListener("click", () => {
+        if (isPlaying) {
+          pauseAutoplay();
+          return;
+        }
+
+        if (state >= TOTAL_STATE) resetAll();
+        startAutoplay();
+      });
+
+      stepBtn.addEventListener("click", async () => {
+        pauseAutoplay();
+
+        if (state >= TOTAL_STATE) {
+          resetAll();
+          return;
+        }
+
+        await goToNextState();
+      });
+
+      resetBtn.addEventListener("click", resetAll);
+
+      buildInputStrip();
+      buildVocabulary();
+      buildActiveTokens();
+      buildTrails();
+      buildPositionVectors();
+      buildDistanceLines();
+      resetAll();
+
+      /*
+        Small console sanity check:
+        The positional vector is ~0.7x the previous 145 length and
+        approximately half the mean input embedding norm.
+      */
+      const meanEmbeddingLength =
+        base.reduce((sum, p) => {
+          return sum + Math.hypot(p.x - origin.x, p.y - origin.y);
+        }, 0) / base.length;
+
+      console.log({
+        positionalVectorLength: POSITION_VECTOR_LENGTH,
+        previousTimesPointSeven: 145 * .7,
+        meanEmbeddingLength: meanEmbeddingLength.toFixed(1),
+        ratioToMeanEmbeddingLength:
+          (POSITION_VECTOR_LENGTH / meanEmbeddingLength).toFixed(2)
+      });
+    })();
+  </script>
+</body>
+</html>
