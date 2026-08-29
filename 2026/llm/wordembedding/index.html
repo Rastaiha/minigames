@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>صفحه مختصات و جبر هندسی بردارها</title>
+  <style>
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; user-select: none; -webkit-user-select: none; }
+    body { margin: 0; background: #0b0f19; color: #f8fafc; display: flex; flex-direction: column; height: 100dvh; overflow: hidden; }
+    
+    header { background: #1e293b; border-bottom: 1px solid #334155; padding: 8px 16px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; z-index: 30; }
+    header h1 { margin: 0; font-size: 0.95rem; color: #38bdf8; }
+    header span { font-size: 0.75rem; color: #94a3b8; }
+    
+    .container { display: flex; flex: 1; overflow: hidden; position: relative; }
+    
+    .sidebar {
+      width: 270px;
+      background: #1e293b;
+      border-left: 1px solid #334155;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 20;
+      flex-shrink: 0;
+    }
+    
+    .btn-row { display: flex; gap: 6px; }
+    .btn { padding: 7px 10px; background: #0284c7; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.8rem; transition: 0.2s; flex: 1; text-align: center; }
+    .btn:active { transform: scale(0.97); }
+    .btn-green { background: #10b981; }
+    .btn-pink { background: #ec4899; }
+    .btn-danger { background: #ef4444; }
+    .btn-save { background: #8b5cf6; }
+    .btn-delete-r { background: #e11d48; }
+    
+    /* محفظه اسکرول بانک کلمات */
+    .word-bank-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+      flex: 1;
+      min-height: 0;
+    }
+    
+    .word-bank {
+      flex: 1;
+      height: 100%;
+      border: 1px dashed #475569;
+      border-radius: 8px;
+      padding: 8px;
+      overflow-y: auto;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-content: flex-start;
+      background: #0b0f19;
+    }
+
+    .scroll-arrow-btn {
+      display: none;
+      background: #334155;
+      border: 1px solid #475569;
+      color: white;
+      border-radius: 6px;
+      width: 28px;
+      height: 38px;
+      font-size: 1rem;
+      cursor: pointer;
+      z-index: 5;
+      flex-shrink: 0;
+    }
+    
+    .canvas-container {
+      flex: 1;
+      position: relative;
+      background: #0b0f19;
+      overflow: hidden;
+      touch-action: none;
+      cursor: grab;
+    }
+    .canvas-container:active { cursor: grabbing; }
+
+    #world-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      transform-origin: 0 0;
+      pointer-events: none;
+    }
+
+    svg#vector-layer {
+      position: absolute;
+      top: -5000px;
+      left: -5000px;
+      width: 10000px;
+      height: 10000px;
+      pointer-events: none;
+    }
+    
+    .zoom-controls {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      z-index: 25;
+    }
+    .zoom-btn {
+      width: 34px;
+      height: 34px;
+      background: #1e293b;
+      border: 1px solid #475569;
+      color: white;
+      border-radius: 8px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.1rem;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    }
+    
+    .word-node {
+      position: absolute;
+      background: #1e293b;
+      border: 2px solid #38bdf8;
+      color: #f8fafc;
+      padding: 5px 10px 5px 12px;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 0.85rem;
+      cursor: grab;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      transform: translate(-50%, -50%);
+      pointer-events: auto;
+      touch-action: none;
+      z-index: 10;
+      white-space: nowrap;
+    }
+    .word-node:active { cursor: grabbing; border-color: #f59e0b; }
+    
+    .word-node.is-result-node {
+      border-color: #ec4899;
+      background: #3b0764;
+      cursor: default !important;
+      box-shadow: 0 0 14px rgba(236, 72, 153, 0.4);
+    }
+    .word-node .coord-tag { font-size: 0.65rem; color: #38bdf8; font-family: monospace; direction: ltr; font-weight: normal; }
+    .word-node.is-result-node .coord-tag { color: #f472b6; }
+    
+    .node-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      width: 100%;
+      justify-content: space-between;
+    }
+    
+    .delete-node-btn {
+      font-size: 0.7rem;
+      color: #94a3b8;
+      cursor: pointer;
+      padding: 0 2px;
+      line-height: 1;
+      border-radius: 4px;
+    }
+    .delete-node-btn:hover { color: #ef4444; background: rgba(255,255,255,0.1); }
+    
+    .word-bank .word-node {
+      position: static;
+      transform: none;
+      cursor: pointer;
+      background: #334155;
+      border-color: #64748b;
+      font-size: 0.85rem;
+      padding: 6px 14px;
+      flex-shrink: 0;
+      touch-action: pan-x;
+    }
+    .word-bank .word-node:active { background: #475569; }
+    .word-bank .word-node .delete-node-btn { display: none; }
+
+    .target-marker {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 15;
+    }
+    .target-pulse {
+      width: 18px;
+      height: 18px;
+      background: #ec4899;
+      border-radius: 50%;
+      border: 2px solid #fff;
+      box-shadow: 0 0 15px #ec4899;
+      animation: pulse 1.2s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(0.9); opacity: 0.8; }
+      50% { transform: scale(1.3); opacity: 1; }
+      100% { transform: scale(0.9); opacity: 0.8; }
+    }
+
+    .math-panel {
+      background: #1e293b;
+      border-top: 1px solid #334155;
+      padding: 8px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 0.85rem;
+      flex-shrink: 0;
+      z-index: 30;
+    }
+    .math-controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+    }
+    .math-controls select { background: #0b0f19; color: white; border: 1px solid #475569; padding: 5px 8px; border-radius: 6px; font-size: 0.8rem; }
+    .math-result { font-weight: bold; color: #38bdf8; font-size: 0.8rem; }
+    .op-select { background: #334155 !important; border-color: #64748b !important; font-weight: bold; }
+
+    /* اصلاحات روان‌سازی کامل اسکرول موبایل */
+    @media (max-width: 768px) {
+      .container { flex-direction: column-reverse; }
+      .sidebar {
+        width: 100%;
+        height: auto;
+        border-left: none;
+        border-top: 1px solid #334155;
+        padding: 6px 10px;
+        gap: 6px;
+      }
+      .word-bank-wrapper {
+        gap: 4px;
+        height: 48px;
+      }
+      .scroll-arrow-btn {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .word-bank {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        touch-action: pan-x;
+        padding: 4px 6px;
+        gap: 8px;
+        align-items: center;
+        scrollbar-width: thin;
+      }
+      .word-bank::-webkit-scrollbar {
+        height: 4px;
+      }
+      .word-bank::-webkit-scrollbar-thumb {
+        background: #475569;
+        border-radius: 4px;
+      }
+      .word-bank .word-node {
+        flex-shrink: 0;
+        white-space: nowrap;
+        margin: 0;
+      }
+      header span { display: none; }
+      .zoom-controls { top: auto; bottom: 15px; left: 15px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>🌌 نمایش هندسی و برداری کلمات</h1>
+    <span>مسیر حرکت بردارها را به صورت زنده دنبال کنید</span>
+  </header>
+
+  <div class="container">
+    <div class="sidebar">
+      <div style="font-size: 0.75rem; color: #94a3b8; font-weight: bold;">بانک کلمات:</div>
+      
+      <div class="word-bank-wrapper">
+        <button class="scroll-arrow-btn" onclick="scrollBank(120)">▶</button>
+        <div class="word-bank" id="word-bank"></div>
+        <button class="scroll-arrow-btn" onclick="scrollBank(-120)">◀</button>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-green" onclick="toggleVectors()">📐 بردار کلمات</button>
+        <button class="btn btn-danger" onclick="resetCanvas()">🔄 پاکسازی کل</button>
+      </div>
+    </div>
+
+    <div class="canvas-container" id="canvas-container">
+      <div class="zoom-controls">
+        <button class="zoom-btn" onclick="changeZoom(1.2)">➕</button>
+        <button class="zoom-btn" onclick="changeZoom(0.8)">➖</button>
+        <button class="zoom-btn" title="بازگشت به مرکز" onclick="resetView()">🎯</button>
+      </div>
+
+      <div id="world-layer">
+        <svg id="vector-layer" viewBox="-5000 -5000 10000 10000">
+          <defs>
+            <pattern id="smallGrid" width="40" height="40" patternUnits="userSpaceOnUse">
+              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="1"/>
+            </pattern>
+            <pattern id="grid" width="200" height="200" patternUnits="userSpaceOnUse">
+              <rect width="200" height="200" fill="url(#smallGrid)"/>
+              <path d="M 200 0 L 0 0 0 200" fill="none" stroke="#334155" stroke-width="1.5"/>
+            </pattern>
+            
+            <marker id="arrow-word" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="14" markerHeight="14" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+              <path d="M 1 2 L 11 6 L 1 10 L 3 6 Z" fill="#38bdf8" />
+            </marker>
+            <marker id="arrow-step1" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="16" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+              <path d="M 1 2 L 11 6 L 1 10 L 3 6 Z" fill="#f59e0b" />
+            </marker>
+            <marker id="arrow-step2" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="16" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+              <path d="M 1 2 L 11 6 L 1 10 L 3 6 Z" fill="#10b981" />
+            </marker>
+            <marker id="arrow-neg-b" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="14" markerHeight="14" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+              <path d="M 1 2 L 11 6 L 1 10 L 3 6 Z" fill="#94a3b8" />
+            </marker>
+            <marker id="arrow-result" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="20" markerHeight="20" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+              <path d="M 1 1 L 11 6 L 1 11 L 3.5 6 Z" fill="#ec4899" stroke="#fff" stroke-width="0.5" />
+            </marker>
+          </defs>
+
+          <rect x="-5000" y="-5000" width="10000" height="10000" fill="url(#grid)" />
+
+          <g id="axes">
+            <line x1="-5000" y1="0" x2="5000" y2="0" stroke="#60a5fa" stroke-width="3"/>
+            <line x1="0" y1="-5000" x2="0" y2="5000" stroke="#60a5fa" stroke-width="3"/>
+            <circle cx="0" cy="0" r="5" fill="#f43f5e"/>
+            <text x="10" y="22" fill="#f43f5e" font-size="16" font-family="monospace" font-weight="bold">(0, 0)</text>
+            <text x="4900" y="-12" fill="#60a5fa" font-size="20" font-family="monospace" font-weight="bold">+X</text>
+            <text x="12" y="-4900" fill="#60a5fa" font-size="20" font-family="monospace" font-weight="bold">+Y</text>
+          </g>
+
+          <g id="axis-ticks"></g>
+          <g id="word-vectors"></g>
+          <g id="math-vector-steps"></g>
+        </svg>
+
+        <div id="nodes-container"></div>
+        <div id="math-target-point"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="math-panel">
+    <div class="math-controls">
+      <span style="font-weight: bold; color: #ec4899;">⚡ جبر برداری:</span>
+      
+      <select id="vec-a" onchange="if(isMathActive) calculateAndDrawVectorMath()"></select>
+      
+      <select id="op-1" class="op-select" onchange="if(isMathActive) calculateAndDrawVectorMath()">
+        <option value="+">➕ (به‌علاوه)</option>
+        <option value="-">➖ (منهای)</option>
+      </select>
+      
+      <select id="vec-b" onchange="if(isMathActive) calculateAndDrawVectorMath()"></select>
+      
+      <button class="btn btn-pink" style="flex: none;" onclick="activateAndDrawMath()">نمایش هندسی</button>
+      <button class="btn btn-save" id="btn-save-res" style="flex: none; display: none;" onclick="saveCurrentResultAsNode()">💾 ثبت بردار حاصل</button>
+      <button class="btn btn-delete-r" style="flex: none;" onclick="deleteAllResultNodes()">🗑 پاکسازی Rها</button>
+      <button class="btn" style="flex: none; background: #475569;" onclick="clearMathDrawings()">پاک کردن مسیر</button>
+    </div>
+    <div class="math-result" id="math-result"></div>
+  </div>
+
+  <script>
+    const defaultWords = ["خودرو", "موز", "پادشاه", "مرد", "زن", "ملکه", "شیر", "پلنگ", "گربه", "سگ", "سیب", "اتوبوس"];
+    const container = document.getElementById('canvas-container');
+    const worldLayer = document.getElementById('world-layer');
+    const nodesContainer = document.getElementById('nodes-container');
+    const targetContainer = document.getElementById('math-target-point');
+    const wordBank = document.getElementById('word-bank');
+    const wordVectorsLayer = document.getElementById('word-vectors');
+    const mathStepsLayer = document.getElementById('math-vector-steps');
+    const ticksLayer = document.getElementById('axis-ticks');
+    const btnSaveRes = document.getElementById('btn-save-res');
+    
+    let panX = 0, panY = 0, scale = 1;
+    let isPanning = false, startPan = { x: 0, y: 0 };
+    let activeNode = null, nodeDragOffset = { x: 0, y: 0 };
+    let showWordVectors = false;
+    let isMathActive = false;
+    
+    let initialPinchDist = null;
+    let initialPinchCenter = { x: 0, y: 0 };
+    let initialScale = 1;
+    
+    let lastResultInfo = null;
+    const resultFormulas = {};
+
+    const UNIT_SCALE = 200;
+
+    function scrollBank(distance) {
+      wordBank.scrollBy({ left: distance, behavior: 'smooth' });
+    }
+
+    function getNextAvailableRName() {
+      const existingNames = new Set(
+        Array.from(document.querySelectorAll('#nodes-container .word-node.is-result-node'))
+             .map(n => n.dataset.word)
+      );
+      let i = 1;
+      while (existingNames.has(`R${i}`)) {
+        i++;
+      }
+      return `R${i}`;
+    }
+
+    function renderAxisTicks() {
+      let ticksHtml = '';
+      for (let i = -20; i <= 20; i++) {
+        if (i === 0) continue;
+        const pos = i * UNIT_SCALE;
+        ticksHtml += `
+          <line x1="${pos}" y1="-6" x2="${pos}" y2="6" stroke="#94a3b8" stroke-width="2"/>
+          <text x="${pos}" y="20" fill="#94a3b8" font-size="12" font-family="monospace" text-anchor="middle">${i}</text>
+        `;
+        ticksHtml += `
+          <line x1="-6" y1="${-pos}" x2="${6}" y2="${-pos}" stroke="#94a3b8" stroke-width="2"/>
+          <text x="-12" y="${-pos + 4}" fill="#94a3b8" font-size="12" font-family="monospace" text-anchor="end">${i}</text>
+        `;
+      }
+      ticksLayer.innerHTML = ticksHtml;
+    }
+
+    defaultWords.forEach(w => createBankItem(w));
+
+    function createBankItem(word, isResult = false) {
+      const item = document.createElement('div');
+      item.className = 'word-node' + (isResult ? ' is-result-node' : '');
+      item.innerText = word;
+
+      // تفکیک لمس برای اسکرول یا کلیک سریع
+      let touchStartX = 0, touchStartY = 0;
+      let hasMoved = false;
+
+      item.addEventListener('touchstart', (e) => {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        hasMoved = false;
+      }, { passive: true });
+
+      item.addEventListener('touchmove', (e) => {
+        const dx = Math.abs(e.touches[0].clientX - touchStartX);
+        const dy = Math.abs(e.touches[0].clientY - touchStartY);
+        if (dx > 8 || dy > 8) {
+          hasMoved = true; // تشخیص اسکرول افقی
+        }
+      }, { passive: true });
+
+      item.addEventListener('touchend', (e) => {
+        if (!hasMoved) {
+          spawnToCanvas(word, item, isResult);
+        }
+      });
+
+      item.addEventListener('click', (e) => {
+        // برای کاربران دسکتاپ
+        if (e.pointerType !== 'touch') {
+          spawnToCanvas(word, item, isResult);
+        }
+      });
+
+      wordBank.appendChild(item);
+    }
+
+    function updateTransform() {
+      worldLayer.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+    }
+
+    function resetView() {
+      const rect = container.getBoundingClientRect();
+      panX = rect.width / 2;
+      panY = rect.height / 2;
+      scale = 1;
+      updateTransform();
+    }
+
+    container.addEventListener('pointerdown', (e) => {
+      if (e.target.closest('.word-node') || e.target.closest('.zoom-controls')) return;
+      if (e.pointerType === 'touch') return;
+      isPanning = true;
+      startPan = { x: e.clientX - panX, y: e.clientY - panY };
+      container.setPointerCapture(e.pointerId);
+    });
+
+    container.addEventListener('pointermove', (e) => {
+      if (e.pointerType === 'touch') return;
+      if (isPanning) {
+        panX = e.clientX - startPan.x;
+        panY = e.clientY - startPan.y;
+        updateTransform();
+      } else if (activeNode) {
+        const worldX = (e.clientX - panX) / scale;
+        const worldY = (e.clientY - panY) / scale;
+
+        activeNode.style.left = `${worldX - nodeDragOffset.x}px`;
+        activeNode.style.top = `${worldY - nodeDragOffset.y}px`;
+
+        updateNodeCoordinates(activeNode);
+        updateAllDerivedResults();
+
+        if(showWordVectors) renderWordVectors();
+        if(isMathActive) calculateAndDrawVectorMath();
+      }
+    });
+
+    container.addEventListener('pointerup', (e) => {
+      if (e.pointerType === 'touch') return;
+      if (isPanning) {
+        isPanning = false;
+        try { container.releasePointerCapture(e.pointerId); } catch(err){}
+      }
+      if (activeNode) activeNode = null;
+    });
+
+    // مدیریت مالتی‌تاچ بوم مختصات
+    container.addEventListener('touchstart', (e) => {
+      if (e.target.closest('.zoom-controls')) return;
+
+      if (e.touches.length === 2) {
+        isPanning = false;
+        activeNode = null;
+        const t1 = e.touches[0];
+        const t2 = e.touches[1];
+        initialPinchDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+        initialPinchCenter = {
+          x: (t1.clientX + t2.clientX) / 2,
+          y: (t1.clientY + t2.clientY) / 2
+        };
+        initialScale = scale;
+      } else if (e.touches.length === 1) {
+        const node = e.target.closest('.word-node');
+        if (node && node.dataset.isResult !== "true" && !e.target.classList.contains('delete-node-btn')) {
+          activeNode = node;
+          const touch = e.touches[0];
+          const currentWX = parseFloat(node.style.left);
+          const currentWY = parseFloat(node.style.top);
+          const mouseWX = (touch.clientX - panX) / scale;
+          const mouseWY = (touch.clientY - panY) / scale;
+          nodeDragOffset = { x: mouseWX - currentWX, y: mouseWY - currentWY };
+        } else if (!node) {
+          isPanning = true;
+          startPan = { x: e.touches[0].clientX - panX, y: e.touches[0].clientY - panY };
+        }
+      }
+    }, { passive: false });
+
+    container.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+
+      if (e.touches.length === 2 && initialPinchDist) {
+        const t1 = e.touches[0];
+        const t2 = e.touches[1];
+        const currentDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+        const factor = currentDist / initialPinchDist;
+        const targetScale = Math.min(Math.max(0.2, initialScale * factor), 3.5);
+
+        const rect = container.getBoundingClientRect();
+        const cx = initialPinchCenter.x - rect.left;
+        const cy = initialPinchCenter.y - rect.top;
+
+        panX = cx - (cx - panX) * (targetScale / scale);
+        panY = cy - (cy - panY) * (targetScale / scale);
+        scale = targetScale;
+        updateTransform();
+      } else if (e.touches.length === 1) {
+        const touch = e.touches[0];
+        if (isPanning) {
+          panX = touch.clientX - startPan.x;
+          panY = touch.clientY - startPan.y;
+          updateTransform();
+        } else if (activeNode) {
+          const worldX = (touch.clientX - panX) / scale;
+          const worldY = (touch.clientY - panY) / scale;
+
+          activeNode.style.left = `${worldX - nodeDragOffset.x}px`;
+          activeNode.style.top = `${worldY - nodeDragOffset.y}px`;
+
+          updateNodeCoordinates(activeNode);
+          updateAllDerivedResults();
+
+          if(showWordVectors) renderWordVectors();
+          if(isMathActive) calculateAndDrawVectorMath();
+        }
+      }
+    }, { passive: false });
+
+    container.addEventListener('touchend', (e) => {
+      if (e.touches.length < 2) initialPinchDist = null;
+      if (e.touches.length === 0) {
+        isPanning = false;
+        activeNode = null;
+      }
+    });
+
+    container.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
+      changeZoom(zoomFactor, e.clientX, e.clientY);
+    }, { passive: false });
+
+    function changeZoom(factor, clientX, clientY) {
+      const rect = container.getBoundingClientRect();
+      const x = clientX !== undefined ? clientX - rect.left : rect.width / 2;
+      const y = clientY !== undefined ? clientY - rect.top : rect.height / 2;
+      const newScale = Math.min(Math.max(0.2, scale * factor), 3.5);
+      panX = x - (x - panX) * (newScale / scale);
+      panY = y - (y - panY) * (newScale / scale);
+      scale = newScale;
+      updateTransform();
+    }
+
+    function spawnToCanvas(word, bankItem, isResult = false, customX = null, customY = null) {
+      if (bankItem) bankItem.style.display = 'none';
+      const node = document.createElement('div');
+      node.className = 'word-node' + (isResult ? ' is-result-node' : '');
+      node.dataset.word = word;
+      node.dataset.isResult = isResult ? "true" : "false";
+
+      const titleText = isResult ? `🔒 ${word}` : word;
+      node.innerHTML = `
+        <div class="node-header">
+          <span>${titleText}</span>
+          <span class="delete-node-btn" onclick="deleteSingleNode('${word}')" title="حذف">✕</span>
+        </div>
+        <span class="coord-tag">[0, 0]</span>
+      `;
+
+      if (customX !== null && customY !== null) {
+        node.style.left = `${customX}px`;
+        node.style.top = `${customY}px`;
+      } else {
+        const rect = container.getBoundingClientRect();
+        const viewCenterX = (rect.width / 2 - panX) / scale;
+        const viewCenterY = (rect.height / 2 - panY) / scale;
+        node.style.left = `${viewCenterX + (Math.random() * 120 - 60)}px`;
+        node.style.top = `${viewCenterY + (Math.random() * 120 - 60)}px`;
+      }
+
+      node.addEventListener('pointerdown', (e) => {
+        if (e.pointerType === 'touch') return;
+        if (e.target.classList.contains('delete-node-btn')) return;
+        if (node.dataset.isResult === "true") return;
+        e.stopPropagation();
+        activeNode = node;
+        const currentWX = parseFloat(node.style.left);
+        const currentWY = parseFloat(node.style.top);
+        const mouseWX = (e.clientX - panX) / scale;
+        const mouseWY = (e.clientY - panY) / scale;
+        nodeDragOffset = { x: mouseWX - currentWX, y: mouseWY - currentWY };
+      });
+
+      nodesContainer.appendChild(node);
+      updateNodeCoordinates(node);
+      updateMathSelectors();
+      if(showWordVectors) renderWordVectors();
+      if(isMathActive) calculateAndDrawVectorMath();
+      return node;
+    }
+
+    function deleteSingleNode(word) {
+      const node = Array.from(document.querySelectorAll('#nodes-container .word-node')).find(n => n.dataset.word === word);
+      if (node) {
+        node.remove();
+        delete resultFormulas[word];
+
+        const bankEl = Array.from(wordBank.children).find(el => el.innerText.trim() === word);
+        if (bankEl && !node.classList.contains('is-result-node')) {
+          bankEl.style.display = 'flex';
+        }
+
+        updateMathSelectors();
+        updateAllDerivedResults();
+        if(isMathActive) calculateAndDrawVectorMath();
+        if(showWordVectors) renderWordVectors();
+      }
+    }
+
+    function deleteAllResultNodes() {
+      document.querySelectorAll('#nodes-container .word-node.is-result-node').forEach(n => {
+        delete resultFormulas[n.dataset.word];
+        n.remove();
+      });
+      updateMathSelectors();
+      clearMathDrawings();
+      if(showWordVectors) renderWordVectors();
+    }
+
+    function getCartesian(node) {
+      const x = parseFloat(node.style.left);
+      const y = parseFloat(node.style.top);
+      const normX = (x / UNIT_SCALE).toFixed(2);
+      const normY = (-y / UNIT_SCALE).toFixed(2);
+      return { x: parseFloat(normX), y: parseFloat(normY), rawX: x, rawY: y };
+    }
+
+    function updateNodeCoordinates(node) {
+      const coords = getCartesian(node);
+      node.querySelector('.coord-tag').innerText = `[${coords.x}, ${coords.y}]`;
+    }
+
+    function updateAllDerivedResults() {
+      const getNode = (word) => Array.from(document.querySelectorAll('#nodes-container .word-node')).find(n => n.dataset.word === word);
+      
+      for (let iter = 0; iter < 3; iter++) {
+        Object.keys(resultFormulas).forEach(rName => {
+          const formula = resultFormulas[rName];
+          const rNode = getNode(rName);
+          const nodeA = getNode(formula.wordA);
+          const nodeB = getNode(formula.wordB);
+
+          if (rNode && nodeA) {
+            const vA = getCartesian(nodeA);
+            let targetX = vA.rawX;
+            let targetY = vA.rawY;
+
+            if (nodeB) {
+              const vB = getCartesian(nodeB);
+              const factorB = (formula.op === '-') ? -1 : 1;
+              targetX += vB.rawX * factorB;
+              targetY += vB.rawY * factorB;
+            }
+
+            rNode.style.left = `${targetX}px`;
+            rNode.style.top = `${targetY}px`;
+            updateNodeCoordinates(rNode);
+          }
+        });
+      }
+    }
+
+    function toggleVectors() {
+      showWordVectors = !showWordVectors;
+      renderWordVectors();
+    }
+
+    function renderWordVectors() {
+      wordVectorsLayer.innerHTML = '';
+      if (!showWordVectors) return;
+
+      document.querySelectorAll('#nodes-container .word-node').forEach(node => {
+        const x = parseFloat(node.style.left);
+        const y = parseFloat(node.style.top);
+        wordVectorsLayer.innerHTML += `
+          <line x1="0" y1="0" x2="${x}" y2="${y}" stroke="#38bdf8" stroke-width="2.5" stroke-dasharray="5,5" marker-end="url(#arrow-word)"/>
+        `;
+      });
+    }
+
+    function updateMathSelectors() {
+      const nodes = document.querySelectorAll('#nodes-container .word-node');
+      const selectors = ['vec-a', 'vec-b'];
+      selectors.forEach(id => {
+        const select = document.getElementById(id);
+        const currentVal = select.value;
+        select.innerHTML = '<option value="">-- انتخاب کلمه --</option>';
+        nodes.forEach(n => {
+          const w = n.dataset.word;
+          select.innerHTML += `<option value="${w}">${w}</option>`;
+        });
+        select.value = currentVal;
+      });
+    }
+
+    function activateAndDrawMath() {
+      isMathActive = true;
+      calculateAndDrawVectorMath();
+    }
+
+    function calculateAndDrawVectorMath() {
+      const wordA = document.getElementById('vec-a').value;
+      const op1 = document.getElementById('op-1').value;
+      const wordB = document.getElementById('vec-b').value;
+
+      if (!wordA) {
+        clearMathDrawings();
+        return;
+      }
+
+      const getNode = (word) => Array.from(document.querySelectorAll('#nodes-container .word-node')).find(n => n.dataset.word === word);
+      
+      const nodeA = getNode(wordA);
+      const nodeB = getNode(wordB);
+
+      if (!nodeA) {
+        clearMathDrawings();
+        return;
+      }
+
+      const vA = getCartesian(nodeA);
+      const vB = nodeB ? getCartesian(nodeB) : null;
+
+      let stepsHtml = '';
+      const ax = vA.rawX;
+      const ay = vA.rawY;
+      
+      let resX = ax;
+      let resY = ay;
+
+      stepsHtml += `
+        <line x1="0" y1="0" x2="${ax}" y2="${ay}" stroke="#f59e0b" stroke-width="3.5" marker-end="url(#arrow-step1)"/>
+        <text x="${ax / 2 - 10}" y="${ay / 2 - 10}" fill="#f59e0b" font-size="13" font-weight="bold">${wordA}</text>
+      `;
+
+      if (vB) {
+        const bx = vB.rawX;
+        const by = vB.rawY;
+
+        if (op1 === '+') {
+          resX = ax + bx;
+          resY = ay + by;
+
+          stepsHtml += `
+            <line x1="${ax}" y1="${ay}" x2="${resX}" y2="${resY}" stroke="#10b981" stroke-width="3" stroke-dasharray="5,5" marker-end="url(#arrow-step2)"/>
+            <text x="${ax + bx / 2 + 10}" y="${ay + by / 2}" fill="#10b981" font-size="13" font-weight="bold">+${wordB}</text>
+            
+            <line x1="0" y1="0" x2="${bx}" y2="${by}" stroke="#64748b" stroke-width="2" stroke-dasharray="4,4"/>
+            <line x1="${bx}" y1="${by}" x2="${resX}" y2="${resY}" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4,4"/>
+          `;
+        } else {
+          const negBx = -bx;
+          const negBy = -by;
+          resX = ax + negBx;
+          resY = ay + negBy;
+
+          stepsHtml += `
+            <line x1="0" y1="0" x2="${bx}" y2="${by}" stroke="#38bdf8" stroke-width="2" stroke-dasharray="3,3"/>
+            <text x="${bx / 2 + 10}" y="${by / 2}" fill="#38bdf8" font-size="11">${wordB}</text>
+
+            <line x1="0" y1="0" x2="${negBx}" y2="${negBy}" stroke="#94a3b8" stroke-width="2.5" stroke-dasharray="4,4" marker-end="url(#arrow-neg-b)"/>
+            <text x="${negBx / 2 - 15}" y="${negBy / 2 + 15}" fill="#94a3b8" font-size="12" font-weight="bold">-${wordB}</text>
+
+            <line x1="${ax}" y1="${ay}" x2="${resX}" y2="${resY}" stroke="#10b981" stroke-width="3" stroke-dasharray="5,5" marker-end="url(#arrow-step2)"/>
+            <text x="${ax + negBx / 2 + 10}" y="${ay + negBy / 2}" fill="#10b981" font-size="13" font-weight="bold">-${wordB}</text>
+
+            <line x1="${negBx}" y1="${negBy}" x2="${resX}" y2="${resY}" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4,4"/>
+          `;
+        }
+      }
+
+      stepsHtml += `
+        <line x1="0" y1="0" x2="${resX}" y2="${resY}" stroke="#ec4899" stroke-width="4.5" marker-end="url(#arrow-result)"/>
+      `;
+
+      mathStepsLayer.innerHTML = stepsHtml;
+
+      targetContainer.innerHTML = `
+        <div class="target-marker" style="left: ${resX}px; top: ${resY}px;">
+          <div class="target-pulse"></div>
+        </div>
+      `;
+
+      const nextRName = getNextAvailableRName();
+
+      lastResultInfo = {
+        name: nextRName,
+        rawX: resX,
+        rawY: resY,
+        wordA: wordA,
+        op: op1,
+        wordB: wordB
+      };
+
+      const isDuplicate = Object.values(resultFormulas).some(f => 
+        f.wordA === wordA && f.op === op1 && f.wordB === wordB
+      );
+
+      if (!isDuplicate && wordB) {
+        btnSaveRes.style.display = 'inline-block';
+        btnSaveRes.innerText = `💾 ثبت بردار حاصل (${lastResultInfo.name})`;
+      } else {
+        btnSaveRes.style.display = 'none';
+      }
+
+      const resNormX = (resX / UNIT_SCALE).toFixed(2);
+      const resNormY = (-resY / UNIT_SCALE).toFixed(2);
+
+      let closestWord = "هیچکدام";
+      let minDist = Infinity;
+      const usedWords = [wordA, wordB].filter(Boolean);
+
+      document.querySelectorAll('#nodes-container .word-node').forEach(node => {
+        const w = node.dataset.word;
+        if (!usedWords.includes(w)) {
+          const v = getCartesian(node);
+          const dist = Math.hypot(v.rawX - resX, v.rawY - resY) / UNIT_SCALE;
+          if (dist < minDist) {
+            minDist = dist;
+            closestWord = w;
+          }
+        }
+      });
+
+      document.getElementById('math-result').innerHTML = `
+        بردار حاصل (${lastResultInfo.name}): <span style="color:#ec4899; font-family:monospace;">[${resNormX}, ${resNormY}]</span> | 
+        نزدیک‌ترین کلمه: <strong style="color:#38bdf8; font-size:1rem;">«${closestWord}»</strong> 
+        <span style="color:#94a3b8; font-size:0.75rem;">(فاصله: ${minDist.toFixed(2)})</span>
+      `;
+    }
+
+    function saveCurrentResultAsNode() {
+      if (!lastResultInfo) return;
+
+      const rName = lastResultInfo.name;
+
+      resultFormulas[rName] = {
+        wordA: lastResultInfo.wordA,
+        op: lastResultInfo.op,
+        wordB: lastResultInfo.wordB
+      };
+
+      spawnToCanvas(rName, null, true, lastResultInfo.rawX, lastResultInfo.rawY);
+
+      btnSaveRes.style.display = 'none';
+      targetContainer.innerHTML = '';
+
+      document.getElementById('vec-a').value = rName;
+      document.getElementById('vec-b').value = "";
+
+      lastResultInfo = null;
+      clearMathDrawings();
+      activateAndDrawMath();
+    }
+
+    function clearMathDrawings() {
+      isMathActive = false;
+      mathStepsLayer.innerHTML = '';
+      targetContainer.innerHTML = '';
+      document.getElementById('math-result').innerText = '';
+      btnSaveRes.style.display = 'none';
+      lastResultInfo = null;
+    }
+
+    function resetCanvas() {
+      nodesContainer.innerHTML = '';
+      wordBank.querySelectorAll('.word-node').forEach(el => {
+        if(el.classList.contains('is-result-node')) el.remove();
+        else el.style.display = 'flex';
+      });
+      wordVectorsLayer.innerHTML = '';
+      Object.keys(resultFormulas).forEach(k => delete resultFormulas[k]);
+      clearMathDrawings();
+      updateMathSelectors();
+    }
+
+    renderAxisTicks();
+    setTimeout(resetView, 50);
+  </script>
+</body>
+</html>
