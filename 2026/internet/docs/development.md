@@ -182,20 +182,31 @@ BASE_PATH=/rasta-internet-workshop SITE_URL=https://example.github.io npm run bu
 
 ## GitHub Actions
 
-workflow موجود در `.github/workflows/deploy.yml` سه job دارد:
+دو workflow مستقل وجود دارد:
 
-1. خواندن Google Doc و ساخت Markdownها
-2. ساخت سایت Astro
-3. انتشار artifact نهایی روی GitHub Pages
+- `.github/workflows/deploy.yml` با هر push به `main`، فقط آخرین محتوای commit‌شده
+  را test و build می‌کند و روی GitHub Pages منتشر می‌کند. این workflow به Google
+  Docs یا secretهای OAuth دسترسی ندارد.
+- `.github/workflows/import-steps.yml` فقط از منوی Actions و به‌صورت دستی اجرا
+  می‌شود. Google Doc را import می‌کند، test و build را روی خروجی تازه اجرا می‌کند
+  و اگر `steps/` تغییر کرده باشد آن را با پیام
+  `content: import steps from Google Docs` در `main` commit و push می‌کند. سپس
+  workflow انتشار را صریحاً برای آخرین commit شاخهٔ `main` اجرا می‌کند.
+
+اجرای صریح workflow انتشار لازم است چون push انجام‌شده با `GITHUB_TOKEN` به‌طور
+خودکار workflow دیگری را با رویداد `push` راه نمی‌اندازد. pushهای معمولی اعضای
+تیم به `main` همچنان مستقیماً workflow انتشار را اجرا می‌کنند.
 
 این دو secret را در تنظیمات مخزن تعریف کنید:
 
 - `GOOGLE_OAUTH_CLIENT_JSON`: کل محتوای فایل `google-oauth-client.json`
 - `GOOGLE_REFRESH_TOKEN`: فقط مقدار refresh token، بدون عنوان یا پیشوند
 
-همان importer و build command در محیط محلی و GitHub Actions اجرا می‌شوند.
-workflow در هر اجرا access token تازه می‌گیرد و هم با push به `main` و هم به‌صورت
-دستی (`workflow_dispatch`) قابل اجراست.
+فقط workflow دستی importer از این secretها استفاده می‌کند. همان importer و build
+command در محیط محلی و GitHub Actions اجرا می‌شوند و importer در هر اجرا access
+token تازه می‌گیرد. اگر شاخهٔ `main` با branch protection جلوی push مستقیم را
+بگیرد، باید به این workflow اجازهٔ مناسب داده شود یا فرایند import به ساخت pull
+request تغییر کند.
 
 ## پیشنهاد متن با کمک Codex
 
