@@ -83,10 +83,6 @@ out
 dist
 .output
 
-# A game's own build output is source material for the workshop site.
-!/games/*/dist/
-!/games/*/dist/**
-
 # Gatsby files
 .cache/
 # Comment in the public line in if your project uses Gatsby and not Next.js
@@ -158,5 +154,6 @@ vite.config.ts.timestamp-*
 # Generated Astro staging and output
 /site/public/games/
 /site/public/steps/
+/site/public/game-entry-versions.json
 /site/dist/
 /site/.astro/

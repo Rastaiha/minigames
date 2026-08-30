@@ -62,7 +62,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '')
       <ul class="game-list">
         {games.map((game, index) => (
           <li>
-            <a href={`${base}/games/${game.name}/index.html`}>
+            <a href={`${base}/games/${game.name}/index.html${game.version ? `?v=${game.version}` : ''}`}>
               <span class="game-icon" aria-hidden="true">
                 <i></i><i></i><i></i>
               </span>

@@ -11,6 +11,12 @@ const repositoryRoot = path.resolve(
 )
 const stepsDirectory = path.join(repositoryRoot, 'steps')
 const gamesDirectory = path.join(repositoryRoot, 'games')
+const gameVersionsPath = path.join(
+  repositoryRoot,
+  'site',
+  'public',
+  'game-entry-versions.json',
+)
 const renderer = unified()
   .use(remarkParse)
   .use(remarkGfm)
@@ -26,7 +32,27 @@ function displayNameFromSlug(slug) {
   return slug.replaceAll('-', ' ').replaceAll('_', ' ')
 }
 
+async function readGameEntryVersions() {
+  try {
+    return JSON.parse(await fs.readFile(gameVersionsPath, 'utf8'))
+  } catch (error) {
+    if (error.code === 'ENOENT') return {}
+    throw error
+  }
+}
+
+export function versionGameEntryUrls(html, versions) {
+  return html.replace(
+    /(src="(?:\.\.\/)+games\/([^"?#]+)\/index\.html)(?:\?[^"#]*)?(#[^"]*)?"/g,
+    (match, url, gamePath, fragment = '') => {
+      const version = versions[gamePath]
+      return version ? `${url}?v=${version}${fragment}"` : match
+    },
+  )
+}
+
 export async function readGameIndex() {
+  const versions = await readGameEntryVersions()
   let entries
   try {
     entries = await fs.readdir(gamesDirectory, {withFileTypes: true})
@@ -59,6 +85,7 @@ export async function readGameIndex() {
     games.push({
       name: entry.name,
       title: documentTitle || displayNameFromSlug(entry.name),
+      version: versions[entry.name] || null,
     })
   }
 
@@ -76,11 +103,17 @@ async function renderFragment(stepName, filename) {
 }
 
 export async function readRenderedStep(entry) {
-  const [mentorBefore, student, mentorAfter] = await Promise.all([
+  const [mentorBefore, student, mentorAfter, versions] = await Promise.all([
     renderFragment(entry.name, 'mentor-before.md'),
     renderFragment(entry.name, 'student.md'),
     renderFragment(entry.name, 'mentor-after.md'),
+    readGameEntryVersions(),
   ])
 
-  return {...entry, mentorBefore, student, mentorAfter}
+  return {
+    ...entry,
+    mentorBefore: versionGameEntryUrls(mentorBefore, versions),
+    student: versionGameEntryUrls(student, versions),
+    mentorAfter: versionGameEntryUrls(mentorAfter, versions),
+  }
 }

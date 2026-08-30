@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import {spawn} from 'node:child_process'
+import {createHash} from 'node:crypto'
 
 const rootDirectory = process.cwd()
 const stepsDirectory = path.join(rootDirectory, 'steps')
@@ -8,6 +9,7 @@ const gamesDirectory = path.join(rootDirectory, 'games')
 const publicDirectory = path.join(rootDirectory, 'site', 'public')
 const publicStepsDirectory = path.join(publicDirectory, 'steps')
 const publicGamesDirectory = path.join(publicDirectory, 'games')
+const gameVersionsPath = path.join(publicDirectory, 'game-entry-versions.json')
 
 async function exists(filePath) {
   try {
@@ -143,6 +145,41 @@ async function copyGames() {
   }
 }
 
+async function gameEntryPaths(directory = publicGamesDirectory) {
+  if (!(await exists(directory))) return []
+
+  const paths = []
+  const entries = await fs.readdir(directory, {withFileTypes: true})
+  for (const entry of entries) {
+    const entryPath = path.join(directory, entry.name)
+    if (entry.isDirectory()) {
+      paths.push(...await gameEntryPaths(entryPath))
+    } else if (entry.name === 'index.html') {
+      paths.push(entryPath)
+    }
+  }
+  return paths
+}
+
+async function writeGameEntryVersions() {
+  const versions = {}
+  for (const entryPath of await gameEntryPaths()) {
+    const gamePath = path.dirname(path.relative(publicGamesDirectory, entryPath))
+      .split(path.sep)
+      .join('/')
+    const contents = await fs.readFile(entryPath)
+    versions[gamePath] = createHash('sha256')
+      .update(contents)
+      .digest('hex')
+      .slice(0, 12)
+  }
+
+  const orderedVersions = Object.fromEntries(
+    Object.entries(versions).sort(([first], [second]) => first.localeCompare(second)),
+  )
+  await fs.writeFile(gameVersionsPath, `${JSON.stringify(orderedVersions, null, 2)}\n`)
+}
+
 async function referencedGamePaths() {
   if (!(await exists(stepsDirectory))) return []
   const paths = []
@@ -167,6 +204,7 @@ async function referencedGamePaths() {
 await assertSubmodulesAvailable()
 await buildGames()
 await Promise.all([copyStepAssets(), copyGames()])
+await writeGameEntryVersions()
 
 for (const gamePath of await referencedGamePaths()) {
   const entry = path.join(publicGamesDirectory, gamePath, 'index.html')
