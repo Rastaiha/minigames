@@ -1,0 +1,21 @@
+---
+import '@fontsource-variable/vazirmatn'
+import '../styles/global.css'
+
+const {title} = Astro.props
+---
+
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <title>{title} — کارگاه اینترنت رستا</title>
+  </head>
+  <body>
+    <main class="page-shell">
+      <slot />
+    </main>
+  </body>
+</html>

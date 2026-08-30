@@ -1,0 +1,122 @@
+:root {
+  font-family: "Vazirmatn Variable", Vazirmatn, Vazir, Tahoma, sans-serif;
+  color: #17201b;
+  background: #f5f7f4;
+  line-height: 1.9;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+a {
+  color: #176b45;
+}
+
+code,
+pre {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+.page-shell {
+  width: min(100% - 2rem, 56rem);
+  margin-inline: auto;
+  padding-block: 2rem 4rem;
+}
+
+.step-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-block-end: 1.5rem;
+}
+
+.step-header h1 {
+  margin: 0;
+}
+
+.mentor-toggle,
+.navigation-button {
+  border: 1px solid #176b45;
+  border-radius: 0.75rem;
+  padding: 0.6rem 1rem;
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.mentor-toggle {
+  color: #176b45;
+  background: white;
+}
+
+.mentor-section {
+  margin-block: 1.5rem;
+  padding: 1.25rem;
+  border: 1px solid #e1ad42;
+  border-radius: 1rem;
+  background: #fff8df;
+}
+
+.student-section {
+  padding: clamp(1rem, 3vw, 2.5rem);
+  border-radius: 1rem;
+  background: white;
+  box-shadow: 0 0.5rem 2rem rgb(20 45 31 / 8%);
+}
+
+img,
+video,
+.mini-game {
+  display: block;
+  max-width: 100%;
+  margin-block: 1.5rem;
+  margin-inline: auto;
+  border-radius: 0.75rem;
+}
+
+.mini-game {
+  width: 100%;
+  min-height: 34rem;
+  border: 1px solid #cbd5ce;
+  background: white;
+}
+
+table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #cbd5ce;
+}
+
+.step-navigation {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-block-start: 2rem;
+}
+
+.navigation-button {
+  color: white;
+  background: #176b45;
+  text-align: center;
+}
+
+@media (max-width: 40rem) {
+  .step-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

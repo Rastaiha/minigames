@@ -1,0 +1,16 @@
+---
+import WorkshopLayout from '../layouts/WorkshopLayout.astro'
+import {readStepIndex} from '../lib/steps.js'
+
+const steps = await readStepIndex()
+const base = import.meta.env.BASE_URL.replace(/\/$/, '')
+---
+
+<WorkshopLayout title="گام‌های کارگاه">
+  <h1>گام‌های کارگاه</h1>
+  <ol class="step-list">
+    {steps.map((step) => (
+      <li><a href={`${base}/steps/${step.name}/`}>{step.title}</a></li>
+    ))}
+  </ol>
+</WorkshopLayout>

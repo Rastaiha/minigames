@@ -1,0 +1,29 @@
+{
+  "name": "rasta-internet-workshop",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "google:tabs": "node scripts/list-google-tabs.js",
+    "import:steps": "node scripts/import-steps.js",
+    "prepare:site": "node scripts/prepare-site.js",
+    "predev": "npm run prepare:site",
+    "dev": "ASTRO_TELEMETRY_DISABLED=1 astro dev --root site",
+    "prebuild": "npm run prepare:site",
+    "build": "ASTRO_TELEMETRY_DISABLED=1 astro build --root site",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@fontsource-variable/vazirmatn": "^5.2.0",
+    "astro": "^7.2.9",
+    "googleapis": "^160.0.0",
+    "rehype-stringify": "^10.0.0",
+    "remark-gfm": "^4.0.0",
+    "remark-parse": "^11.0.0",
+    "remark-rehype": "^11.0.0",
+    "remark-stringify": "^11.0.0",
+    "unified": "^11.0.0"
+  },
+  "engines": {
+    "node": ">=22.12"
+  }
+}

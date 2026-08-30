@@ -1,0 +1,75 @@
+---
+import WorkshopLayout from '../../layouts/WorkshopLayout.astro'
+import {readRenderedStep, readStepIndex} from '../../lib/steps.js'
+
+export async function getStaticPaths() {
+  const entries = await readStepIndex()
+  return Promise.all(entries.map(async (entry, index) => ({
+    params: {step: entry.name},
+    props: {
+      step: await readRenderedStep(entry),
+      previous: entries[index - 1] ?? null,
+      next: entries[index + 1] ?? null,
+    },
+  })))
+}
+
+const {step, previous, next} = Astro.props
+const base = import.meta.env.BASE_URL.replace(/\/$/, '')
+---
+
+<WorkshopLayout title={step.title}>
+  <header class="step-header">
+    <h1>{step.title}</h1>
+    <button class="mentor-toggle" type="button" aria-pressed="false">
+      نمایش بخش‌های منتور
+    </button>
+  </header>
+
+  <section class="mentor-section" data-mentor hidden>
+    <div set:html={step.mentorBefore} />
+  </section>
+
+  <article class="student-section">
+    <div set:html={step.student} />
+  </article>
+
+  <section class="mentor-section" data-mentor hidden>
+    <div set:html={step.mentorAfter} />
+  </section>
+
+  <nav class="step-navigation" aria-label="جابه‌جایی بین گام‌ها">
+    {previous ? (
+      <a class="navigation-button" rel="prev" href={`${base}/steps/${previous.name}/`}>
+        گام قبلی
+      </a>
+    ) : <span />}
+    {next ? (
+      <a class="navigation-button" rel="next" href={`${base}/steps/${next.name}/`}>
+        گام بعدی
+      </a>
+    ) : <span />}
+  </nav>
+
+  <script>
+    const button = document.querySelector('.mentor-toggle')
+    const mentorSections = document.querySelectorAll('[data-mentor]')
+    const storageKey = 'rasta-show-mentor-sections'
+
+    function setMentorVisibility(visible) {
+      for (const section of mentorSections) section.hidden = !visible
+      button?.setAttribute('aria-pressed', String(visible))
+      if (button) button.textContent = visible
+        ? 'پنهان‌کردن بخش‌های منتور'
+        : 'نمایش بخش‌های منتور'
+    }
+
+    const initiallyVisible = sessionStorage.getItem(storageKey) === 'true'
+    setMentorVisibility(initiallyVisible)
+    button?.addEventListener('click', () => {
+      const visible = button.getAttribute('aria-pressed') !== 'true'
+      sessionStorage.setItem(storageKey, String(visible))
+      setMentorVisibility(visible)
+    })
+  </script>
+</WorkshopLayout>

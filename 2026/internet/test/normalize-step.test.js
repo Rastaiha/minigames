@@ -1,0 +1,62 @@
+import assert from 'node:assert/strict'
+import test from 'node:test'
+import {
+  splitAndNormalizeStep,
+  stringifyMdast,
+} from '../scripts/lib/normalize-step.js'
+
+const text = (value) => ({type: 'text', value})
+const heading = (value) => ({type: 'heading', depth: 1, children: [text(value)]})
+const paragraph = (...children) => ({type: 'paragraph', children})
+
+test('splits the three audience regions without retaining sentinel headings', () => {
+  const root = {
+    type: 'root',
+    children: [
+      heading('عنوان گام'),
+      heading('🧑‍🏫 پشت‌صحنهٔ منتور - قبل از شروع گام'),
+      paragraph(text('قبل')),
+      heading('🧑‍🎓 صفحه‌ای که دانش‌آموز می‌بینه'),
+      paragraph(text('دانش‌آموز')),
+      heading('🧑‍🏫 پشت‌صحنهٔ منتور - وقتی صداتون می‌کنن'),
+      paragraph(text('بعد')),
+    ],
+  }
+
+  const {sections} = splitAndNormalizeStep(root)
+  assert.equal(stringifyMdast(sections.mentorBefore), 'قبل\n')
+  assert.equal(stringifyMdast(sections.student), 'دانش‌آموز\n')
+  assert.equal(stringifyMdast(sections.mentorAfter), 'بعد\n')
+})
+
+test('turns a standalone /games link into a relative iframe', () => {
+  const root = {
+    type: 'root',
+    children: [
+      heading('🧑‍🏫 پشت‌صحنهٔ منتور - قبل از شروع گام'),
+      paragraph(text('قبل')),
+      heading('🧑‍🎓 صفحه‌ای که دانش‌آموز می‌بینه'),
+      paragraph({
+        type: 'link',
+        url: '/games/router/',
+        children: [text('بازی روتر')],
+      }),
+      heading('🧑‍🏫 پشت‌صحنهٔ منتور - وقتی صداتون می‌کنن'),
+      paragraph(text('بعد')),
+    ],
+  }
+
+  const {sections} = splitAndNormalizeStep(root)
+  const markdown = stringifyMdast(sections.student)
+  assert.match(markdown, /<iframe class="mini-game"/)
+  assert.match(markdown, /src="\.\.\/\.\.\/games\/router\/"/)
+  assert.match(markdown, /title="بازی روتر"/)
+})
+
+test('rejects documents missing an audience region', () => {
+  const root = {
+    type: 'root',
+    children: [heading('🧑‍🎓 صفحه‌ای که دانش‌آموز می‌بینه')],
+  }
+  assert.throws(() => splitAndNormalizeStep(root), /Missing mentorBefore section/)
+})
