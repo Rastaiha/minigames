@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import {spawn} from 'node:child_process'
 
 const rootDirectory = process.cwd()
 const stepsDirectory = path.join(rootDirectory, 'steps')
@@ -14,6 +15,90 @@ async function exists(filePath) {
     return true
   } catch {
     return false
+  }
+}
+
+function run(command, args, cwd) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args, {cwd, stdio: 'inherit'})
+    child.on('error', reject)
+    child.on('exit', (code, signal) => {
+      if (code === 0) return resolve()
+      const reason = signal ? `signal ${signal}` : `exit code ${code}`
+      reject(new Error(`${command} ${args.join(' ')} failed with ${reason}`))
+    })
+  })
+}
+
+async function fixRoutingGameScriptOrder(gameName, packageJson, gameDirectory) {
+  if (gameName !== 'routing' || packageJson.name !== 'network-routing-game') return
+
+  const outputPath = path.join(gameDirectory, 'dist', 'index.html')
+  const html = await fs.readFile(outputPath, 'utf8')
+  const headEnd = html.indexOf('</head>')
+  const bodyEnd = html.lastIndexOf('</body>')
+  if (headEnd === -1 || bodyEnd === -1) return
+
+  const head = html.slice(0, headEnd)
+  const scriptMatch = head.match(/<script>([\s\S]*?getElementById\(["']app["']\)[\s\S]*?)<\/script>/)
+  if (!scriptMatch) return
+
+  const withoutEarlyScript = html.replace(scriptMatch[0], '')
+  const fixedHtml = withoutEarlyScript.replace(
+    '</body>',
+    `  ${scriptMatch[0]}\n  </body>`,
+  )
+  await fs.writeFile(outputPath, fixedHtml)
+  console.log('Moved the routing game bundle after its DOM to preserve classic-script execution order.')
+}
+
+async function assertSubmodulesAvailable() {
+  const configPath = path.join(rootDirectory, '.gitmodules')
+  if (!(await exists(configPath))) return
+
+  const config = await fs.readFile(configPath, 'utf8')
+  const submodulePaths = [...config.matchAll(/^\s*path\s*=\s*(.+)$/gm)]
+    .map((match) => match[1].trim())
+
+  for (const submodulePath of submodulePaths) {
+    if (await exists(path.join(rootDirectory, submodulePath, '.git'))) continue
+    throw new Error(
+      `Submodule ${submodulePath} is not initialized. Run: git submodule update --init --recursive`,
+    )
+  }
+}
+
+async function buildGames() {
+  if (!(await exists(gamesDirectory))) return
+  const entries = await fs.readdir(gamesDirectory, {withFileTypes: true})
+
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue
+    const gameDirectory = path.join(gamesDirectory, entry.name)
+    const packagePath = path.join(gameDirectory, 'package.json')
+    if (!(await exists(packagePath))) continue
+
+    const packageJson = JSON.parse(await fs.readFile(packagePath, 'utf8'))
+    if (!packageJson.scripts?.build) continue
+
+    if (!(await exists(path.join(gameDirectory, 'package-lock.json')))) {
+      throw new Error(
+        `Game ${entry.name} has an npm build but no package-lock.json for npm ci`,
+      )
+    }
+
+    console.log(`Building game ${entry.name}...`)
+    const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm'
+    await run(npm, ['ci'], gameDirectory)
+    await run(npm, ['run', 'build'], gameDirectory)
+
+    if (!(await exists(path.join(gameDirectory, 'dist', 'index.html')))) {
+      throw new Error(
+        `Game ${entry.name} finished building without creating dist/index.html`,
+      )
+    }
+
+    await fixRoutingGameScriptOrder(entry.name, packageJson, gameDirectory)
   }
 }
 
@@ -79,6 +164,8 @@ async function referencedGamePaths() {
   return [...new Set(paths)]
 }
 
+await assertSubmodulesAvailable()
+await buildGames()
 await Promise.all([copyStepAssets(), copyGames()])
 
 for (const gamePath of await referencedGamePaths()) {

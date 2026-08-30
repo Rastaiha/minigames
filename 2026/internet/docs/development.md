@@ -156,6 +156,35 @@ games/router/dist/index.html
 games/router/index.html
 ```
 
+اگر پوشهٔ بازی `package.json` با scriptای به نام `build` داشته باشد، آماده‌ساز
+سایت پیش از کپی‌کردن خروجی به‌طور خودکار `npm ci` و سپس `npm run build` را داخل
+همان پوشه اجرا می‌کند. چنین بازی‌ای باید `package-lock.json` داشته باشد و خروجی
+نهایی را در `dist/index.html` بسازد. این قرارداد برای بازی‌های عادی و git
+submoduleها یکسان است؛ بازی‌های HTML ساده که `package.json` ندارند مستقیماً کپی
+می‌شوند.
+
+بازی routing از مخزن مستقل زیر به‌شکل submodule در `games/routing` قرار دارد:
+
+```text
+https://github.com/KianHsn/RastaNetwork.git
+```
+
+پس از clone عادی این مخزن، submoduleها را یک‌بار آماده کنید:
+
+```sh
+git submodule update --init --recursive
+```
+
+یا از ابتدا مخزن را با `git clone --recurse-submodules` دریافت کنید. هر دو
+workflow گیت‌هاب submoduleها را خودکار checkout می‌کنند. برای انتخاب نسخهٔ تازه‌تر
+بازی routing، pointer آن را به‌صورت معمول در همین مخزن update و commit کنید.
+
+build فعلی routing خروجی JavaScript را به‌شکل classic script در `<head>` می‌گذارد؛
+در نتیجه اگر بدون اصلاح اجرا شود، script پیش از ساخته‌شدن DOM شروع به کار می‌کند.
+آماده‌ساز سایت پس از هر build، فقط برای همین بازی bundle تولیدشده را به انتهای
+`<body>` منتقل می‌کند. این یک compatibility fix روی فایل موقت `dist/index.html`
+است و هیچ تغییری در source یا تاریخچهٔ submodule ایجاد نمی‌کند.
+
 در زمان `dev` یا `build`، خروجی بازی‌ها موقتاً به `site/public/games/` کپی می‌شود.
 این کپی در Git نگهداری نمی‌شود و هر بار از نو ساخته می‌شود.
 
