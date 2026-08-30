@@ -69,14 +69,37 @@ function escapeHtml(value) {
     .replaceAll('>', '&gt;')
 }
 
+function gamePathFromReference(reference) {
+  let url
+  try {
+    url = new URL(reference)
+  } catch {
+    return null
+  }
+
+  if (
+    !['http:', 'https:'].includes(url.protocol) ||
+    url.hostname !== 'games' ||
+    url.port ||
+    url.username ||
+    url.password
+  ) {
+    return null
+  }
+
+  const gamePath = url.pathname.replace(/^\/+|\/+$/g, '')
+  return gamePath || null
+}
+
 function transformGameLinks(root, warnings) {
   root.children = root.children.map((node) => {
     if (node.type !== 'paragraph') return node
     const link = gameLinkFromChildren(node.children)
-    if (!link?.url.startsWith('/games/')) return node
+    if (!link) return node
 
-    const gamePath = link.url.slice('/games/'.length)
-    if (!gamePath || gamePath.split('/').some((part) => part === '..')) {
+    const gamePath = gamePathFromReference(link.url)
+    if (!gamePath) return node
+    if (gamePath.split('/').some((part) => part === '..')) {
       throw new Error(`Unsafe or empty game path: ${link.url}`)
     }
 
@@ -92,7 +115,7 @@ function transformGameLinks(root, warnings) {
 
   const inlineGameLinks = []
   const inspect = (node) => {
-    if (node.type === 'link' && node.url.startsWith('/games/')) {
+    if (node.type === 'link' && gamePathFromReference(node.url)) {
       inlineGameLinks.push(node.url)
     }
     for (const child of node.children ?? []) inspect(child)
@@ -143,4 +166,19 @@ export function splitAndNormalizeStep(root) {
 
 export function stringifyMdast(root) {
   return `${serializer.stringify(root).trim()}\n`
+}
+
+export function studentTitleFromSection(studentSection) {
+  const titleHeading = studentSection.children.find(
+    (node) => node.type === 'heading' && node.depth === 2,
+  )
+  const title = titleHeading ? plainText(titleHeading).trim() : ''
+
+  if (!title) {
+    throw new Error(
+      'Student section must contain a level-two heading (##) to use as the step title',
+    )
+  }
+
+  return title
 }

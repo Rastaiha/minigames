@@ -45,7 +45,7 @@ test('converts headings, styled links, and tables to mdast', async () => {
               {
                 textRun: {
                   content: 'بازی\n',
-                  textStyle: {bold: true, link: {url: '/games/router/'}},
+                  textStyle: {bold: true, link: {url: 'http://games/router/'}},
                 },
               },
             ],

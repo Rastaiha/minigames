@@ -3,6 +3,7 @@ import test from 'node:test'
 import {
   splitAndNormalizeStep,
   stringifyMdast,
+  studentTitleFromSection,
 } from '../scripts/lib/normalize-step.js'
 
 const text = (value) => ({type: 'text', value})
@@ -29,7 +30,7 @@ test('splits the three audience regions without retaining sentinel headings', ()
   assert.equal(stringifyMdast(sections.mentorAfter), 'بعد\n')
 })
 
-test('turns a standalone /games link into a relative iframe', () => {
+test('turns a standalone http://games link into a relative iframe', () => {
   const root = {
     type: 'root',
     children: [
@@ -38,7 +39,7 @@ test('turns a standalone /games link into a relative iframe', () => {
       heading('🧑‍🎓 صفحه‌ای که دانش‌آموز می‌بینه'),
       paragraph({
         type: 'link',
-        url: '/games/router/',
+        url: 'http://games/router/',
         children: [text('بازی روتر')],
       }),
       heading('🧑‍🏫 پشت‌صحنهٔ منتور - وقتی صداتون می‌کنن'),
@@ -53,10 +54,59 @@ test('turns a standalone /games link into a relative iframe', () => {
   assert.match(markdown, /title="بازی روتر"/)
 })
 
+test('does not treat a similar public hostname as a game reference', () => {
+  const root = {
+    type: 'root',
+    children: [
+      heading('🧑‍🏫 پشت‌صحنهٔ منتور - قبل از شروع گام'),
+      paragraph(text('قبل')),
+      heading('🧑‍🎓 صفحه‌ای که دانش‌آموز می‌بینه'),
+      paragraph({
+        type: 'link',
+        url: 'https://games.example.com/router/',
+        children: [text('لینک عادی')],
+      }),
+      heading('🧑‍🏫 پشت‌صحنهٔ منتور - وقتی صداتون می‌کنن'),
+      paragraph(text('بعد')),
+    ],
+  }
+
+  const {sections} = splitAndNormalizeStep(root)
+  const markdown = stringifyMdast(sections.student)
+  assert.doesNotMatch(markdown, /<iframe/)
+  assert.match(markdown, /https:\/\/games\.example\.com\/router\//)
+})
+
 test('rejects documents missing an audience region', () => {
   const root = {
     type: 'root',
     children: [heading('🧑‍🎓 صفحه‌ای که دانش‌آموز می‌بینه')],
   }
   assert.throws(() => splitAndNormalizeStep(root), /Missing mentorBefore section/)
+})
+
+test('uses the first level-two heading in the student section as its title', () => {
+  const studentSection = {
+    type: 'root',
+    children: [
+      paragraph(text('مقدمه')),
+      {type: 'heading', depth: 3, children: [text('عنوان فرعی')]},
+      {type: 'heading', depth: 2, children: [text('عنوان اصلی گام')]},
+      {type: 'heading', depth: 2, children: [text('عنوان بعدی')]},
+    ],
+  }
+
+  assert.equal(studentTitleFromSection(studentSection), 'عنوان اصلی گام')
+})
+
+test('rejects a student section without a level-two title heading', () => {
+  const studentSection = {
+    type: 'root',
+    children: [{type: 'heading', depth: 3, children: [text('فقط عنوان فرعی')]}],
+  }
+
+  assert.throws(
+    () => studentTitleFromSection(studentSection),
+    /must contain a level-two heading/,
+  )
 })

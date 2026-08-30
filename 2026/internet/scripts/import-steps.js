@@ -11,7 +11,11 @@ import {
   DEFAULT_REFRESH_TOKEN_PATH,
   createGoogleRefreshClient,
 } from './lib/google-refresh-auth.js'
-import {splitAndNormalizeStep, stringifyMdast} from './lib/normalize-step.js'
+import {
+  splitAndNormalizeStep,
+  stringifyMdast,
+  studentTitleFromSection,
+} from './lib/normalize-step.js'
 import {loadStepConfig} from './lib/step-config.js'
 
 const args = parseArgs(process.argv.slice(2))
@@ -43,28 +47,28 @@ if (missingTabIds.length) {
 const unmappedSubtabs = allTabs.filter(
   ({tab, depth}) => depth > 0 && !config.names[tab.tabProperties.tabId],
 )
-if (unmappedSubtabs.length) {
-  const descriptions = unmappedSubtabs.map(
-    ({tab}) => `${tab.tabProperties.title} (${tab.tabProperties.tabId})`,
-  )
-  throw new Error(
-    `Every subtab must be mapped in ${configPath}. Missing:\n- ${descriptions.join('\n- ')}`,
+for (const {tab} of unmappedSubtabs) {
+  console.log(
+    `Skipping unmapped subtab: ${tab.tabProperties.title} (${tab.tabProperties.tabId})`,
   )
 }
 
 const stepTabs = allTabs.filter(({tab}) => config.names[tab.tabProperties.tabId])
 if (!stepTabs.length) throw new Error(`No mapped step tabs found in ${configPath}`)
 
+console.log(`Clearing generated steps from ${outputDirectory}...`)
+await fs.rm(outputDirectory, {recursive: true, force: true})
 await fs.mkdir(outputDirectory, {recursive: true})
+await fs.writeFile(path.join(outputDirectory, '.gitkeep'), '')
 const order = []
 
 for (const {tab} of stepTabs) {
-  const {tabId, title} = tab.tabProperties
+  const {tabId, title: tabTitle} = tab.tabProperties
   const stepName = config.names[tabId]
   const stepDirectory = path.join(outputDirectory, stepName)
   const assetsDirectory = path.join(stepDirectory, 'assets')
 
-  console.log(`Importing ${title} -> steps/${stepName}`)
+  console.log(`Importing ${tabTitle} -> steps/${stepName}`)
   await fs.rm(assetsDirectory, {recursive: true, force: true})
   await fs.mkdir(stepDirectory, {recursive: true})
 
@@ -74,6 +78,7 @@ for (const {tab} of stepTabs) {
     auth,
   })
   const {sections, warnings} = splitAndNormalizeStep(root)
+  const title = studentTitleFromSection(sections.student)
 
   await Promise.all([
     fs.writeFile(

@@ -23,5 +23,13 @@ const {data: document} = await docs.documents.get({
 
 for (const {tab, depth} of flattenTabs(document.tabs)) {
   const properties = tab.tabProperties
-  console.log(`${'  '.repeat(depth)}${properties.title}  (${properties.tabId})`)
+  const stepName = config.names[properties.tabId]
+  const status = stepName
+    ? ` -> steps/${stepName}`
+    : depth > 0
+      ? ' [omitted]'
+      : ''
+  console.log(
+    `${'  '.repeat(depth)}${properties.title}  (${properties.tabId})${status}`,
+  )
 }
