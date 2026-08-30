@@ -54,6 +54,70 @@ test('turns a standalone http://games link into a relative iframe', () => {
   assert.match(markdown, /title="بازی روتر"/)
 })
 
+test('splits an inline game link into its own iframe block', () => {
+  const root = {
+    type: 'root',
+    children: [
+      heading('🧑‍🏫 پشت‌صحنهٔ منتور - قبل از شروع گام'),
+      paragraph(text('قبل')),
+      heading('🧑‍🎓 صفحه‌ای که دانش‌آموز می‌بینه'),
+      paragraph(
+        text('متن قبل از بازی'),
+        {type: 'break'},
+        {
+          type: 'strong',
+          children: [{
+            type: 'link',
+            url: 'http://games/router/',
+            children: [text('بازی روتر')],
+          }],
+        },
+        {type: 'break'},
+        text('متن بعد از بازی'),
+      ),
+      heading('🧑‍🏫 پشت‌صحنهٔ منتور - وقتی صداتون می‌کنن'),
+      paragraph(text('بعد')),
+    ],
+  }
+
+  const {sections, warnings} = splitAndNormalizeStep(root)
+  assert.deepEqual(
+    sections.student.children.map((node) => node.type),
+    ['paragraph', 'html', 'paragraph'],
+  )
+  assert.equal(warnings.length, 0)
+
+  const markdown = stringifyMdast(sections.student)
+  assert.match(markdown, /متن قبل از بازی/)
+  assert.match(markdown, /<iframe class="mini-game"/)
+  assert.match(markdown, /متن بعد از بازی/)
+  assert.doesNotMatch(markdown, /http:\/\/games\/router/)
+})
+
+test('strips trailing horizontal rules from every audience section', () => {
+  const horizontalRule = () => ({type: 'thematicBreak'})
+  const root = {
+    type: 'root',
+    children: [
+      heading('🧑‍🏫 پشت‌صحنهٔ منتور - قبل از شروع گام'),
+      paragraph(text('قبل')),
+      horizontalRule(),
+      heading('🧑‍🎓 صفحه‌ای که دانش‌آموز می‌بینه'),
+      paragraph(text('دانش‌آموز')),
+      paragraph(text('---')),
+      heading('🧑‍🏫 پشت‌صحنهٔ منتور - وقتی صداتون می‌کنن'),
+      paragraph(text('بعد')),
+      horizontalRule(),
+      paragraph(text('---')),
+    ],
+  }
+
+  const {sections} = splitAndNormalizeStep(root)
+  assert.equal(stringifyMdast(sections.mentorBefore), 'قبل\n')
+  assert.equal(stringifyMdast(sections.student), 'دانش‌آموز\n')
+  assert.equal(stringifyMdast(sections.mentorAfter), 'بعد\n')
+})
+
 test('does not treat a similar public hostname as a game reference', () => {
   const root = {
     type: 'root',

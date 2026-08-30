@@ -44,23 +44,6 @@ function audienceForHeading(node) {
   return null
 }
 
-function gameLinkFromChildren(children) {
-  const meaningful = children.filter(
-    (child) => child.type !== 'text' || child.value.trim() !== '',
-  )
-  if (meaningful.length !== 1) return null
-
-  const only = meaningful[0]
-  if (only.type === 'link') return only
-  if (
-    ['strong', 'emphasis', 'delete'].includes(only.type) &&
-    Array.isArray(only.children)
-  ) {
-    return gameLinkFromChildren(only.children)
-  }
-  return null
-}
-
 function escapeHtml(value) {
   return value
     .replaceAll('&', '&amp;')
@@ -91,37 +74,99 @@ function gamePathFromReference(reference) {
   return gamePath || null
 }
 
-function transformGameLinks(root, warnings) {
-  root.children = root.children.map((node) => {
-    if (node.type !== 'paragraph') return node
-    const link = gameLinkFromChildren(node.children)
-    if (!link) return node
+function gameIframe(link, gamePath) {
+  if (gamePath.split('/').some((part) => part === '..')) {
+    throw new Error(`Unsafe or empty game path: ${link.url}`)
+  }
 
-    const gamePath = gamePathFromReference(link.url)
-    if (!gamePath) return node
-    if (gamePath.split('/').some((part) => part === '..')) {
-      throw new Error(`Unsafe or empty game path: ${link.url}`)
+  const label = plainText(link).trim() || gamePath
+  return {
+    type: 'html',
+    value:
+      `<iframe class="mini-game" src="../../games/${escapeHtml(gamePath)}/index.html" ` +
+      `title="${escapeHtml(label)}" loading="lazy" allowfullscreen></iframe>`,
+  }
+}
+
+function mergeInlineSegments(segments) {
+  const merged = []
+  for (const segment of segments) {
+    const previous = merged.at(-1)
+    if (segment.kind === 'inline' && previous?.kind === 'inline') {
+      previous.nodes.push(...segment.nodes)
+    } else {
+      merged.push(segment)
     }
+  }
+  return merged
+}
 
-    const label = plainText(link).trim() || gamePath
+function splitInlineNode(node) {
+  if (node.type === 'link') {
+    const gamePath = gamePathFromReference(node.url)
+    if (gamePath) return [{kind: 'game', node: gameIframe(node, gamePath)}]
+  }
+
+  if (!Array.isArray(node.children)) {
+    return [{kind: 'inline', nodes: [node]}]
+  }
+
+  const childSegments = mergeInlineSegments(node.children.flatMap(splitInlineNode))
+  if (!childSegments.some((segment) => segment.kind === 'game')) {
+    return [{kind: 'inline', nodes: [node]}]
+  }
+
+  return childSegments.map((segment) => {
+    if (segment.kind === 'game') return segment
     return {
-      type: 'html',
-      value:
-        `<iframe class="mini-game" src="../../games/${escapeHtml(gamePath)}/index.html" ` +
-        `title="${escapeHtml(label)}" loading="lazy" allowfullscreen></iframe>`,
+      kind: 'inline',
+      nodes: [{...node, children: segment.nodes}],
     }
   })
+}
 
-  const inlineGameLinks = []
-  const inspect = (node) => {
-    if (node.type === 'link' && gamePathFromReference(node.url)) {
-      inlineGameLinks.push(node.url)
+function hasVisibleInlineContent(nodes) {
+  return nodes.some((node) => node.type === 'image' || plainText(node).trim())
+}
+
+function splitParagraphAtGameLinks(paragraph) {
+  const segments = mergeInlineSegments(paragraph.children.flatMap(splitInlineNode))
+  if (!segments.some((segment) => segment.kind === 'game')) return [paragraph]
+
+  return segments.flatMap((segment) => {
+    if (segment.kind === 'game') return [segment.node]
+    if (!hasVisibleInlineContent(segment.nodes)) return []
+    return [{...paragraph, children: segment.nodes}]
+  })
+}
+
+function transformGameLinks(parent) {
+  const transformed = []
+  for (const node of parent.children) {
+    if (node.type === 'paragraph') {
+      transformed.push(...splitParagraphAtGameLinks(node))
+      continue
     }
-    for (const child of node.children ?? []) inspect(child)
+
+    if (node.type === 'blockquote' || node.type === 'listItem') {
+      transformGameLinks(node)
+    } else if (node.type === 'list') {
+      for (const item of node.children) transformGameLinks(item)
+    }
+    transformed.push(node)
   }
-  inspect(root)
-  for (const url of inlineGameLinks) {
-    warnings.push(`Game link must be in its own paragraph to become an iframe: ${url}`)
+  parent.children = transformed
+}
+
+function isHorizontalRule(node) {
+  if (node?.type === 'thematicBreak') return true
+  if (node?.type !== 'paragraph') return false
+  return /^-{3,}$/.test(plainText(node).replace(/\s/g, ''))
+}
+
+function stripTrailingHorizontalRules(root) {
+  while (isHorizontalRule(root.children.at(-1))) {
+    root.children.pop()
   }
 }
 
@@ -148,7 +193,8 @@ export function splitAndNormalizeStep(root) {
 
   for (const name of Object.keys(sections)) {
     if (!found.has(name)) throw new Error(`Missing ${name} section`)
-    transformGameLinks(sections[name], warnings)
+    transformGameLinks(sections[name])
+    stripTrailingHorizontalRules(sections[name])
   }
 
   const guideCount = Object.values(sections).reduce((count, section) => {
