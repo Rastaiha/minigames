@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>packet switching</title>
+<style>
+  :root{
+    --bg:#0B0F14;
+    --panel:#111820;
+    --panel-2:#0E141C;
+    --line:#243040;
+    --line-soft:#1A232E;
+    --text:#E7EDF3;
+    --muted:#7C8B9C;
+    --small:#4FD1C5;
+    --big:#EF5B5B;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;}
+  .wrap{max-width:900px;margin:0 auto;padding:22px 16px 34px;}
+  .panel{background:var(--panel);border:1px solid var(--line-soft);border-radius:14px;padding:14px;}
+  canvas{width:100%;height:auto;display:block;border-radius:8px;background:var(--panel-2);}
+  .controls{display:flex;align-items:center;gap:8px;margin-top:14px;flex-wrap:wrap;}
+  button{
+    font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;
+    background:var(--panel-2);color:var(--text);border:1px solid var(--line);
+    padding:9px 15px;border-radius:9px;cursor:pointer;min-width:44px;
+  }
+  button:hover{border-color:var(--small);}
+  button:active{transform:translateY(1px);}
+  button.primary{background:var(--small);color:#06201D;border-color:var(--small);}
+  button:disabled{opacity:.3;cursor:not-allowed;}
+  .spacer{flex:1;}
+  .stagebadges{display:flex;gap:6px;}
+  .badge{width:24px;height:24px;border-radius:50%;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted);}
+  .badge.active{border-color:var(--small);color:var(--small);box-shadow:0 0 8px rgba(79,209,197,.5);}
+  .timer{font-size:13px;color:var(--muted);}
+  .timer b{color:var(--text);}
+  .progress-track{height:5px;border-radius:3px;background:var(--line-soft);margin-top:12px;overflow:hidden;}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--small),#7fe3d9);width:0%;}
+  #btnStage2{display:none;margin-top:10px;width:100%;}
+  #btnBackStage{display:none;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="panel">
+    <canvas id="cv" width="900" height="440"></canvas>
+    <div class="progress-track"><div class="progress-fill" id="fill"></div></div>
+    <div class="controls">
+      <div class="stagebadges">
+        <div class="badge" id="pill1">1</div>
+        <div class="badge" id="pill2">2</div>
+      </div>
+      <div class="spacer"></div>
+      <div class="timer"><b id="tOut">0.0</b>/<span id="durOut">35.0</span></div>
+    </div>
+    <div class="controls">
+      <button id="btnStart" class="primary">▶</button>
+      <button id="btnPause" disabled>⏸</button>
+      <button id="btnRestart" disabled>⟲</button>
+      <button id="btnBack" disabled>◀10</button>
+      <button id="btnFwd" disabled>10▶</button>
+      <button id="btnBackStage">◀1</button>
+    </div>
+    <button id="btnStage2" class="primary">▶ 2</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  const cv = document.getElementById('cv');
+  const ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+
+  /* ---------------------------------------------------------
+     TOPOLOGY (unchanged): 2 sources, 3 switches, 2 destinations
+  --------------------------------------------------------- */
+  const nodes = {
+    S1:  {x:90,  y:110, type:'src', label:'S1'},
+    S2:  {x:90,  y:330, type:'src', label:'S2'},
+    SW1: {x:430, y:70,  type:'sw',  label:'SW1'},
+    SW2: {x:430, y:220, type:'sw',  label:'SW2'},
+    SW3: {x:430, y:370, type:'sw',  label:'SW3'},
+    D1: {x:800, y:150, type:'dst', label:'D1'},
+    D2: {x:800, y:290, type:'dst', label:'D2'},
+  };
+  const adj = {
+    S1:['SW1','SW2'],
+    S2:['SW2','SW3'],
+    SW1:['D1','D2'],
+    SW2:['D1','D2'],
+    SW3:['D1','D2'],
+  };
+  const edgeList = [];
+  Object.keys(adj).forEach(from => adj[from].forEach(to => edgeList.push([from,to])));
+
+  // precompute pixel length of every edge, used to convert a fixed pixel
+  // following-gap into an edge-relative fraction (so packets keep a
+  // consistent visual gap no matter which link they are on)
+  const edgeLenPx = {};
+  edgeList.forEach(([a,b])=>{
+    const A=nodes[a], B=nodes[b];
+    edgeLenPx[a+'>'+b] = Math.hypot(B.x-A.x, B.y-A.y);
+  });
+  const MIN_GAP_PX = 24;
+
+  const STAGE1_DUR = 35;
+  const STAGE2_DUR = 30;
+  let DUR = STAGE1_DUR;
+  const COLOR_SMALL = '#4FD1C5';
+  const COLOR_BIG = '#EF5B5B';
+
+  /* ---------------------------------------------------------
+     PACKET DEFINITIONS (unchanged storylines)
+  --------------------------------------------------------- */
+  function buildDefsStage1(){
+    return [
+      {spawnTime:0.0,  size:1.2, path:['S1','SW1','D2']},
+      {spawnTime:0.0,  size:1.2, path:['S2','SW3','D1']},
+
+      {spawnTime:4.0,  size:4.5, path:['S1','SW2','D1']},
+      {spawnTime:5.0,  size:1.2, path:['S1','SW2','D1']},
+      {spawnTime:6.0,  size:1.2, path:['S2','SW3','D2']},
+      {spawnTime:10.0, size:1.2, path:['S2','SW3','D2']},
+
+      {spawnTime:13.0, size:4.5, path:['S2','SW3','D1']},
+      {spawnTime:14.5, size:1.2, path:['S2','SW3','D1']},
+      {spawnTime:15.0, size:1.2, path:['S1','SW1','D2']},
+      {spawnTime:19.0, size:1.2, path:['S1','SW1','D2']},
+
+      {spawnTime:24.0, size:2.8, path:['S1','SW1','D2']},
+      {spawnTime:25.0, size:1.2, path:['S1','SW1','D2']},
+    ];
+  }
+  function buildDefsStage2(){
+    const cyclePaths = [
+      ['S1','SW1','D1'],
+      ['S2','SW3','D2'],
+      ['S1','SW2','D2'],
+      ['S2','SW2','D1'],
+    ];
+    const PAIR_GAP = 0.7;
+    const GROUP_GAP = 3.7;
+    const defs = [];
+    let t = 0.3, i = 0;
+    while(t < STAGE2_DUR - 0.4){
+      const path = cyclePaths[i % cyclePaths.length];
+      const isPair = (i % 2 === 0);
+      defs.push({spawnTime:t, size:1.2, path});
+      if(isPair && t + PAIR_GAP < STAGE2_DUR - 0.4){
+        defs.push({spawnTime:t + PAIR_GAP, size:1.2, path});
+      }
+      i++; t += GROUP_GAP;
+    }
+    return defs;
+  }
+
+  function genPackets(stage){
+    const defs = stage===1 ? buildDefsStage1() : buildDefsStage2();
+    const baseTime = stage===1 ? 0.9 : 0.6;
+    const factor   = stage===1 ? 0.75 : 0.4;
+    return defs.map((def,i)=>({
+      id:i,
+      size:def.size,
+      color: def.size > 2.5 ? COLOR_BIG : COLOR_SMALL,
+      path:def.path,
+      spawnTime:def.spawnTime,
+      duration: baseTime + def.size*factor,   // seconds to cross ONE edge, unobstructed
+      edgeIndex:0,
+      pos:0,                                   // progress 0..1 along current edge
+      state:'pending',                         // pending | active | done
+      blocked:false,                           // true this tick if being held back by a slower packet ahead
+      doneAt:0,
+    }));
+  }
+
+  /* ---------------------------------------------------------
+     LIVE, POSITION-BASED SIMULATION (car-following / no-overtake)
+     Every packet moves continuously along its own edge at its own
+     speed; it may never pass the packet directly ahead of it on the
+     same link, so a fast packet catching up to a slow one is forced
+     to slow down and tail it instead of teleporting/waiting at the node.
+  --------------------------------------------------------- */
+  const FIXED_DT = 1/60;
+  let stepCount = 0;
+  let acc = 0;
+  let running = false;
+  let lastFrameTs = null;
+  let packets = [];
+  let stage = 0;
+
+  function simTime(){ return Math.min(DUR, stepCount*FIXED_DT); }
+
+  function advance(dt){
+    const t = stepCount*FIXED_DT + dt;
+
+    for(const p of packets){
+      if(p.state==='pending' && p.spawnTime<=t){
+        p.state='active'; p.edgeIndex=0; p.pos=0; p.blocked=false;
+      }
+    }
+
+    // group active packets by the edge they are currently on
+    const groups={};
+    for(const p of packets){
+      if(p.state!=='active') continue;
+      const key=p.path[p.edgeIndex]+'>'+p.path[p.edgeIndex+1];
+      (groups[key]=groups[key]||[]).push(p);
+    }
+
+    Object.entries(groups).forEach(([key,group])=>{
+      group.sort((a,b)=>b.pos-a.pos); // front (largest pos) first
+      const gapFrac = MIN_GAP_PX/(edgeLenPx[key]||200);
+      let leaderPos = null;
+      for(const p of group){
+        const speed = 1/p.duration;
+        const desired = p.pos + speed*dt;
+        let allowed;
+        if(leaderPos===null){
+          allowed = desired;
+          p.blocked = false;
+        } else {
+          const maxAllowed = leaderPos - gapFrac;
+          allowed = Math.min(desired, maxAllowed);
+          p.blocked = allowed < desired - 1e-9;
+        }
+        if(allowed < p.pos) allowed = p.pos; // never move backward
+        p.pos = allowed;
+        leaderPos = p.pos;
+      }
+    });
+
+    // handle edge -> edge transitions
+    for(const p of packets){
+      if(p.state!=='active') continue;
+      if(p.pos>=1){
+        p.edgeIndex++;
+        if(p.edgeIndex>=p.path.length-1){
+          p.state='done'; p.pos=1; p.doneAt=t;
+        } else {
+          p.pos=0; p.blocked=false;
+        }
+      }
+    }
+
+    stepCount++;
+  }
+
+  /* ---------------------------------------------------------
+     STATE / UI WIRING
+  --------------------------------------------------------- */
+  const btnStart = document.getElementById('btnStart');
+  const btnPause = document.getElementById('btnPause');
+  const btnRestart = document.getElementById('btnRestart');
+  const btnBack = document.getElementById('btnBack');
+  const btnFwd = document.getElementById('btnFwd');
+  const btnStage2 = document.getElementById('btnStage2');
+  const btnBackStage = document.getElementById('btnBackStage');
+  const tOut = document.getElementById('tOut');
+  const fill = document.getElementById('fill');
+  const pill1 = document.getElementById('pill1');
+  const pill2 = document.getElementById('pill2');
+
+  function setStage(n){
+    stage = n;
+    DUR = n===1 ? STAGE1_DUR : STAGE2_DUR;
+    document.getElementById('durOut').textContent = DUR.toFixed(1);
+    packets = genPackets(n);
+    stepCount = 0; acc = 0;
+    running = true;
+    lastFrameTs = null;
+    pill1.classList.toggle('active', n===1);
+    pill2.classList.toggle('active', n===2);
+    btnStage2.style.display = 'none';
+    btnBackStage.style.display = n===2 ? 'inline-block' : 'none';
+    btnPause.disabled = false;
+    btnPause.textContent = '⏸';
+    btnRestart.disabled = false;
+    btnBack.disabled = false;
+    btnFwd.disabled = false;
+    btnStart.disabled = true;
+    requestAnimationFrame(loop);
+  }
+
+  btnStart.addEventListener('click', ()=> setStage(1));
+  btnStage2.addEventListener('click', ()=> setStage(2));
+  btnBackStage.addEventListener('click', ()=> setStage(1));
+
+  btnPause.addEventListener('click', ()=>{
+    running = !running;
+    btnPause.textContent = running ? '⏸' : '▶';
+    lastFrameTs = null;
+    if(running) requestAnimationFrame(loop);
+    else draw();
+  });
+
+  btnRestart.addEventListener('click', ()=>{
+    packets = genPackets(stage);
+    stepCount = 0; acc = 0;
+    running = true;
+    btnPause.textContent = '⏸';
+    lastFrameTs = null;
+    if(stage===1) btnStage2.style.display = 'none';
+    requestAnimationFrame(loop);
+  });
+
+  btnBack.addEventListener('click', ()=> seek(-10));
+  btnFwd.addEventListener('click', ()=> seek(10));
+
+  function seek(deltaSeconds){
+    const target = Math.max(0, Math.min(DUR, simTime()+deltaSeconds));
+    const targetSteps = Math.round(target/FIXED_DT);
+    const wasRunning = running;
+    running = false;
+    packets = packets.map(p=>Object.assign({}, p, {state:'pending', pos:0, edgeIndex:0, blocked:false, doneAt:0}));
+    stepCount = 0; acc = 0;
+    for(let i=0;i<targetSteps;i++) advance(FIXED_DT);
+    if(stepCount*FIXED_DT >= DUR-1e-6){
+      onStageEnd();
+    } else {
+      running = wasRunning;
+      lastFrameTs = null;
+      if(running) requestAnimationFrame(loop);
+    }
+    draw(); updateHUD();
+  }
+
+  function onStageEnd(){
+    running = false;
+    if(stage===1){
+      btnStage2.style.display = 'block';
+    } else {
+      pill2.classList.remove('active');
+    }
+  }
+
+  function loop(ts){
+    if(!running) return;
+    if(lastFrameTs===null) lastFrameTs = ts;
+    let delta = (ts-lastFrameTs)/1000;
+    lastFrameTs = ts;
+    if(delta>0.25) delta=0.25;
+    acc += delta;
+    let steps=0;
+    while(acc>=FIXED_DT && stepCount*FIXED_DT<DUR-1e-6 && steps<12){
+      advance(FIXED_DT);
+      acc -= FIXED_DT;
+      steps++;
+    }
+    if(stepCount*FIXED_DT>=DUR-1e-6){
+      onStageEnd();
+      draw();
+      updateHUD();
+      return;
+    }
+    draw();
+    updateHUD();
+    requestAnimationFrame(loop);
+  }
+
+  function updateHUD(){
+    tOut.textContent = simTime().toFixed(1);
+    fill.style.width = (simTime()/DUR*100)+'%';
+  }
+
+  /* ---------------------------------------------------------
+     RENDERING
+  --------------------------------------------------------- */
+  function lerp(a,b,f){ return a+(b-a)*f; }
+
+  function drawEdgeSegment(A,B,fracStart,fracEnd,color){
+    if(fracEnd<=fracStart+1e-6) return;
+    const x1=lerp(A.x,B.x,fracStart), y1=lerp(A.y,B.y,fracStart);
+    const x2=lerp(A.x,B.x,fracEnd),   y2=lerp(A.y,B.y,fracEnd);
+    ctx.beginPath();
+    ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 5;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 12;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+
+  function drawPacket(x,y,color,size){
+    const r = 5 + size*1.6;
+    ctx.beginPath();
+    ctx.arc(x,y,r,0,Math.PI*2);
+    ctx.fillStyle = color;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 10;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+
+  function drawSwitch(n, id, activeLinkColor){
+    const w=58,h=36,rx=9;
+    const x=n.x-w/2, y=n.y-h/2;
+    ctx.beginPath();
+    ctx.moveTo(x+rx,y);
+    ctx.arcTo(x+w,y,x+w,y+h,rx);
+    ctx.arcTo(x+w,y+h,x,y+h,rx);
+    ctx.arcTo(x,y+h,x,y,rx);
+    ctx.arcTo(x,y,x+w,y,rx);
+    ctx.closePath();
+
+    let glowing = false;
+    Object.keys(activeLinkColor).forEach(k=>{ if(k.startsWith(id+'>')) glowing = true; });
+
+    ctx.fillStyle = '#101820';
+    ctx.fill();
+    ctx.lineWidth = glowing ? 2.6 : 1.8;
+    ctx.strokeStyle = glowing ? '#4FD1C5' : '#3A4a5c';
+    if(glowing){ ctx.shadowColor='#4FD1C5'; ctx.shadowBlur=12; }
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    (adj[id]||[]).forEach(to=>{
+      const B = nodes[to];
+      const ang = Math.atan2(B.y-n.y, B.x-n.x);
+      const px1 = n.x + Math.cos(ang)*(w/2), py1 = n.y + Math.sin(ang)*(h/2+2);
+      const px2 = n.x + Math.cos(ang)*(w/2+11), py2 = n.y + Math.sin(ang)*(h/2+14);
+      const key = id+'>'+to;
+      const color = activeLinkColor[key];
+      ctx.beginPath();
+      ctx.moveTo(px1,py1);
+      ctx.lineTo(px2,py2);
+      ctx.strokeStyle = color || '#3A4a5c';
+      ctx.lineWidth = color ? 4 : 1.6;
+      ctx.stroke();
+    });
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    const t = simTime();
+
+    // group currently-active packets per edge, front (largest pos) first
+    const groups={};
+    for(const p of packets){
+      if(p.state!=='active') continue;
+      const key=p.path[p.edgeIndex]+'>'+p.path[p.edgeIndex+1];
+      (groups[key]=groups[key]||[]).push(p);
+    }
+    Object.values(groups).forEach(g=>g.sort((a,b)=>b.pos-a.pos));
+
+    // base wires
+    edgeList.forEach(([a,b])=>{
+      const A=nodes[a], B=nodes[b];
+      ctx.beginPath();
+      ctx.moveTo(A.x,A.y);
+      ctx.lineTo(B.x,B.y);
+      ctx.strokeStyle = '#243040';
+      ctx.lineWidth = 2;
+      ctx.shadowBlur = 0;
+      ctx.stroke();
+    });
+
+    // colored occupied segments:
+    // - the front-most packet's own trailing segment is drawn in its own
+    //   colour (it is moving freely at its natural speed on this link)
+    // - any packet behind it that is currently being held back (blocked)
+    //   has its trailing segment drawn in the "big/slow" red, showing the
+    //   congestion; if it hasn't caught up yet it still shows its own colour
+    const activeLinkColor = {};
+    Object.entries(groups).forEach(([key,group])=>{
+      const [a,b]=key.split('>');
+      const A=nodes[a], B=nodes[b];
+      activeLinkColor[key]=group[0].color;
+      for(let i=0;i<group.length;i++){
+        const p=group[i];
+        const segStart = (i+1<group.length) ? group[i+1].pos : 0;
+        const segEnd = p.pos;
+        const color = (i===0) ? p.color : (p.blocked ? COLOR_BIG : p.color);
+        drawEdgeSegment(A,B,segStart,segEnd,color);
+      }
+    });
+
+    // nodes
+    Object.entries(nodes).forEach(([id,n])=>{
+      if(n.type==='sw') drawSwitch(n, id, activeLinkColor);
+      else {
+        ctx.beginPath();
+        ctx.arc(n.x,n.y,22,0,Math.PI*2);
+        ctx.fillStyle = '#1B2836';
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = n.type==='src' ? '#7C8B9C' : '#F2B84B';
+        ctx.stroke();
+      }
+      ctx.fillStyle = '#E7EDF3';
+      ctx.font = "700 13px 'JetBrains Mono', monospace";
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(n.label, n.x, n.y);
+    });
+
+    // packet icons
+    packets.forEach(p=>{
+      if(p.state==='active'){
+        const A = nodes[p.path[p.edgeIndex]], B = nodes[p.path[p.edgeIndex+1]];
+        drawPacket(lerp(A.x,B.x,p.pos), lerp(A.y,B.y,p.pos), p.color, p.size);
+      } else if(p.state==='done' && (t-p.doneAt) < 0.35){
+        const n = nodes[p.path[p.path.length-1]];
+        ctx.globalAlpha = 0.5;
+        drawPacket(n.x, n.y, p.color, p.size);
+        ctx.globalAlpha = 1;
+      }
+    });
+  }
+
+  draw();
+  updateHUD();
+})();
+</script>
+</body>
+</html>

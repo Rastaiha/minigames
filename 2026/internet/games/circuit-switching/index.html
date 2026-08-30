@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Circuit Switching Minigame</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #f8f9fa;
+            color: #333;
+            font-family: Tahoma, Arial, sans-serif;
+            overflow: hidden;
+            position: fixed;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        #game-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        .btn {
+            pointer-events: auto;
+            background: #0056b3;
+            color: white;
+            border: 2px solid #004085;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: clamp(14px, 2vw, 16px);
+            font-weight: bold;
+            transition: 0.2s;
+            z-index: 100;
+            touch-action: manipulation;
+        }
+
+        .btn:hover { background: #004085; }
+        .btn:active { transform: scale(0.95); }
+        .btn:disabled { background: #6c757d; border-color: #5a6268; cursor: not-allowed; }
+
+        #controls {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            pointer-events: auto;
+            width: 90%;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        #top-center {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+            width: 90%;
+        }
+
+        #top-left {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 50vh;
+            overflow-y: auto;
+            pointer-events: auto;
+            scrollbar-width: none;
+        }
+        #top-left::-webkit-scrollbar { display: none; }
+
+        .req-card {
+            background: #ffffff;
+            border: 2px solid #17a2b8;
+            padding: clamp(8px, 1.5vw, 15px);
+            border-radius: 10px;
+            text-align: center;
+            pointer-events: auto;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            font-size: clamp(12px, 1.5vw, 14px);
+            direction: ltr;
+            color: #333;
+        }
+
+        .req-card.active {
+            border-color: #0056b3;
+            box-shadow: 0 0 10px rgba(0, 86, 179, 0.5);
+        }
+
+        .req-card.completed {
+            border-color: #dc3545;
+            box-shadow: 0 0 10px rgba(220, 53, 69, 0.5);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            min-width: 140px;
+        }
+
+        #modal {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: #ffffff;
+            border: 3px solid #0056b3;
+            padding: clamp(20px, 4vw, 30px);
+            border-radius: 15px;
+            text-align: center;
+            pointer-events: auto;
+            transition: 0.3s transform ease-out;
+            box-shadow: 0 0 30px rgba(0,0,0,0.2);
+            z-index: 200;
+            font-size: clamp(16px, 3vw, 20px);
+            direction: ltr;
+        }
+
+        #modal.show { transform: translate(-50%, -50%) scale(1); }
+
+        svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .edge { stroke: #666; stroke-width: clamp(2px, 0.8vw, 4px); transition: 0.3s; stroke-linecap: round; }
+        .edge.occupied { stroke: #dc3545; stroke-width: clamp(5px, 1.5vw, 8px); }
+        .edge.drawing { stroke: #0056b3; stroke-width: clamp(4px, 1.2vw, 6px); stroke-dasharray: 10; animation: dash 1s linear infinite; }
+        
+        @keyframes dash { to { stroke-dashoffset: -20; } }
+
+        #nodes-container {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .node {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: clamp(10px, 1.5vw, 13px);
+            cursor: pointer;
+            pointer-events: auto;
+            transition: 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            direction: ltr;
+            touch-action: manipulation;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .node.terminal {
+            width: clamp(70px, 12vw, 100px);
+            height: clamp(35px, 6vw, 50px);
+            background: #fff3cd;
+            border: 2px solid #333;
+            border-radius: 8px;
+            color: #000;
+        }
+
+        .node.switch {
+            width: clamp(50px, 8vw, 70px);
+            height: clamp(50px, 8vw, 70px);
+            background: #ffe4c4;
+            border: 5px double #333;
+            border-radius: 50%;
+            color: #000;
+        }
+
+        .node:hover { transform: translate(-50%, -50%) scale(1.1); }
+        .node.selected { border-color: #0056b3; box-shadow: 0 0 15px rgba(0, 86, 179, 0.8); }
+        .node.terminal.selected { background: #cce5ff; }
+
+        @media (max-width: 768px) {
+            #top-left { top: 80px; left: 10px; }
+            #controls { bottom: max(35px, env(safe-area-inset-bottom) + 20px); gap: 10px; }
+            .btn { padding: 8px 12px; font-size: 13px; }
+            .node { font-size: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <svg id="links"></svg>
+    <div id="nodes-container"></div>
+
+    <div id="ui-layer">
+        <div id="top-left"></div>
+        <div id="top-center"></div>
+
+        <div id="modal">
+            <div id="modal-text"></div>
+        </div>
+
+        <div id="controls">
+            <button class="btn" id="btn-start">شروع</button>
+            <button class="btn" id="btn-undo" disabled>بازگشت</button>
+            <button class="btn" id="btn-restart">شروع مجدد</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const Senders = [
+        { id: 'UT1', type: 'terminal', x: 15, y: 25, label: 'User Terminal 1' },
+        { id: 'UT2', type: 'terminal', x: 15, y: 50, label: 'User Terminal 2' },
+        { id: 'UT3', type: 'terminal', x: 15, y: 75, label: 'User Terminal 3' }
+    ];
+    const Switches = [
+        { id: 'SwA', type: 'switch', x: 38, y: 35, label: 'Switch A' },
+        { id: 'SwB', type: 'switch', x: 38, y: 65, label: 'Switch B' },
+        { id: 'SwC', type: 'switch', x: 62, y: 35, label: 'Switch C' },
+        { id: 'SwD', type: 'switch', x: 62, y: 65, label: 'Switch D' }
+    ];
+    const Receivers = [
+        { id: 'UT4', type: 'terminal', x: 85, y: 25, label: 'User Terminal 4' },
+        { id: 'UT5', type: 'terminal', x: 85, y: 50, label: 'User Terminal 5' },
+        { id: 'UT6', type: 'terminal', x: 85, y: 75, label: 'User Terminal 6' }
+    ];
+
+    const AllNodes = [...Senders, ...Switches, ...Receivers];
+    
+    const Connections = [
+        ['UT1','SwA'], ['UT2','SwA'], ['UT2','SwB'], ['UT3','SwB'],
+        ['SwA','SwC'], ['SwA','SwD'], ['SwB','SwC'], ['SwB','SwD'],
+        ['SwC','UT4'], ['SwC','UT5'], ['SwD','UT5'], ['SwD','UT6']
+    ];
+
+    let edges = [];
+    let state = {
+        playing: false,
+        activeRequest: null,
+        currentPath: [],
+        requestCount: 0,
+        maxRequests: 15,
+        usedInitialReceivers: [] 
+    };
+
+    const DOM = {
+        nodes: document.getElementById('nodes-container'),
+        links: document.getElementById('links'),
+        modal: document.getElementById('modal'),
+        modalText: document.getElementById('modal-text'),
+        topCenter: document.getElementById('top-center'),
+        topLeft: document.getElementById('top-left'),
+        btnStart: document.getElementById('btn-start'),
+        btnUndo: document.getElementById('btn-undo'),
+        btnRestart: document.getElementById('btn-restart')
+    };
+
+    function initGraph() {
+        DOM.nodes.innerHTML = '';
+        DOM.links.innerHTML = '';
+        edges = [];
+
+        Connections.forEach(pair => {
+            const u = AllNodes.find(n => n.id === pair[0]);
+            const v = AllNodes.find(n => n.id === pair[1]);
+            
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('class', 'edge');
+            DOM.links.appendChild(line);
+            
+            edges.push({ u: u.id, v: v.id, dom: line, occupiedBy: null });
+        });
+
+        AllNodes.forEach(n => {
+            const el = document.createElement('div');
+            el.className = `node ${n.type}`;
+            el.id = n.id;
+            el.style.left = `${n.x}%`;
+            el.style.top = `${n.y}%`;
+            el.innerHTML = `<span>${n.label.replace(' Terminal', '<br>Terminal').replace('Switch ', 'Sw ')}</span>`;
+            el.onclick = () => handleNodeClick(n);
+            DOM.nodes.appendChild(el);
+        });
+        
+        setTimeout(updateLines, 50);
+        window.addEventListener('resize', updateLines);
+    }
+
+    function updateLines() {
+        edges.forEach(edge => {
+            const uEl = document.getElementById(edge.u);
+            const vEl = document.getElementById(edge.v);
+            if (!uEl || !vEl) return;
+            
+            const uRect = uEl.getBoundingClientRect();
+            const vRect = vEl.getBoundingClientRect();
+            
+            edge.dom.setAttribute('x1', uRect.left + uRect.width/2);
+            edge.dom.setAttribute('y1', uRect.top + uRect.height/2);
+            edge.dom.setAttribute('x2', vRect.left + vRect.width/2);
+            edge.dom.setAttribute('y2', vRect.top + vRect.height/2);
+        });
+    }
+
+    function startGame() {
+        if (state.playing) return;
+        state.playing = true;
+        DOM.btnStart.disabled = true;
+        spawnNextRequest();
+    }
+
+    function spawnNextRequest() {
+        if (state.requestCount >= state.maxRequests) return;
+        
+        const s = Senders[Math.floor(Math.random() * Senders.length)].id;
+        let r;
+
+        if (state.requestCount < Receivers.length) {
+            let availableReceivers = Receivers.filter(rec => !state.usedInitialReceivers.includes(rec.id));
+            if (availableReceivers.length > 0) {
+                r = availableReceivers[Math.floor(Math.random() * availableReceivers.length)].id;
+                state.usedInitialReceivers.push(r);
+            } else {
+                r = Receivers[Math.floor(Math.random() * Receivers.length)].id;
+            }
+        } else {
+            r = Receivers[Math.floor(Math.random() * Receivers.length)].id;
+        }
+
+        state.requestCount++;
+        
+        // تغییرات جدید: حجم دیتا بین ۱ تا ۳ مگابایت
+        const vol = Math.floor(Math.random() * 3) + 1; 
+        
+        // زمان اشغال مسیر متناسب با حجم: بین ۱۰ تا ۳۰ ثانیه (۱ مگ = ۱۰ ثانیه، ۲ مگ = ۲۰ ثانیه، ۳ مگ = ۳۰ ثانیه)
+        const duration = vol * 10; 
+        
+        const req = { id: Date.now(), s, r, vol, duration };
+        showModal(req);
+    }
+
+    function showModal(req) {
+        DOM.modalText.innerHTML = `<strong>${req.s} ➔ ${req.r}</strong><br>حجم دیتا: ${req.vol} MB`;
+        DOM.modal.classList.add('show');
+        
+        setTimeout(() => {
+            DOM.modal.classList.remove('show');
+            activateRequest(req);
+        }, 3000);
+    }
+
+    function activateRequest(req) {
+        state.activeRequest = req;
+        state.currentPath = [];
+        DOM.btnUndo.disabled = true;
+        
+        const card = document.createElement('div');
+        card.className = 'req-card active';
+        card.id = `req-${req.id}`;
+        card.innerHTML = `درخواست فعلی: <strong>${req.s} ➔ ${req.r}</strong> (${req.vol}MB)`;
+        DOM.topCenter.innerHTML = '';
+        DOM.topCenter.appendChild(card);
+        renderGraphState();
+    }
+
+    function handleNodeClick(node) {
+        if (!state.activeRequest) return;
+        const req = state.activeRequest;
+
+        if (state.currentPath.length === 0) {
+            if (node.id === req.s) {
+                state.currentPath.push(node.id);
+                DOM.btnUndo.disabled = false;
+            }
+        } else {
+            const lastNode = state.currentPath[state.currentPath.length - 1];
+            if (state.currentPath.includes(node.id)) return; 
+
+            const edge = edges.find(e => 
+                (e.u === lastNode && e.v === node.id) || 
+                (e.v === lastNode && e.u === node.id)
+            );
+
+            if (edge && !edge.occupiedBy) {
+                state.currentPath.push(node.id);
+                DOM.btnUndo.disabled = false;
+                if (node.id === req.r) {
+                    completePath();
+                }
+            }
+        }
+        renderGraphState();
+    }
+
+    function completePath() {
+        const req = state.activeRequest;
+        
+        for (let i = 0; i < state.currentPath.length - 1; i++) {
+            const u = state.currentPath[i];
+            const v = state.currentPath[i+1];
+            const edge = edges.find(e => (e.u===u && e.v===v) || (e.v===u && e.u===v));
+            if(edge) edge.occupiedBy = req.id;
+        }
+
+        DOM.topCenter.innerHTML = '';
+        
+        const card = document.createElement('div');
+        card.className = 'req-card completed';
+        card.id = `timer-${req.id}`;
+        
+        let timeLeft = req.duration;
+        card.innerHTML = `<span>${req.s} ➔ ${req.r}</span> <span id="time-val-${req.id}">⏱ ${timeLeft}s</span>`;
+        DOM.topLeft.appendChild(card);
+
+        const timer = setInterval(() => {
+            timeLeft--;
+            const span = document.getElementById(`time-val-${req.id}`);
+            if(span) span.innerHTML = `⏱ ${timeLeft}s`;
+            
+            if (timeLeft <= 0) {
+                clearInterval(timer);
+                edges.forEach(e => { if(e.occupiedBy === req.id) e.occupiedBy = null; });
+                if(card.parentNode) card.parentNode.removeChild(card);
+                renderGraphState();
+            }
+        }, 1000);
+
+        state.activeRequest = null;
+        state.currentPath = [];
+        DOM.btnUndo.disabled = true;
+        renderGraphState();
+        
+        setTimeout(spawnNextRequest, 500);
+    }
+
+    DOM.btnUndo.addEventListener('click', () => {
+        if (state.currentPath.length > 0) {
+            state.currentPath.pop();
+            if (state.currentPath.length === 0) DOM.btnUndo.disabled = true;
+            renderGraphState();
+        }
+    });
+
+    DOM.btnRestart.addEventListener('click', () => {
+        location.reload();
+    });
+
+    DOM.btnStart.addEventListener('click', startGame);
+
+    function renderGraphState() {
+        document.querySelectorAll('.node').forEach(el => el.classList.remove('selected'));
+        state.currentPath.forEach(id => {
+            document.getElementById(id).classList.add('selected');
+        });
+
+        edges.forEach(e => {
+            e.dom.setAttribute('class', 'edge');
+            if (e.occupiedBy) {
+                e.dom.setAttribute('class', 'edge occupied');
+            } else if (state.currentPath.includes(e.u) && state.currentPath.includes(e.v)) {
+                const idxU = state.currentPath.indexOf(e.u);
+                const idxV = state.currentPath.indexOf(e.v);
+                if (Math.abs(idxU - idxV) === 1) {
+                    e.dom.setAttribute('class', 'edge drawing');
+                }
+            }
+        });
+    }
+
+    initGraph();
+</script>
+
+</body>
+</html>
