@@ -72,7 +72,7 @@ async function referencedGamePaths() {
         'utf8',
       )
       for (const match of markdown.matchAll(/src="\.\.\/\.\.\/games\/([^"?#]+)["?#]/g)) {
-        paths.push(match[1].replace(/\/$/, ''))
+        paths.push(match[1].replace(/\/index\.html$/, '').replace(/\/$/, ''))
       }
     }
   }

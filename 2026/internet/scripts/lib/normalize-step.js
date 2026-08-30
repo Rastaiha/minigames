@@ -104,11 +104,10 @@ function transformGameLinks(root, warnings) {
     }
 
     const label = plainText(link).trim() || gamePath
-    const normalizedPath = gamePath.endsWith('/') ? gamePath : `${gamePath}/`
     return {
       type: 'html',
       value:
-        `<iframe class="mini-game" src="../../games/${escapeHtml(normalizedPath)}" ` +
+        `<iframe class="mini-game" src="../../games/${escapeHtml(gamePath)}/index.html" ` +
         `title="${escapeHtml(label)}" loading="lazy" allowfullscreen></iframe>`,
     }
   })

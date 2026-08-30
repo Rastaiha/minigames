@@ -50,7 +50,7 @@ test('turns a standalone http://games link into a relative iframe', () => {
   const {sections} = splitAndNormalizeStep(root)
   const markdown = stringifyMdast(sections.student)
   assert.match(markdown, /<iframe class="mini-game"/)
-  assert.match(markdown, /src="\.\.\/\.\.\/games\/router\/"/)
+  assert.match(markdown, /src="\.\.\/\.\.\/games\/router\/index\.html"/)
   assert.match(markdown, /title="بازی روتر"/)
 })
 

@@ -137,7 +137,9 @@ steps/<name>/assets/*
 لینک Google Docs به آدرسی مانند `http://games/router` باید در پاراگرافی مستقل
 باشد. hostname ثابت `games` فقط یک قرارداد نویسندگی است و درخواست شبکه‌ای به آن
 ارسال نمی‌شود. importer بخش بعد از hostname را به مسیر بازی تبدیل می‌کند؛ مثلاً
-`http://games/router` در Markdown به iframe مربوط به `/games/router/` تبدیل می‌شود.
+`http://games/router` در Markdown به iframe مربوط به
+`/games/router/index.html` تبدیل می‌شود. استفادهٔ صریح از `index.html` باعث می‌شود
+لینک بازی هم در dev server محلی Astro و هم در GitHub Pages کار کند.
 
 ## قراردادن بازی‌ها
 
