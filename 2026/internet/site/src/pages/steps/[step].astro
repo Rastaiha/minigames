@@ -1,5 +1,6 @@
 ---
 import WorkshopLayout from '../../layouts/WorkshopLayout.astro'
+import EventCountdown from '../../components/EventCountdown.astro'
 import {readRenderedStep, readStepIndex} from '../../lib/steps.js'
 
 export async function getStaticPaths() {
@@ -18,58 +19,98 @@ const {step, previous, next} = Astro.props
 const base = import.meta.env.BASE_URL.replace(/\/$/, '')
 ---
 
-<WorkshopLayout title={step.title}>
-  <header class="step-header">
-    <h1>{step.title}</h1>
-    <button class="mentor-toggle" type="button" aria-pressed="false">
-      نمایش بخش‌های منتور
-    </button>
+<WorkshopLayout
+  title={step.title}
+  description={`گام «${step.title}» از کارگاه اینترنت رستا`}
+  shareImage={false}
+>
+  <EventCountdown variant="compact" />
+
+  <header class="step-topbar">
+    <a class="home-link" href={`${base}/`}>
+      <span aria-hidden="true">⌂</span>
+      صفحهٔ اصلی
+    </a>
+    <span class="workshop-name">کارگاه اینترنت رستا</span>
   </header>
 
-  <section class="mentor-section" data-mentor hidden>
+  <section class="step-hero">
+    <div>
+      <p class="section-kicker">یکی از گام‌های مسیر</p>
+      <h1>{step.title}</h1>
+    </div>
+    <button class="mentor-toggle" type="button" aria-pressed="false">
+      <span class="toggle-track" aria-hidden="true"><i></i></span>
+      <span data-toggle-label>ورود به حالت منتور</span>
+    </button>
+  </section>
+
+  <div class="view-banner student-banner" data-student>
+    <span aria-hidden="true">◉</span>
+    صفحهٔ دانش‌آموز
+  </div>
+
+  <div class="view-banner mentor-banner" data-mentor hidden>
+    <span aria-hidden="true">◆</span>
+    حالت منتور — محتوای دانش‌آموز پنهان است
+  </div>
+
+  <section class="mentor-section mentor-before" data-mentor hidden>
+    <p class="content-label"><span aria-hidden="true">۱</span> قبل از شروع گام</p>
     <div set:html={step.mentorBefore} />
   </section>
 
-  <article class="student-section">
+  <article class="student-section" data-student>
     <div set:html={step.student} />
   </article>
 
-  <section class="mentor-section" data-mentor hidden>
+  <section class="mentor-section mentor-after" data-mentor hidden>
+    <p class="content-label"><span aria-hidden="true">۲</span> وقتی صداتون می‌کنن</p>
     <div set:html={step.mentorAfter} />
   </section>
 
   <nav class="step-navigation" aria-label="جابه‌جایی بین گام‌ها">
-    {previous ? (
-      <a class="navigation-button" rel="prev" href={`${base}/steps/${previous.name}/`}>
-        گام قبلی
-      </a>
-    ) : <span />}
-    {next ? (
-      <a class="navigation-button" rel="next" href={`${base}/steps/${next.name}/`}>
-        گام بعدی
-      </a>
-    ) : <span />}
+    <div class="previous-slot">
+      {previous && (
+        <a class="navigation-button previous-button" rel="prev" href={`${base}/steps/${previous.name}/`}>
+          <span class="navigation-arrow" aria-hidden="true">←</span>
+          <span><small>گام قبلی</small><strong>{previous.title}</strong></span>
+        </a>
+      )}
+    </div>
+    <div class="next-slot">
+      {next && (
+        <a class="navigation-button next-button" rel="next" href={`${base}/steps/${next.name}/`}>
+          <span><small>گام بعدی</small><strong>{next.title}</strong></span>
+          <span class="navigation-arrow" aria-hidden="true">→</span>
+        </a>
+      )}
+    </div>
   </nav>
 
   <script>
     const button = document.querySelector('.mentor-toggle')
     const mentorSections = document.querySelectorAll('[data-mentor]')
-    const storageKey = 'rasta-show-mentor-sections'
+    const studentSections = document.querySelectorAll('[data-student]')
+    const label = document.querySelector('[data-toggle-label]')
+    const storageKey = 'rasta-mentor-mode'
 
-    function setMentorVisibility(visible) {
-      for (const section of mentorSections) section.hidden = !visible
-      button?.setAttribute('aria-pressed', String(visible))
-      if (button) button.textContent = visible
-        ? 'پنهان‌کردن بخش‌های منتور'
-        : 'نمایش بخش‌های منتور'
+    function setMentorMode(active) {
+      for (const section of mentorSections) section.hidden = !active
+      for (const section of studentSections) section.hidden = active
+      button?.setAttribute('aria-pressed', String(active))
+      document.documentElement.dataset.viewMode = active ? 'mentor' : 'student'
+      if (label) label.textContent = active
+        ? 'بازگشت به حالت دانش‌آموز'
+        : 'ورود به حالت منتور'
     }
 
-    const initiallyVisible = sessionStorage.getItem(storageKey) === 'true'
-    setMentorVisibility(initiallyVisible)
+    const initiallyMentor = sessionStorage.getItem(storageKey) === 'true'
+    setMentorMode(initiallyMentor)
     button?.addEventListener('click', () => {
-      const visible = button.getAttribute('aria-pressed') !== 'true'
-      sessionStorage.setItem(storageKey, String(visible))
-      setMentorVisibility(visible)
+      const active = button.getAttribute('aria-pressed') !== 'true'
+      sessionStorage.setItem(storageKey, String(active))
+      setMentorMode(active)
     })
   </script>
 </WorkshopLayout>

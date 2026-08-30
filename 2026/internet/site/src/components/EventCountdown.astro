@@ -1,0 +1,116 @@
+---
+// Change these two values and rebuild to preview another event window.
+// The explicit +03:30 offset keeps both moments fixed to Tehran time.
+const EVENT_START_AT = '2026-09-16T08:00:00+03:30'
+const EVENT_END_AT = '2026-08-18T19:00:00+03:30'
+
+const {variant = 'compact'} = Astro.props
+const units = [
+  ['days', 'روز'],
+  ['hours', 'ساعت'],
+  ['minutes', 'دقیقه'],
+  ['seconds', 'ثانیه'],
+]
+---
+
+<section
+  class:list={['event-countdown', `event-countdown--${variant}`]}
+  data-event-countdown
+  data-event-start={EVENT_START_AT}
+  data-event-end={EVENT_END_AT}
+  data-phase="upcoming"
+  aria-label="شمارش معکوس مدرسه تابستانه رستا"
+>
+  <div class="event-message">
+    <p class="event-name">مدرسه تابستانه ۱۴۰۵ رستا</p>
+    <strong data-event-message>تا شروع رویداد</strong>
+    <small data-event-caption>۲۵ شهریور، ساعت ۸ صبح به وقت تهران</small>
+  </div>
+
+  <div class="countdown-clock" data-countdown-clock role="timer">
+    {units.map(([key, label]) => (
+      <span class="time-unit">
+        <strong data-time-unit={key}>۰۰</strong>
+        <small>{label}</small>
+      </span>
+    ))}
+  </div>
+</section>
+
+<script>
+  const persianNumber = new Intl.NumberFormat('fa-IR', {
+    minimumIntegerDigits: 2,
+    useGrouping: false,
+  })
+
+  function updateUnits(element, distance) {
+    const totalSeconds = Math.max(0, Math.floor(distance / 1000))
+    const values = {
+      days: Math.floor(totalSeconds / 86400),
+      hours: Math.floor((totalSeconds % 86400) / 3600),
+      minutes: Math.floor((totalSeconds % 3600) / 60),
+      seconds: totalSeconds % 60,
+    }
+
+    for (const [unit, value] of Object.entries(values)) {
+      const output = element.querySelector(`[data-time-unit="${unit}"]`)
+      if (output) output.textContent = persianNumber.format(value)
+    }
+  }
+
+  function showEndedUnits(element) {
+    for (const output of element.querySelectorAll('[data-time-unit]')) {
+      output.textContent = '--'
+    }
+  }
+
+  function startCountdown(element) {
+    if (element.dataset.countdownReady === 'true') return
+    element.dataset.countdownReady = 'true'
+
+    const startAt = Date.parse(element.dataset.eventStart)
+    const endAt = Date.parse(element.dataset.eventEnd)
+    const message = element.querySelector('[data-event-message]')
+    const caption = element.querySelector('[data-event-caption]')
+    const clock = element.querySelector('[data-countdown-clock]')
+
+    function update() {
+      const now = Date.now()
+      let target
+
+      if (now < startAt) {
+        element.dataset.phase = 'upcoming'
+        if (message) message.textContent = 'تا شروع رویداد'
+        if (caption) caption.textContent = '۲۵ شهریور، ساعت ۸ صبح به وقت تهران'
+        if (clock) clock.hidden = false
+        target = startAt
+      } else if (now < endAt) {
+        element.dataset.phase = 'live'
+        if (message) message.textContent = 'رویداد شروع شده! بریم که بترکونیم🔥'
+        if (caption) caption.textContent = 'تا پایان مدرسه تابستانه'
+        if (clock) clock.hidden = false
+        target = endAt
+      } else {
+        element.dataset.phase = 'ended'
+        if (message) {
+          message.textContent = `آخر قصه‌مه اما، قصهٔ آخرم این نیست...
+تا رویداد بعدی، مواظب خوبی‌هاتون باشید🥲
+به امید دیدار 🕊️`
+        }
+        if (caption) caption.hidden = true
+        if (clock) clock.hidden = false
+        showEndedUnits(element)
+        return
+      }
+
+      updateUnits(element, target - now)
+      window.setTimeout(update, Math.max(250, 1020 - (Date.now() % 1000)))
+    }
+
+    update()
+  }
+
+  for (const countdown of document.querySelectorAll('[data-event-countdown]')) {
+    startCountdown(countdown)
+  }
+</script>

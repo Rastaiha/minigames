@@ -10,6 +10,7 @@ const repositoryRoot = path.resolve(
   process.env.WORKSHOP_ROOT || process.env.INIT_CWD || path.join(process.cwd(), '..'),
 )
 const stepsDirectory = path.join(repositoryRoot, 'steps')
+const gamesDirectory = path.join(repositoryRoot, 'games')
 const renderer = unified()
   .use(remarkParse)
   .use(remarkGfm)
@@ -19,6 +20,51 @@ const renderer = unified()
 export async function readStepIndex() {
   const value = await fs.readFile(path.join(stepsDirectory, '.order.json'), 'utf8')
   return JSON.parse(value)
+}
+
+function displayNameFromSlug(slug) {
+  return slug.replaceAll('-', ' ').replaceAll('_', ' ')
+}
+
+export async function readGameIndex() {
+  let entries
+  try {
+    entries = await fs.readdir(gamesDirectory, {withFileTypes: true})
+  } catch (error) {
+    if (error.code === 'ENOENT') return []
+    throw error
+  }
+
+  const games = []
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue
+
+    const gameDirectory = path.join(gamesDirectory, entry.name)
+    const candidates = [
+      path.join(gameDirectory, 'dist', 'index.html'),
+      path.join(gameDirectory, 'index.html'),
+    ]
+    let html
+    for (const candidate of candidates) {
+      try {
+        html = await fs.readFile(candidate, 'utf8')
+        break
+      } catch (error) {
+        if (error.code !== 'ENOENT') throw error
+      }
+    }
+    if (!html) continue
+
+    const documentTitle = html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1].trim()
+    games.push({
+      name: entry.name,
+      title: documentTitle || displayNameFromSlug(entry.name),
+    })
+  }
+
+  return games.sort((first, second) =>
+    first.title.localeCompare(second.title, 'fa'),
+  )
 }
 
 async function renderFragment(stepName, filename) {
