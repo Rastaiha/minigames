@@ -12,9 +12,9 @@ import {
   createGoogleRefreshClient,
 } from './lib/google-refresh-auth.js'
 import {
+  extractStudentTitle,
   splitAndNormalizeStep,
   stringifyMdast,
-  studentTitleFromSection,
 } from './lib/normalize-step.js'
 import {loadStepConfig} from './lib/step-config.js'
 
@@ -78,7 +78,7 @@ for (const {tab} of stepTabs) {
     auth,
   })
   const {sections, warnings} = splitAndNormalizeStep(root)
-  const title = studentTitleFromSection(sections.student)
+  const title = extractStudentTitle(sections.student)
 
   await Promise.all([
     fs.writeFile(

@@ -168,10 +168,11 @@ export function stringifyMdast(root) {
   return `${serializer.stringify(root).trim()}\n`
 }
 
-export function studentTitleFromSection(studentSection) {
-  const titleHeading = studentSection.children.find(
+export function extractStudentTitle(studentSection) {
+  const titleIndex = studentSection.children.findIndex(
     (node) => node.type === 'heading' && node.depth === 2,
   )
+  const titleHeading = studentSection.children[titleIndex]
   const title = titleHeading ? plainText(titleHeading).trim() : ''
 
   if (!title) {
@@ -180,5 +181,6 @@ export function studentTitleFromSection(studentSection) {
     )
   }
 
+  studentSection.children.splice(titleIndex, 1)
   return title
 }

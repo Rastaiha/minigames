@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import {
+  extractStudentTitle,
   splitAndNormalizeStep,
   stringifyMdast,
-  studentTitleFromSection,
 } from '../scripts/lib/normalize-step.js'
 
 const text = (value) => ({type: 'text', value})
@@ -85,7 +85,7 @@ test('rejects documents missing an audience region', () => {
   assert.throws(() => splitAndNormalizeStep(root), /Missing mentorBefore section/)
 })
 
-test('uses the first level-two heading in the student section as its title', () => {
+test('extracts and removes the first level-two student heading as its title', () => {
   const studentSection = {
     type: 'root',
     children: [
@@ -96,7 +96,11 @@ test('uses the first level-two heading in the student section as its title', () 
     ],
   }
 
-  assert.equal(studentTitleFromSection(studentSection), 'عنوان اصلی گام')
+  assert.equal(extractStudentTitle(studentSection), 'عنوان اصلی گام')
+  assert.equal(
+    stringifyMdast(studentSection),
+    'مقدمه\n\n### عنوان فرعی\n\n## عنوان بعدی\n',
+  )
 })
 
 test('rejects a student section without a level-two title heading', () => {
@@ -106,7 +110,7 @@ test('rejects a student section without a level-two title heading', () => {
   }
 
   assert.throws(
-    () => studentTitleFromSection(studentSection),
+    () => extractStudentTitle(studentSection),
     /must contain a level-two heading/,
   )
 })
