@@ -3,19 +3,24 @@
 
   const SVG_NS = "http://www.w3.org/2000/svg";
   const isPersian = document.body.dataset.language === "fa";
-  const sentence = isPersian
+  const completeSentence = isPersian
     ? ["بهرام", "که", "گور", "می‌گرفتی", "همه", "عمر", "دیدی", "که", "چگونه", "گور", "بهرام", "گرفت"]
     : ["The", "bat", "flew", "past", "the", "wooden", "bat"];
+  const sentence = document.body.dataset.mode === "decoder"
+    ? completeSentence.slice(0, -1)
+    : completeSentence;
   const ui = isPersian
-    ? { play: "▶ پخش", pause: "❚❚ مکث", counter: "مرحله" }
-    : { play: "▶ Play", pause: "❚❚ Pause", counter: "Step" };
+    ? { play: "پخش", pause: "مکث" }
+    : { play: "Play", pause: "Pause" };
   const tokenColors = [
-    "#64d6ff", "#ff8a65", "#a78bfa", "#f4c95d",
-    "#68d391", "#f687b3", "#4fd1c5", "#f6ad55",
-    "#90cdf4", "#c4f1be", "#fc8181", "#b794f4"
+    "#2878c7", "#d05c49", "#8557c9", "#bd7024",
+    "#2e8a69", "#bd4f80", "#27858d", "#c9663a",
+    "#4a82c7", "#6d943f", "#cc5d68", "#7656b5"
   ];
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  let instantMode = false;
+  const stepPause = 700;
+  const positionMoveDuration = 1200;
+  const layerMoveDuration = 720;
 
   const $ = selector => document.querySelector(selector);
   const createSvg = (tag, attrs = {}) => {
@@ -25,7 +30,7 @@
   };
 
   const sleep = milliseconds => new Promise(resolve => {
-    window.setTimeout(resolve, reducedMotion || instantMode ? 0 : milliseconds);
+    window.setTimeout(resolve, reducedMotion ? 0 : milliseconds);
   });
 
   const clamp01 = value => Math.max(0, Math.min(1, value));
@@ -53,7 +58,7 @@
   };
 
   const animate = (duration, onFrame) => new Promise(resolve => {
-    if (reducedMotion || instantMode) {
+    if (reducedMotion) {
       onFrame(1);
       resolve();
       return;
@@ -69,21 +74,9 @@
     requestAnimationFrame(frame);
   });
 
-  const animateStepped = async (duration, steps, onFrame) => {
-    if (reducedMotion || instantMode) {
-      onFrame(1);
-      return;
-    }
-    for (let step = 1; step <= steps; step += 1) {
-      await sleep(duration / steps);
-      onFrame(step / steps);
-    }
-  };
-
   class StateController {
-    constructor({ totalState, describe, transition, reset }) {
+    constructor({ totalState, transition, reset }) {
       this.totalState = totalState;
-      this.describe = describe;
       this.transition = transition;
       this.resetVisualization = reset;
       this.state = 0;
@@ -92,8 +85,6 @@
       this.pending = null;
 
       this.playButton = $("#playBtn");
-      this.previousButton = $("#prevBtn");
-      this.stepButton = $("#stepBtn");
       this.resetButton = $("#resetBtn");
       this.bindControls();
       this.reset();
@@ -108,56 +99,15 @@
         }
       });
 
-      this.stepButton.addEventListener("click", async () => {
-        this.pause();
-        if (this.state >= this.totalState) this.reset();
-        else await this.next();
-      });
-
-      this.previousButton.addEventListener("click", async () => {
-        await this.previous();
-      });
-
       this.resetButton.addEventListener("click", () => this.reset());
     }
 
     updateCopy() {
-      const copy = this.describe(this.state);
-      $("#stepLabel").textContent = copy.label;
-      $("#counter").textContent = `${ui.counter} ${this.state} / ${this.totalState}`;
       $("#progress").style.width = `${this.state / this.totalState * 100}%`;
     }
 
     setBusy(busy) {
-      this.stepButton.disabled = busy;
-      this.previousButton.disabled = busy || this.state === 0;
       this.resetButton.disabled = busy;
-    }
-
-    async previous() {
-      if (this.pending || this.state === 0) return this.pending;
-      this.pause();
-      const targetState = this.state - 1;
-      this.setBusy(true);
-
-      this.pending = (async () => {
-        instantMode = true;
-        try {
-          this.resetVisualization();
-          this.state = 0;
-          for (let state = 1; state <= targetState; state += 1) {
-            this.state = state;
-            await this.transition(state);
-          }
-        } finally {
-          instantMode = false;
-        }
-      })().finally(() => {
-        this.pending = null;
-        this.updateCopy();
-        this.setBusy(false);
-      });
-      return this.pending;
     }
 
     async next() {
@@ -181,7 +131,11 @@
 
       while (this.playing && generation === this.playGeneration && this.state < this.totalState) {
         await this.next();
-        if (this.playing && generation === this.playGeneration) await sleep(210);
+        if (
+          this.playing
+          && generation === this.playGeneration
+          && this.state < this.totalState
+        ) await sleep(stepPause);
       }
 
       if (generation === this.playGeneration) this.pause();
@@ -209,12 +163,13 @@
       const chip = document.createElement("span");
       chip.className = "token-chip";
       chip.dataset.index = String(index);
-      chip.textContent = token;
+      const startsVerse = isPersian && index === 6;
+      chip.textContent = index === 0 || startsVerse ? token : ` ${token}`;
       chip.style.setProperty("--token-color", tokenColors[index % tokenColors.length]);
       return chip;
     });
     if (isPersian) {
-      const lineBreak = document.createElement("span");
+      const lineBreak = document.createElement("br");
       lineBreak.className = "verse-break";
       lineBreak.setAttribute("aria-hidden", "true");
       chips.splice(6, 0, lineBreak);
@@ -267,8 +222,8 @@
           { x: 40, y: 28 }
         ];
       this.positioned = this.base.map((point, index) => ({
-        x: point.x + this.positionOffsets[index].x,
-        y: point.y + this.positionOffsets[index].y
+        x: point.x + this.positionOffsets[index].x * 2,
+        y: point.y + this.positionOffsets[index].y * 2
       }));
       this.finalTargets = isPersian
         ? [
@@ -302,7 +257,6 @@
 
       this.controller = new StateController({
         totalState: this.totalState,
-        describe: state => this.describe(state),
         transition: state => this.transition(state),
         reset: () => this.reset()
       });
@@ -379,23 +333,6 @@
       });
     }
 
-    describe(state) {
-      if (isPersian) {
-        if (state === 0) return { label: "بردارهای واژه" };
-        if (state === 1) return { label: "دو بار گور" };
-        if (state === 2) return { label: "جای‌گذاری واژه‌ها" };
-        if (state === 3) return { label: "+ جایگاه" };
-        if (state >= 4 && state <= 11) return { label: `لایهٔ رمزگذار ${state - 3}` };
-        return { label: "بردارهای بافتی" };
-      }
-      if (state === 0) return { label: "Word embeddings" };
-      if (state === 1) return { label: "Two occurrences" };
-      if (state === 2) return { label: "Embedding lookup" };
-      if (state === 3) return { label: "+ position" };
-      if (state >= 4 && state <= 11) return { label: `Encoder layer ${state - 3}` };
-      return { label: "Contextual embeddings" };
-    }
-
     async transition(state) {
       if (state === 1) {
         const sentenceWords = new Set(sentence);
@@ -419,7 +356,7 @@
       if (state === 3) {
         this.positionLines.forEach(line => line.classList.add("show"));
         const from = this.renderedPositions.map(point => ({ ...point }));
-        await animate(760, progress => {
+        await animate(positionMoveDuration, progress => {
           this.renderedPositions = from.map((point, index) => ({
             x: point.x + (this.positioned[index].x - point.x) * progress,
             y: point.y + (this.positioned[index].y - point.y) * progress
@@ -436,7 +373,7 @@
         const to = this.tokens.map((_, index) => this.trajectory(index, layer));
         this.setMeaningStage(layer >= 4);
 
-        await animateStepped(360, 5, progress => {
+        await animate(layerMoveDuration, progress => {
           this.renderedPositions = from.map((point, index) => ({
             x: point.x + (to[index].x - point.x) * progress,
             y: point.y + (to[index].y - point.y) * progress
@@ -478,14 +415,14 @@
     constructor() {
       this.tokens = sentence.map((word, occurrence) => ({ word, occurrence }));
       this.nextTokens = isPersian
-        ? ["که", "گور", "می‌گرفتی", "همه", "عمر", "دیدی", "که", "چگونه", "گور", "بهرام", "گرفت", "⟨پایان⟩"]
-        : ["bat", "flew", "past", "the", "wooden", "bat", "⟨end⟩"];
+        ? ["که", "گور", "می‌گرفتی", "همه", "عمر", "دیدی", "که", "چگونه", "گور", "بهرام", "گرفت"]
+        : ["bat", "flew", "past", "the", "wooden", "bat"];
       this.vocabulary = isPersian
         ? [
           ["بهرام", 120, 300], ["که", 230, 210], ["گور", 360, 250],
           ["می‌گرفتی", 650, 95], ["همه", 560, 160], ["عمر", 460, 110],
           ["دیدی", 500, 350], ["چگونه", 590, 240], ["گرفت", 680, 415],
-          ["⟨پایان⟩", 830, 440], ["گورخر", 720, 78], ["شکار", 815, 135],
+          ["؟", 830, 440], ["گورخر", 720, 78], ["شکار", 815, 135],
           ["دشت", 625, 65], ["جانور", 755, 190], ["قبر", 710, 350],
           ["مرگ", 810, 400], ["خاک", 615, 405], ["آرامگاه", 790, 315],
           ["گورستان", 850, 350], ["روز", 80, 65], ["شب", 95, 170],
@@ -500,7 +437,7 @@
         : [
           ["The", 118, 292], ["bat", 210, 250], ["flew", 700, 110],
           ["past", 610, 170], ["the", 420, 315], ["wooden", 690, 360],
-          ["⟨end⟩", 810, 420], ["hung", 780, 72], ["slept", 820, 138],
+          ["?", 810, 420], ["hung", 780, 72], ["slept", 820, 138],
           ["squeaked", 620, 70], ["bird", 760, 205], ["ball", 292, 350],
           ["chair", 350, 390], ["wood", 250, 410], ["cave", 825, 245],
           ["quietly", 520, 82], ["heavy", 555, 390], ["old", 600, 340],
@@ -521,8 +458,8 @@
           { x: 40, y: 28 }
         ];
       this.positioned = this.base.map((point, index) => ({
-        x: point.x + this.positionOffsets[index].x,
-        y: point.y + this.positionOffsets[index].y
+        x: point.x + this.positionOffsets[index].x * 2,
+        y: point.y + this.positionOffsets[index].y * 2
       }));
 
       // Layer four is the visual checkpoint where causal context is rich
@@ -539,6 +476,7 @@
           { x: 438, y: 248 }, { x: 535, y: 325 }, { x: 340, y: 338 },
           { x: 620, y: 395 }
         ];
+      this.contextTargets = this.contextTargets.slice(0, this.tokens.length);
       this.contextControls = isPersian
         ? this.contextTargets.map((target, index) => ({
           x: (this.positioned[index].x + target.x) / 2 + Math.sin(index * 2.4) * 80,
@@ -549,6 +487,7 @@
           { x: 540, y: 190 }, { x: 390, y: 355 }, { x: 520, y: 420 },
           { x: 385, y: 390 }
         ];
+      this.contextControls = this.contextControls.slice(0, this.tokens.length);
 
       // Near—not exactly on—the next word embedding, so both the moving
       // representation and its fixed vocabulary target remain legible.
@@ -561,7 +500,7 @@
           { x: -28, y: -24 }, { x: -30, y: 28 }, { x: 22, y: 28 },
           { x: -28, y: -22 }, { x: -32, y: -27 }, { x: 32, y: 32 },
           { x: -36, y: -28 }
-        ];
+        ].slice(0, this.nextTokens.length);
       this.predictionTargets = this.nextTokens.map((word, index) => {
         const target = this.embeddingByWord[word];
         return {
@@ -579,6 +518,7 @@
           { x: 430, y: 292 }, { x: 620, y: 350 }, { x: 300, y: 300 },
           { x: 720, y: 435 }
         ];
+      this.predictionControls = this.predictionControls.slice(0, this.nextTokens.length);
 
       this.contextLayerCount = 4;
       this.predictionLayerCount = 4;
@@ -601,7 +541,6 @@
 
       this.controller = new StateController({
         totalState: this.totalState,
-        describe: state => this.describe(state),
         transition: state => this.transition(state),
         reset: () => this.reset()
       });
@@ -662,12 +601,6 @@
           "data-index": index
         });
         group.style.setProperty("--token-color", tokenColors[index % tokenColors.length]);
-        const halo = createSvg("circle", {
-          class: "context-halo",
-          cx: 0,
-          cy: 0,
-          r: 14
-        });
         const dot = createSvg("circle", {
           class: "active-dot",
           cx: 0,
@@ -679,10 +612,10 @@
         });
         positionActiveLabel(label, index);
         label.textContent = token.word;
-        group.append(halo, dot, label);
+        group.append(dot, label);
         setPosition(group, this.base[index]);
         layer.appendChild(group);
-        this.activeElements.push({ group, halo, dot, label });
+        this.activeElements.push({ group, dot, label });
       });
     }
 
@@ -729,31 +662,10 @@
       });
     }
 
-    describe(state) {
-      if (isPersian) {
-        if (state === 0) return { label: "بردارهای واژه" };
-        if (state === 1) return { label: "دنبالهٔ علّی" };
-        if (state === 2) return { label: "جای‌گذاری واژه‌ها" };
-        if (state === 3) return { label: "+ جایگاه" };
-        if (state >= 4 && state <= 7) return { label: `لایهٔ بافت ${state - 3}` };
-        if (state === 8) return { label: "بافت پیش‌بین" };
-        if (state >= 9 && state <= 12) return { label: `لایهٔ پیش‌بینی ${state - 8}` };
-        return { label: "پیش‌بینی واژهٔ بعد" };
-      }
-      if (state === 0) return { label: "Word embeddings" };
-      if (state === 1) return { label: "Causal sequence" };
-      if (state === 2) return { label: "Embedding lookup" };
-      if (state === 3) return { label: "+ position" };
-      if (state >= 4 && state <= 7) return { label: `Context layer ${state - 3}` };
-      if (state === 8) return { label: "Context checkpoint" };
-      if (state >= 9 && state <= 12) return { label: `Prediction layer ${state - 8}` };
-      return { label: "Next-token predictions" };
-    }
-
     async moveToLayer(overallLayer) {
       const from = this.renderedPositions.map(point => ({ ...point }));
       const to = this.tokens.map((_, index) => this.trajectory(index, overallLayer));
-      await animateStepped(360, 5, progress => {
+      await animate(layerMoveDuration, progress => {
         this.renderedPositions = from.map((point, index) => ({
           x: point.x + (to[index].x - point.x) * progress,
           y: point.y + (to[index].y - point.y) * progress
@@ -789,7 +701,7 @@
       if (state === 3) {
         this.positionLines.forEach(line => line.classList.add("show"));
         const from = this.renderedPositions.map(point => ({ ...point }));
-        await animate(760, progress => {
+        await animate(positionMoveDuration, progress => {
           this.renderedPositions = from.map((point, index) => ({
             x: point.x + (this.positioned[index].x - point.x) * progress,
             y: point.y + (this.positioned[index].y - point.y) * progress
@@ -810,7 +722,6 @@
       }
 
       if (state === 8) {
-        this.activeElements.forEach(({ halo }) => halo.classList.add("show"));
         this.vocabElements.forEach(({ group, word }) => {
           if (this.contextAnchorWords.has(word)) group.classList.remove("hidden");
         });
@@ -826,8 +737,7 @@
             if (this.contextAnchorWords.has(word)) group.classList.add("hidden");
           });
         }
-        this.activeElements.forEach(({ halo, group }) => {
-          halo.classList.remove("show");
+        this.activeElements.forEach(({ group }) => {
           group.classList.add("predicting");
         });
         await this.moveToLayer(overallLayer);
@@ -857,9 +767,8 @@
         group.style.transitionDelay = "0ms";
         dot.setAttribute("r", "5.5");
       });
-      this.activeElements.forEach(({ group, halo, dot, label }, index) => {
+      this.activeElements.forEach(({ group, dot, label }, index) => {
         group.className.baseVal = "active-token";
-        halo.classList.remove("show");
         dot.setAttribute("r", "8");
         label.textContent = this.tokens[index].word;
         positionActiveLabel(label, index);

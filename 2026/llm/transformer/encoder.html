@@ -9,30 +9,14 @@
 </head>
 <body data-mode="encoder" data-language="fa">
   <main class="shell">
-    <header class="masthead">
-      <div>
-        <div class="eyebrow">درون ترنسفورمر · رمزگذار</div>
-        <h1>یک واژه، دو معنا.</h1>
+    <div class="toolbar">
+      <div class="controls">
+        <button id="playBtn" type="button">پخش</button>
+        <button id="resetBtn" type="button">Reset</button>
       </div>
-      <div class="header-actions">
-        <nav class="mode-switch" aria-label="نوع نمایش">
-          <a class="mode-link active" href="encoder-fa.html" aria-current="page">رمزگذار</a>
-          <a class="mode-link" href="decoder-fa.html">رمزگشا</a>
-          <a class="mode-link language-link" href="encoder.html" lang="en" dir="ltr">EN</a>
-        </nav>
-        <div class="controls">
-          <button id="playBtn" type="button">▶ پخش</button>
-          <button id="prevBtn" type="button">→ قبلی</button>
-          <button id="stepBtn" type="button">بعدی ←</button>
-          <button id="resetBtn" type="button">از نو</button>
-        </div>
-      </div>
-    </header>
+    </div>
 
-    <section class="sentence-board" aria-label="بیت ورودی">
-      <span class="sentence-label">بیت ورودی</span>
-      <div id="tokenStrip" class="token-strip"></div>
-    </section>
+    <div id="tokenStrip" class="token-strip" aria-label="بیت ورودی"></div>
 
     <section class="stage">
       <svg id="space" viewBox="0 0 900 470" role="img" aria-label="حرکت بازنمایی واژه‌های شعر از بردار واژه تا بردار بافتی">
@@ -41,18 +25,14 @@
             <path d="M0 0L10 5L0 10Z" fill="var(--muted)" />
           </marker>
         </defs>
-        <rect class="stage-bg" x="1" y="1" width="898" height="468" rx="14" />
+        <rect class="stage-bg" x="1" y="1" width="898" height="468" rx="7" />
         <g id="positionLayer"></g>
         <g id="vocabLayer"></g>
         <g id="activeLayer"></g>
       </svg>
     </section>
 
-    <footer class="timeline">
-      <div class="meta">
-        <span id="stepLabel" class="badge"></span>
-        <span id="counter" class="counter"></span>
-      </div>
+    <footer class="status">
       <div class="progress-track"><div id="progress" class="progress-fill"></div></div>
     </footer>
   </main>
