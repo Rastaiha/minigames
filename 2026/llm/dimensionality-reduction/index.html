@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>3D → 2D → 1D Ball Space</title>
+  <style>
+    html, body { margin:0; width:100%; height:100%; overflow:hidden; background:#f5f5f5; font-family:Arial,Helvetica,sans-serif; }
+    #app { width:100%; height:100%; position:relative; }
+    canvas { display:block; width:100%; height:100%; }
+    .controls { position:absolute; top:16px; right:16px; display:flex; gap:8px; z-index:10; }
+    button { border:1px solid #d0d0d0; background:rgba(255,255,255,.92); color:#111; border-radius:8px; padding:9px 14px; font-size:14px; cursor:pointer; box-shadow:0 2px 10px rgba(0,0,0,.08); }
+    button:hover { background:#fff; }
+    .hint { position:absolute; left:16px; bottom:14px; font-size:12px; color:#555; background:rgba(255,255,255,.75); padding:7px 10px; border-radius:7px; pointer-events:none; }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div class="controls">
+    <button id="btn2d">2D</button>
+    <button id="btn1d">1D</button>
+    <button id="reset">Reset</button>
+  </div>
+  <div class="hint" id="hint">3D: drag to rotate · right-drag to pan · wheel to zoom</div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+  import * as THREE from 'three';
+  import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+  const CONFIG = {
+    pointCount: 85,
+    worldSpread: 9,
+    radius: 0.28,
+    flatRadius: 0.28,
+    transitionDuration: 1000
+  };
+
+  const app = document.getElementById('app');
+  const hint = document.getElementById('hint');
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xf5f5f5);
+
+  const renderer = new THREE.WebGLRenderer({ antialias:true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  app.prepend(renderer.domElement);
+
+  const perspectiveCamera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 100);
+  perspectiveCamera.position.set(10, 8, 13);
+
+  const orthoCamera = new THREE.OrthographicCamera(-10, 10, 10, -10, -100, 100);
+  let activeCamera = perspectiveCamera;
+
+  const controls = new OrbitControls(perspectiveCamera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+  controls.screenSpacePanning = true;
+  controls.minDistance = 3;
+  controls.maxDistance = 40;
+
+  function makeBallMaterial(color) {
+    return new THREE.ShaderMaterial({
+      uniforms: { baseColor:{ value:new THREE.Color(color) }, flatness:{ value:0.0 } },
+      vertexShader: `
+        varying vec3 vNormalView;
+        void main() {
+          vNormalView = normalize(normalMatrix * normal);
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform vec3 baseColor;
+        uniform float flatness;
+        varying vec3 vNormalView;
+        void main() {
+          vec3 N = normalize(vNormalView);
+          vec3 L = normalize(vec3(-0.45, 0.65, 1.0));
+          float diffuse = max(dot(N, L), 0.0);
+          float shadedAmount = 0.34 + 0.66 * diffuse;
+          vec3 V = vec3(0.0, 0.0, 1.0);
+          vec3 H = normalize(L + V);
+          float spec = pow(max(dot(N, H), 0.0), 28.0) * 0.24;
+          vec3 shaded = baseColor * shadedAmount + vec3(spec);
+          gl_FragColor = vec4(mix(shaded, baseColor, flatness), 1.0);
+        }
+      `
+    });
+  }
+
+  const geometry = new THREE.SphereGeometry(1, 32, 20);
+  const palette = [0x4f86f7,0xff6b6b,0x42b883,0xf6b73c,0x9b6df2,0x28b6c8];
+  const balls = [];
+  const rand = r => (Math.random()*2-1)*r;
+
+  for (let i=0; i<CONFIG.pointCount; i++) {
+    const original = new THREE.Vector3(rand(CONFIG.worldSpread), rand(CONFIG.worldSpread*0.72), rand(CONFIG.worldSpread*0.72));
+    const color = palette[Math.floor(Math.random()*palette.length)];
+    const mesh = new THREE.Mesh(geometry, makeBallMaterial(color));
+    mesh.position.copy(original);
+    mesh.scale.setScalar(CONFIG.radius);
+    scene.add(mesh);
+    balls.push({
+      mesh, original,
+      startPosition:original.clone(), targetPosition:original.clone(),
+      startScale:CONFIG.radius, targetScale:CONFIG.radius,
+      startFlatness:0, targetFlatness:0,
+      startDepth:1, targetDepth:1
+    });
+  }
+
+  let mode = '3d';
+  let transition = null;
+  let rotating2D = false;
+  let lastPointerAngle = 0;
+
+  const raycaster = new THREE.Raycaster();
+  const tmpNdc = new THREE.Vector3();
+  const tmpForward = new THREE.Vector3();
+  const tmpPlane = new THREE.Plane();
+  const tmpPoint = new THREE.Vector3();
+
+  const smoothstep = t => t*t*(3-2*t);
+
+  function configure3DControls() {
+    controls.object = perspectiveCamera;
+    controls.enabled = true;
+    controls.enableRotate = true;
+    controls.enablePan = true;
+    controls.enableZoom = true;
+    controls.mouseButtons.LEFT = THREE.MOUSE.ROTATE;
+    controls.mouseButtons.RIGHT = THREE.MOUSE.PAN;
+  }
+
+  function configure2DControls() {
+    controls.object = orthoCamera;
+    controls.enabled = true;
+    controls.enableRotate = false;
+    controls.enablePan = true;
+    controls.enableZoom = false;
+    controls.mouseButtons.LEFT = -1;
+    controls.mouseButtons.RIGHT = THREE.MOUSE.PAN;
+  }
+
+  function configure1DControls() {
+    controls.object = orthoCamera;
+    controls.enabled = true;
+    controls.enableRotate = false;
+    controls.enablePan = true;
+    controls.enableZoom = false;
+    controls.mouseButtons.LEFT = THREE.MOUSE.PAN;
+    controls.mouseButtons.RIGHT = THREE.MOUSE.PAN;
+  }
+
+  function matchOrthoToPerspective(planeDistance) {
+    const aspect = window.innerWidth/window.innerHeight;
+    const halfHeight = Math.tan(THREE.MathUtils.degToRad(perspectiveCamera.fov*0.5))*planeDistance;
+    const halfWidth = halfHeight*aspect;
+    orthoCamera.left = -halfWidth;
+    orthoCamera.right = halfWidth;
+    orthoCamera.top = halfHeight;
+    orthoCamera.bottom = -halfHeight;
+    orthoCamera.zoom = 1;
+    orthoCamera.position.copy(perspectiveCamera.position);
+    orthoCamera.quaternion.copy(perspectiveCamera.quaternion);
+    orthoCamera.updateProjectionMatrix();
+    orthoCamera.updateMatrixWorld(true);
+  }
+
+  function begin3DTo2D() {
+    if (mode !== '3d') return;
+    perspectiveCamera.updateMatrixWorld(true);
+    controls.enabled = false;
+
+    const cameraPos = perspectiveCamera.position.clone();
+    const forward = perspectiveCamera.getWorldDirection(tmpForward).clone().normalize();
+    const planePoint = controls.target.clone();
+    let planeDistance = planePoint.clone().sub(cameraPos).dot(forward);
+    if (planeDistance < 1) {
+      planeDistance = Math.max(5, cameraPos.distanceTo(planePoint));
+      planePoint.copy(cameraPos).addScaledVector(forward, planeDistance);
+    }
+
+    tmpPlane.setFromNormalAndCoplanarPoint(forward, planePoint);
+    matchOrthoToPerspective(planeDistance);
+
+    balls.forEach(ball => {
+      ball.startPosition.copy(ball.mesh.position);
+      ball.startScale = ball.mesh.scale.x;
+      ball.startFlatness = ball.mesh.material.uniforms.flatness.value;
+
+      tmpNdc.copy(ball.mesh.position).project(perspectiveCamera);
+      raycaster.setFromCamera(new THREE.Vector2(tmpNdc.x,tmpNdc.y), perspectiveCamera);
+      const hit = raycaster.ray.intersectPlane(tmpPlane, tmpPoint);
+      ball.targetPosition.copy(hit || ball.mesh.position);
+      ball.targetScale = CONFIG.flatRadius;
+      ball.targetFlatness = 1;
+      ball.startDepth = ball.startPosition.clone().sub(cameraPos).dot(forward);
+      ball.targetDepth = planeDistance;
+    });
+
+    transition = { kind:'to2d', startTime:performance.now(), duration:CONFIG.transitionDuration, planePoint:planePoint.clone(), planeDistance };
+    mode = 'transition2d';
+    hint.textContent = 'Flattening to 2D…';
+  }
+
+  function begin2DTo1D() {
+    if (mode === '3d') { begin3DTo2D(); return; }
+    if (mode !== '2d') return;
+
+    rotating2D = false;
+    controls.enabled = false;
+    orthoCamera.updateMatrixWorld(true);
+
+    balls.forEach(ball => {
+      ball.startPosition.copy(ball.mesh.position);
+      ball.startScale = ball.mesh.scale.x;
+      ball.startFlatness = ball.mesh.material.uniforms.flatness.value;
+      const cameraSpace = ball.mesh.position.clone();
+      orthoCamera.worldToLocal(cameraSpace);
+      cameraSpace.y = 0;
+      ball.targetPosition.copy(cameraSpace);
+      orthoCamera.localToWorld(ball.targetPosition);
+      ball.targetScale = CONFIG.flatRadius;
+      ball.targetFlatness = 1;
+    });
+
+    transition = { kind:'to1d', startTime:performance.now(), duration:CONFIG.transitionDuration };
+    mode = 'transition1d';
+    hint.textContent = 'Collapsing to 1D…';
+  }
+
+  function resetTo3D() {
+    rotating2D = false;
+    transition = null;
+    mode = '3d';
+    activeCamera = perspectiveCamera;
+    perspectiveCamera.position.set(10,8,13);
+    perspectiveCamera.lookAt(0,0,0);
+    perspectiveCamera.updateMatrixWorld(true);
+    controls.target.set(0,0,0);
+    balls.forEach(ball => {
+      ball.mesh.position.copy(ball.original);
+      ball.mesh.scale.setScalar(CONFIG.radius);
+      ball.mesh.material.uniforms.flatness.value = 0;
+    });
+    configure3DControls();
+    controls.update();
+    hint.textContent = '3D: drag to rotate · right-drag to pan · wheel to zoom';
+  }
+
+  function pointerAngleFromScreenCenter(event) {
+    const rect = renderer.domElement.getBoundingClientRect();
+    const cx = rect.left + rect.width/2;
+    const cy = rect.top + rect.height/2;
+    return Math.atan2(event.clientY-cy, event.clientX-cx);
+  }
+
+  function normalizeAngleDelta(d) {
+    if (d > Math.PI) d -= Math.PI*2;
+    if (d < -Math.PI) d += Math.PI*2;
+    return d;
+  }
+
+  function rotateFlatPointsAroundScreenCenter(delta) {
+    const pivot = controls.target.clone();
+    const axis = orthoCamera.getWorldDirection(new THREE.Vector3()).normalize();
+    balls.forEach(ball => {
+      const relative = ball.mesh.position.clone().sub(pivot).applyAxisAngle(axis, delta);
+      ball.mesh.position.copy(pivot).add(relative);
+      ball.targetPosition.copy(ball.mesh.position);
+      ball.startPosition.copy(ball.mesh.position);
+    });
+  }
+
+  renderer.domElement.addEventListener('pointerdown', event => {
+    if (mode !== '2d' || event.button !== 0) return;
+    rotating2D = true;
+    lastPointerAngle = pointerAngleFromScreenCenter(event);
+    controls.enabled = false;
+    renderer.domElement.setPointerCapture(event.pointerId);
+    event.preventDefault();
+    event.stopPropagation();
+  }, true);
+
+  renderer.domElement.addEventListener('pointermove', event => {
+    if (!rotating2D || mode !== '2d') return;
+    const a = pointerAngleFromScreenCenter(event);
+    const delta = normalizeAngleDelta(a-lastPointerAngle);
+    if (Number.isFinite(delta) && Math.abs(delta)>1e-6) rotateFlatPointsAroundScreenCenter(delta);
+    lastPointerAngle = a;
+    event.preventDefault();
+    event.stopPropagation();
+  }, true);
+
+  function finish2DRotation(event) {
+    if (!rotating2D) return;
+    rotating2D = false;
+    if (renderer.domElement.hasPointerCapture(event.pointerId)) renderer.domElement.releasePointerCapture(event.pointerId);
+    if (mode === '2d') { configure2DControls(); controls.update(); }
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  renderer.domElement.addEventListener('pointerup', finish2DRotation, true);
+  renderer.domElement.addEventListener('pointercancel', finish2DRotation, true);
+
+  document.getElementById('btn2d').addEventListener('click', begin3DTo2D);
+  document.getElementById('btn1d').addEventListener('click', begin2DTo1D);
+  document.getElementById('reset').addEventListener('click', resetTo3D);
+
+  function animateTransition(now) {
+    if (!transition) return;
+    const rawT = Math.min(1, (now-transition.startTime)/transition.duration);
+    const t = smoothstep(rawT);
+
+    if (transition.kind === 'to2d') {
+      const cameraPos = perspectiveCamera.position;
+      const forward = perspectiveCamera.getWorldDirection(tmpForward).normalize();
+      balls.forEach(ball => {
+        ball.mesh.position.lerpVectors(ball.startPosition, ball.targetPosition, t);
+        const currentDepth = ball.mesh.position.clone().sub(cameraPos).dot(forward);
+        const startScreenRadius = ball.startScale/Math.max(.001,ball.startDepth);
+        const endScreenRadius = ball.targetScale/Math.max(.001,ball.targetDepth);
+        const currentScale = THREE.MathUtils.lerp(startScreenRadius,endScreenRadius,t)*Math.max(.001,currentDepth);
+        ball.mesh.scale.setScalar(currentScale);
+        ball.mesh.material.uniforms.flatness.value = THREE.MathUtils.lerp(ball.startFlatness,1,t);
+      });
+
+      if (rawT >= 1) {
+        const planePoint = transition.planePoint.clone();
+        balls.forEach(ball => {
+          ball.mesh.position.copy(ball.targetPosition);
+          ball.mesh.scale.setScalar(CONFIG.flatRadius);
+          ball.mesh.material.uniforms.flatness.value = 1;
+        });
+        activeCamera = orthoCamera;
+        transition = null;
+        mode = '2d';
+        controls.target.copy(planePoint);
+        configure2DControls();
+        controls.update();
+        hint.textContent = '2D: left-drag to rotate around screen center · right-drag to pan · zoom disabled';
+      }
+    } else if (transition.kind === 'to1d') {
+      balls.forEach(ball => {
+        ball.mesh.position.lerpVectors(ball.startPosition,ball.targetPosition,t);
+        ball.mesh.scale.setScalar(THREE.MathUtils.lerp(ball.startScale,CONFIG.flatRadius,t));
+        ball.mesh.material.uniforms.flatness.value = THREE.MathUtils.lerp(ball.startFlatness,1,t);
+      });
+      if (rawT >= 1) {
+        balls.forEach(ball => ball.mesh.position.copy(ball.targetPosition));
+        transition = null;
+        mode = '1d';
+        configure1DControls();
+        controls.update();
+        hint.textContent = '1D: all points collapsed to a horizontal line · drag to pan';
+      }
+    }
+  }
+
+  function animate(now) {
+    requestAnimationFrame(animate);
+    animateTransition(now);
+    controls.update();
+    renderer.render(scene,activeCamera);
+  }
+
+  function onResize() {
+    const w=window.innerWidth, h=window.innerHeight, aspect=w/h;
+    renderer.setSize(w,h);
+    perspectiveCamera.aspect=aspect;
+    perspectiveCamera.updateProjectionMatrix();
+    if (mode==='2d' || mode==='1d' || mode==='transition1d') {
+      const halfHeight=(orthoCamera.top-orthoCamera.bottom)/2;
+      const midX=(orthoCamera.left+orthoCamera.right)/2;
+      orthoCamera.left=midX-halfHeight*aspect;
+      orthoCamera.right=midX+halfHeight*aspect;
+      orthoCamera.updateProjectionMatrix();
+    }
+  }
+
+  window.addEventListener('resize',onResize);
+  resetTo3D();
+  requestAnimationFrame(animate);
+</script>
+</body>
+</html>
