@@ -21,7 +21,6 @@ const elements = {
     voltageSliderControl: document.getElementById('voltageSliderControl'),
     voltageAnnouncement: document.getElementById('voltageAnnouncement'),
     sampleResult: document.getElementById('sampleResult'),
-    btnEncode: document.getElementById('btnEncode'),
     btnSample: document.getElementById('btnSample'),
     btnClear: document.getElementById('btnClear'),
 };
@@ -35,10 +34,7 @@ const receivedBits = new ReceivedBits();
 
 restrictToAscii(elements.textInput);
 
-elements.btnEncode.addEventListener('click', encodeMessage);
-elements.textInput.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter') encodeMessage();
-});
+elements.textInput.addEventListener('input', encodeMessage);
 elements.voltageSlider.addEventListener('input', () => {
     cancelSliderSettling();
     setTransmitterVoltage(Number(elements.voltageSlider.value));
@@ -48,11 +44,8 @@ elements.btnSample.addEventListener('click', sampleReceiverVoltage);
 elements.btnClear.addEventListener('click', clearReceivedData);
 
 function encodeMessage() {
-    const text = elements.textInput.value || 'A';
-    elements.textInput.value = text;
-    binaryData = stringToBinary(text);
+    binaryData = stringToBinary(elements.textInput.value);
     clearReceivedData();
-    updateTransmittedBits();
 }
 
 function setTransmitterVoltage(voltage) {
@@ -132,7 +125,7 @@ function voltageToBit(voltage) {
 function updateTransmittedBits() {
     const activeIndex = receivedBits.count < binaryData.length ? receivedBits.count : -1;
     elements.sentBinary.innerHTML = renderTransmittedBits(binaryData, activeIndex);
-    elements.targetBit.textContent = activeIndex >= 0 ? binaryData[activeIndex] : '✓';
+    elements.targetBit.textContent = activeIndex >= 0 ? binaryData[activeIndex] : (binaryData ? '✓' : '–');
 }
 
 function clearReceivedData() {

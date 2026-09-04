@@ -14,10 +14,13 @@
 
 * { box-sizing: border-box; touch-action: manipulation; }
 
+html { height: 100%; }
+
 body {
-    min-height: 100vh;
+    height: 100dvh;
     margin: 0;
-    padding: 16px;
+    padding: 10px;
+    overflow: hidden;
     color: var(--text);
     background:
         radial-gradient(circle at 50% 0%, rgba(69, 162, 158, 0.12), transparent 38rem),
@@ -32,12 +35,15 @@ button { cursor: pointer; }
 
 .game-shell {
     width: min(1180px, 100%);
+    height: 100%;
     margin: 0 auto;
     display: grid;
-    gap: 22px;
+    grid-template-rows: minmax(180px, 34%) minmax(0, 1fr);
+    gap: 14px;
 }
 
 .voltage-monitor {
+    min-height: 0;
     overflow: hidden;
     border: 3px solid #28333d;
     border-radius: 16px;
@@ -46,8 +52,8 @@ button { cursor: pointer; }
 }
 
 .monitor-header {
-    min-height: 76px;
-    padding: 14px 20px;
+    height: 60px;
+    padding: 9px 16px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -57,7 +63,7 @@ button { cursor: pointer; }
 }
 
 .eyebrow {
-    margin: 0 0 2px;
+    margin: 0;
     color: var(--tx);
     font-size: 0.74rem;
     font-weight: 800;
@@ -81,8 +87,9 @@ h1 {
 }
 
 .monitor-readings {
-    min-height: 220px;
-    padding: 18px;
+    height: calc(100% - 60px);
+    min-height: 0;
+    padding: 10px 14px;
     display: grid;
     grid-template-columns: minmax(0, 1fr) 54px minmax(0, 1fr);
     align-items: stretch;
@@ -90,11 +97,11 @@ h1 {
 
 .voltage-reading {
     min-width: 0;
-    padding: 14px 16px;
+    padding: 9px 12px;
     display: grid;
     grid-template-columns: auto minmax(140px, 1fr);
     grid-template-rows: auto 1fr;
-    gap: 8px 22px;
+    gap: 5px 14px;
     border: 1px solid #23323c;
     border-radius: 12px;
     background: linear-gradient(145deg, rgba(22, 35, 43, 0.88), rgba(5, 10, 14, 0.75));
@@ -125,15 +132,15 @@ h1 {
 
 .voltage-value b {
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    font-size: clamp(3rem, 8vw, 5.3rem);
+    font-size: clamp(2.15rem, 5.4vw, 3.7rem);
     line-height: 1;
 }
 
-.voltage-value small { font-size: clamp(1.1rem, 3vw, 1.6rem); }
+.voltage-value small { font-size: clamp(0.85rem, 2vw, 1.2rem); }
 
 .level-window {
     position: relative;
-    min-height: 125px;
+    min-height: 86px;
     overflow: hidden;
     border: 1px solid #1c313d;
     border-radius: 9px;
@@ -208,6 +215,7 @@ h1 {
 }
 
 .network-stage {
+    min-height: 0;
     display: grid;
     grid-template-columns: minmax(280px, 1fr) minmax(90px, 0.36fr) minmax(280px, 1fr);
     align-items: center;
@@ -216,7 +224,7 @@ h1 {
 .device {
     min-width: 0;
     position: relative;
-    padding: 13px;
+    padding: 9px;
     border: 2px solid #98a5af;
     border-radius: 13px;
     background: linear-gradient(145deg, #d7dde2, #8d9ba7);
@@ -266,11 +274,11 @@ h1 {
 .receiver-device .device-label { color: var(--rx); border-color: var(--rx); }
 
 .device-screen {
-    min-height: 320px;
-    padding: 18px;
+    min-height: 260px;
+    padding: 12px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 7px;
     border: 3px solid #2c343a;
     border-radius: 8px;
     background: var(--screen);
@@ -279,8 +287,8 @@ h1 {
 
 .transmitter-screen {
     display: grid;
-    grid-template-columns: 68px minmax(0, 1fr);
-    gap: 12px;
+    grid-template-columns: 62px minmax(0, 1fr);
+    gap: 9px;
     direction: ltr;
 }
 
@@ -288,7 +296,7 @@ h1 {
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 7px;
 }
 
 .device-screen label,
@@ -298,12 +306,10 @@ h1 {
     font-weight: 700;
 }
 
-.encode-row { display: flex; gap: 7px; }
-
 input[type="text"] {
     min-width: 0;
     flex: 1;
-    padding: 8px 10px;
+    padding: 7px 9px;
     color: var(--tx);
     border: 1px solid #40515e;
     border-radius: 6px;
@@ -315,24 +321,19 @@ input[type="text"] {
 
 input[type="text"]:focus { border-color: var(--tx); box-shadow: 0 0 0 3px rgba(102, 252, 241, 0.12); }
 
-#asciiHint { color: #6f7d86; font-size: 0.67rem; }
-
-.btn-secondary,
 .clear-button {
-    padding: 7px 10px;
+    padding: 6px 9px;
     color: #d8e1e5;
     border: 1px solid #40515e;
     border-radius: 6px;
     background: #26333d;
 }
 
-.btn-secondary:hover,
-.btn-secondary:focus-visible,
 .clear-button:hover,
 .clear-button:focus-visible { border-color: var(--tx-dark); background: #31424e; outline: none; }
 
 .target-bit {
-    padding: 9px 12px;
+    padding: 6px 9px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -346,13 +347,13 @@ input[type="text"]:focus { border-color: var(--tx); box-shadow: 0 0 0 3px rgba(1
 .target-bit strong {
     min-width: 38px;
     color: var(--tx);
-    font: 800 1.6rem ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font: 800 1.3rem ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     text-align: center;
 }
 
 .voltage-slider-control {
     min-width: 0;
-    padding: 7px 5px;
+    padding: 5px 4px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -376,10 +377,10 @@ input[type="text"]:focus { border-color: var(--tx); box-shadow: 0 0 0 3px rgba(1
 }
 
 .slider-track-wrap {
-    min-height: 190px;
+    min-height: 154px;
     position: relative;
     display: grid;
-    grid-template-rows: auto minmax(145px, 1fr) auto;
+    grid-template-rows: auto minmax(112px, 1fr) auto;
     justify-items: center;
     align-items: center;
 }
@@ -387,7 +388,7 @@ input[type="text"]:focus { border-color: var(--tx); box-shadow: 0 0 0 3px rgba(1
 .voltage-slider {
     width: 28px;
     height: 100%;
-    min-height: 145px;
+    min-height: 112px;
     margin: 0;
     padding: 0;
     border: 0;
@@ -442,17 +443,19 @@ input[type="text"]:focus { border-color: var(--tx); box-shadow: 0 0 0 3px rgba(1
 .voltage-slider-control[data-level="1"] .voltage-slider { accent-color: var(--high); }
 
 .data-block {
-    min-height: 62px;
+    min-height: 48px;
     margin-top: auto;
-    padding: 8px 10px;
+    padding: 5px 7px;
     border-top: 1px solid #25333d;
 }
 
 .binary-display {
-    margin-top: 5px;
-    min-height: 25px;
+    margin-top: 2px;
+    min-height: 20px;
+    max-height: 72px;
+    overflow-y: auto;
     color: #dbe7ec;
-    font: 700 clamp(0.86rem, 2.7vw, 1rem)/1.7 'Courier New', monospace;
+    font: 700 clamp(0.76rem, 2vw, 0.92rem)/1.55 'Courier New', monospace;
     letter-spacing: 1px;
     direction: ltr;
     text-align: left;
@@ -471,9 +474,12 @@ input[type="text"]:focus { border-color: var(--tx); box-shadow: 0 0 0 3px rgba(1
 
 .wire {
     position: relative;
-    height: 46px;
+    height: 82px;
     display: flex;
+    flex-direction: column;
     align-items: center;
+    justify-content: center;
+    gap: 14px;
     z-index: 1;
 }
 
@@ -504,7 +510,7 @@ input[type="text"]:focus { border-color: var(--tx); box-shadow: 0 0 0 3px rgba(1
 
 .wire-name {
     position: absolute;
-    top: 0;
+    top: 3px;
     left: 50%;
     padding: 2px 8px;
     color: var(--tx);
@@ -516,16 +522,9 @@ input[type="text"]:focus { border-color: var(--tx); box-shadow: 0 0 0 3px rgba(1
     transform: translateX(-50%);
 }
 
-.receiver-instruction {
-    margin: 0;
-    color: #9cabb4;
-    font-size: 0.78rem;
-    line-height: 1.8;
-}
-
 .sample-button {
-    min-height: 64px;
-    padding: 10px 14px;
+    min-height: 48px;
+    padding: 8px 12px;
     color: #00180d;
     border: 0;
     border-radius: 9px;
@@ -540,7 +539,7 @@ input[type="text"]:focus { border-color: var(--tx); box-shadow: 0 0 0 3px rgba(1
 .sample-icon { margin-left: 5px; font-size: 1.3rem; }
 
 .sample-result {
-    min-height: 24px;
+    min-height: 20px;
     margin: 0;
     color: var(--rx);
     font-size: 0.75rem;
@@ -551,8 +550,8 @@ input[type="text"]:focus { border-color: var(--tx); box-shadow: 0 0 0 3px rgba(1
 .new-rx-correct { border-radius: 2px; background: rgba(0, 255, 136, 0.3); }
 
 .decoded-row {
-    min-height: 42px;
-    padding: 7px 10px;
+    min-height: 34px;
+    padding: 5px 8px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -568,7 +567,16 @@ input[type="text"]:focus { border-color: var(--tx); box-shadow: 0 0 0 3px rgba(1
     direction: ltr;
 }
 
-.clear-button { align-self: center; font-size: 0.72rem; }
+.clear-button {
+    position: relative;
+    z-index: 2;
+    align-self: center;
+    flex: none;
+    font-size: 0.68rem;
+    white-space: nowrap;
+}
+
+.clear-icon { margin-left: 3px; font-size: 0.9rem; }
 
 .sr-only {
     position: absolute;
@@ -583,35 +591,65 @@ input[type="text"]:focus { border-color: var(--tx); box-shadow: 0 0 0 3px rgba(1
 }
 
 @media (max-width: 780px) {
-    body { padding: 8px; }
-    .game-shell { gap: 15px; }
-    .monitor-header { padding: 11px 13px; }
-    .monitor-readings { min-height: 170px; padding: 10px; grid-template-columns: minmax(0, 1fr) 30px minmax(0, 1fr); }
-    .voltage-reading { padding: 10px; grid-template-columns: 1fr; grid-template-rows: auto auto 1fr; gap: 5px; }
-    .voltage-value { justify-self: start; }
-    .voltage-value b { font-size: clamp(2.2rem, 12vw, 3.4rem); }
-    .level-window { min-height: 72px; }
-    .network-stage { grid-template-columns: 1fr; gap: 8px; }
-    .device { width: 100%; }
-    .wire { width: 100%; height: 58px; justify-content: center; }
-    .wire-core { width: 11px; height: 100%; border: 0; border-right: 1px solid #5a7b96; border-left: 1px solid #000; background: linear-gradient(90deg, #354f61, #172530); }
-    .wire-pulse { inset: 0; width: 100%; height: 42%; background: linear-gradient(180deg, transparent, rgba(102, 252, 241, 0.88), transparent); animation-name: wire-flow-mobile; }
-    .wire-name { top: 50%; left: calc(50% + 42px); transform: translate(-50%, -50%); }
-    .device-screen { min-height: 0; }
-}
-
-@keyframes wire-flow-mobile {
-    from { transform: translateY(-110%); }
-    to { transform: translateY(340%); }
+    body { padding: 5px; }
+    .game-shell { grid-template-rows: minmax(150px, 30%) minmax(0, 1fr); gap: 8px; }
+    .monitor-header { height: 52px; padding: 6px 9px; }
+    .monitor-readings { height: calc(100% - 52px); padding: 6px; grid-template-columns: minmax(0, 1fr) 22px minmax(0, 1fr); }
+    .voltage-reading { padding: 6px; grid-template-columns: auto minmax(50px, 1fr); grid-template-rows: auto 1fr; gap: 3px 5px; }
+    .voltage-value { justify-self: center; }
+    .voltage-value b { font-size: clamp(1.6rem, 7vw, 2.2rem); }
+    .voltage-value small { font-size: 0.7rem; }
+    .level-window { min-height: 58px; }
+    .level-guide { left: 4px; font-size: 0.52rem; }
+    .level-track { left: 25px; right: 6px; top: 12px; bottom: 12px; }
+    .network-stage { grid-template-columns: minmax(0, 1fr) 30px minmax(0, 1fr); gap: 0; align-items: center; }
+    .device { width: auto; padding: 5px; border-width: 1px; }
+    .device-screen { min-height: 0; padding: 7px; gap: 5px; border-width: 2px; }
+    .device-label { top: -11px; padding: 2px 6px; border-width: 1px; font-size: 0.58rem; }
+    .device::before { bottom: -12px; width: 28px; height: 12px; }
+    .device::after { bottom: -16px; width: 55px; height: 5px; }
+    .transmitter-screen { grid-template-columns: 45px minmax(0, 1fr); padding: 6px; gap: 5px; }
+    .transmitter-content { gap: 5px; }
+    input[type="text"] { width: 100%; padding: 5px 6px; font-size: 0.7rem; }
+    .target-bit { padding: 4px 5px; font-size: 0.62rem; gap: 2px; }
+    .target-bit strong { min-width: 20px; font-size: 1.05rem; }
+    .voltage-slider-control { padding: 3px 2px; gap: 2px; }
+    .voltage-slider-control label { font-size: 0.58rem; }
+    .voltage-slider-control output { font-size: 0.62rem; }
+    .slider-track-wrap { min-height: 142px; }
+    .voltage-slider { min-height: 104px; width: 23px; }
+    .voltage-slider-control small { font-size: 0.47rem; }
+    .slider-threshold { left: calc(50% + 11px); font-size: 0.48rem; }
+    .data-block { min-height: 42px; padding: 4px; }
+    .data-label { font-size: 0.61rem; }
+    .binary-display { max-height: 82px; font-size: 0.68rem; letter-spacing: 0; }
+    .byte-block { margin-right: 3px; }
+    .wire { width: 30px; height: 70px; min-height: 0; gap: 0; }
+    .wire-core { width: 100%; height: 9px; }
+    .wire-pulse { inset: 0 auto 0 0; width: 42%; height: 100%; background: linear-gradient(90deg, transparent, rgba(102, 252, 241, 0.88), transparent); animation-name: wire-flow; }
+    .wire-name { display: none; }
+    .clear-button { position: absolute; top: calc(50% + 12px); left: 50%; width: 28px; height: 28px; padding: 0; border-radius: 50%; transform: translateX(-50%); }
+    .clear-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); }
+    .clear-icon { margin: 0; font-size: 1rem; }
+    .sample-button { min-height: 40px; padding: 5px; font-size: 0.68rem; }
+    .sample-icon { margin-left: 2px; font-size: 0.9rem; }
+    .sample-result { min-height: 31px; font-size: 0.58rem; line-height: 1.45; }
+    .decoded-row { min-height: 30px; padding: 3px 5px; font-size: 0.58rem; }
+    .decoded-row strong { font-size: 0.86rem; }
 }
 
 @media (max-width: 480px) {
-    .monitor-header { align-items: flex-start; flex-direction: column; gap: 7px; }
-    .delay-badge { align-self: flex-start; }
-    .monitor-readings { grid-template-columns: minmax(0, 1fr) 22px minmax(0, 1fr); }
-    .voltage-reading { padding: 8px; }
-    .level-window { min-width: 0; }
-    .reading-label { min-height: 38px; }
-    .encode-row { flex-direction: column; }
-    .transmitter-screen { grid-template-columns: 60px minmax(0, 1fr); padding: 13px; gap: 8px; }
+    .eyebrow { display: none; }
+    h1 { font-size: 0.82rem; }
+    .delay-badge { padding: 3px 5px; font-size: 0.54rem; }
+    .reading-label { font-size: 0.58rem; }
+}
+
+@media (max-height: 650px) {
+    .game-shell { grid-template-rows: minmax(140px, 29%) minmax(0, 1fr); gap: 7px; }
+    .monitor-header { height: 48px; }
+    .monitor-readings { height: calc(100% - 48px); }
+    .device-screen { padding-top: 6px; padding-bottom: 6px; }
+    .slider-track-wrap { min-height: 124px; }
+    .voltage-slider { min-height: 88px; }
 }

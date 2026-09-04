@@ -63,12 +63,7 @@
                     </div>
 
                     <div class="transmitter-content" dir="rtl">
-                        <label for="textInput">پیامی که می‌خواین به بیت تبدیل کنین</label>
-                        <div class="encode-row">
-                            <input type="text" id="textInput" value="Hi" maxlength="8" autocomplete="off" aria-describedby="asciiHint">
-                            <button type="button" class="btn-secondary" id="btnEncode">تبدیل به بیت‌ها</button>
-                        </div>
-                        <small id="asciiHint">فعلاً از حروف و نشانه‌های انگلیسی استفاده کنین.</small>
+                        <input type="text" id="textInput" value="Hi" maxlength="8" autocomplete="off" aria-label="پیام انگلیسی برای تبدیل به بیت" placeholder="پیامتون رو اینجا بنویسین (Hi)">
 
                         <div class="target-bit" aria-live="polite">
                             <span>بیتی که الان باید بفرستین</span>
@@ -83,15 +78,18 @@
                 </div>
             </article>
 
-            <div class="wire" aria-hidden="true">
-                <span class="wire-name">DATA Cable</span>
-                <span class="wire-core"><span class="wire-pulse"></span></span>
+            <div class="wire">
+                <span class="wire-name" aria-hidden="true">DATA Cable</span>
+                <span class="wire-core" aria-hidden="true"><span class="wire-pulse"></span></span>
+                <button type="button" class="clear-button" id="btnClear" aria-label="پاک‌کردن بیت‌های خوانده‌شده">
+                    <span class="clear-icon">↻</span>
+                    <span class="clear-label">پاک‌کردن دریافت</span>
+                </button>
             </div>
 
             <article class="device receiver-device" dir="rtl">
                 <div class="device-label">🖥️ گیرنده (RX)</div>
                 <div class="device-screen">
-                    <p class="receiver-instruction">با فشردن دکمه، گیرنده ولتاژ همین لحظهٔ انتهای سیم رو نمونه‌برداری می‌کنه.</p>
                     <button type="button" class="sample-button" id="btnSample">
                         <span class="sample-icon">◎</span>
                         خواندن ولتاژ
@@ -106,7 +104,6 @@
                         <span>متن خوانده‌شده</span>
                         <strong id="receivedText">-</strong>
                     </div>
-                    <button type="button" class="clear-button" id="btnClear">پاک‌کردن دریافت</button>
                 </div>
             </article>
         </section>
