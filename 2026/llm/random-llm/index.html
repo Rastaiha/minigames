@@ -457,6 +457,23 @@
       'کجا', 'چرا', 'چطور', 'چه'
     ]);
 
+    const PERSIAN_VERB_PREFIXES = Object.freeze(['می‌', 'نمی‌']);
+    const PERSIAN_VERB_ROOTS = Object.freeze([
+      'خواند', 'نوشت', 'دید', 'رفت', 'آمد', 'ماند', 'ساخت', 'گفت', 'پرسید', 'خواست', 'دانست', 'فهمید'
+    ]);
+    const PERSIAN_WORD_PREFIXES = Object.freeze(['بی‌', 'نا', 'هم‌']);
+    const PERSIAN_PREFIX_ROOTS = Object.freeze([
+      'معنا', 'نظم', 'خبر', 'صدا', 'رنگ', 'راه', 'فکر', 'زمان', 'آرام', 'روشن', 'پایان', 'شروع', 'ممکن'
+    ]);
+    const PERSIAN_NOUN_ROOTS = Object.freeze([
+      'کتاب', 'خانه', 'پنجره', 'درخت', 'شهر', 'کلمه', 'جمله', 'داستان', 'مدل', 'داده', 'تصویر', 'دوست', 'راه'
+    ]);
+    const PERSIAN_NOUN_SUFFIXES = Object.freeze(['‌ها', '‌های', 'م', 'ت', 'ش', 'مان', 'تان', 'شان']);
+    const PERSIAN_ADJECTIVE_ROOTS = Object.freeze([
+      'آرام', 'سریع', 'روشن', 'تاریک', 'بزرگ', 'کوچک', 'خوب', 'عجیب', 'ساده', 'پیچیده', 'تازه', 'زیبا'
+    ]);
+    const PERSIAN_ADJECTIVE_SUFFIXES = Object.freeze(['‌تر', '‌ترین', 'ی', 'انه']);
+
     function randomIndex(limit) {
       const value = new Uint32Array(1);
       crypto.getRandomValues(value);
@@ -465,6 +482,35 @@
 
     function randomPersianToken() {
       return PERSIAN_TOKENS[randomIndex(PERSIAN_TOKENS.length)];
+    }
+
+    function randomFrom(tokens) {
+      return tokens[randomIndex(tokens.length)];
+    }
+
+    function buildPersianTokenSequence(limit) {
+      const sequence = [];
+      while (sequence.length < limit) {
+        const remaining = limit - sequence.length;
+        const mode = randomIndex(100);
+
+        if (remaining >= 2 && mode < 15) {
+          sequence.push({ text: randomFrom(PERSIAN_VERB_PREFIXES), joinLeft: false });
+          sequence.push({ text: randomFrom(PERSIAN_VERB_ROOTS), joinLeft: true });
+        } else if (remaining >= 2 && mode < 27) {
+          sequence.push({ text: randomFrom(PERSIAN_WORD_PREFIXES), joinLeft: false });
+          sequence.push({ text: randomFrom(PERSIAN_PREFIX_ROOTS), joinLeft: true });
+        } else if (remaining >= 2 && mode < 42) {
+          sequence.push({ text: randomFrom(PERSIAN_NOUN_ROOTS), joinLeft: false });
+          sequence.push({ text: randomFrom(PERSIAN_NOUN_SUFFIXES), joinLeft: true });
+        } else if (remaining >= 2 && mode < 52) {
+          sequence.push({ text: randomFrom(PERSIAN_ADJECTIVE_ROOTS), joinLeft: false });
+          sequence.push({ text: randomFrom(PERSIAN_ADJECTIVE_SUFFIXES), joinLeft: true });
+        } else {
+          sequence.push({ text: randomPersianToken(), joinLeft: false });
+        }
+      }
+      return sequence;
     }
 
     function initialiseModel() {
@@ -505,10 +551,12 @@
     function generate() {
       const element = addMessage('assistant');
       element.classList.add('generating');
+      const tokenLimit = 20 + Math.floor(Math.random() * 16);
       const state = {
         element,
+        sequence: buildPersianTokenSequence(tokenLimit),
         count: 0,
-        limit: 20 + Math.floor(Math.random() * 16),
+        limit: tokenLimit,
         timer: null
       };
       generation = state;
@@ -518,10 +566,11 @@
 
       const next = () => {
         if (generation !== state) return;
-        if (state.count > 0) state.element.append(' ');
+        const piece = state.sequence[state.count];
+        if (state.count > 0 && !piece.joinLeft) state.element.append(' ');
         const token = document.createElement('span');
         token.className = 'generated-token entering';
-        token.textContent = randomPersianToken();
+        token.textContent = piece.text;
         state.element.append(token);
         setTimeout(() => token.classList.remove('entering'), 180);
         state.count++;
