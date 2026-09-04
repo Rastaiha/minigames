@@ -163,6 +163,61 @@ games/router/index.html
 submoduleها یکسان است؛ بازی‌های HTML ساده که `package.json` ندارند مستقیماً کپی
 می‌شوند.
 
+### چند بازی با کد مشترک در یک پروژه
+
+اگر چند بازی اجزای مشترک دارند، آن‌ها را می‌توان به‌صورت چند صفحهٔ یک پروژه
+ساخت؛ لازم نیست هر صفحه `package.json` و build جداگانه داشته باشد. در این حالت
+پوشهٔ پروژه باید همچنان یک `index.html` در ریشه داشته باشد و build هم همان ساختار
+مسیرها را داخل `dist/` نگه دارد. برای نمونه ساختار پروژهٔ کدگذاری داده چنین است:
+
+```text
+games/data-encoding/
+├── index.html
+├── shared/
+├── manchester/index.html
+├── timer/index.html
+├── package.json
+└── vite.config.js
+```
+
+و خروجی لازم آن:
+
+```text
+games/data-encoding/dist/
+├── index.html
+├── manchester/index.html
+└── timer/index.html
+```
+
+در Vite، همهٔ صفحه‌ها ــ از جمله `index.html` ریشه ــ باید در
+`build.rollupOptions.input` ثبت شوند. حذف ورودی ریشه باعث می‌شود قرارداد
+آماده‌ساز سایت (`dist/index.html`) شکسته شود؛ ثبت‌نکردن یکی از صفحه‌های داخلی هم
+باعث می‌شود آن مسیر در خروجی نهایی وجود نداشته باشد.
+
+لینک‌های بین صفحه‌های چنین پروژه‌ای باید نسبت به فایل فعلی نوشته شوند و نام
+`index.html` را صریح داشته باشند:
+
+```html
+<a href="./manchester/index.html">…</a>
+<a href="./timer/index.html">…</a>
+```
+
+از مسیر مطلقی مثل `/manchester/` استفاده نکنید: بازی در سایت نهایی زیر
+`/games/<project-name>/` قرار می‌گیرد و ممکن است کل سایت نیز با یک base path مثل
+GitHub Project Pages منتشر شود. به مسیر پوشه‌ای مثل `./manchester/` هم تکیه نکنید؛
+همهٔ static serverها تبدیل خودکار آن به `index.html` را یکسان انجام نمی‌دهند.
+query string روی صفحهٔ مبدأ (برای نمونه `index.html?v=...`) در resolveشدن این
+لینک‌های نسبی مشکلی ایجاد نمی‌کند.
+
+بعد از ساخت یا تغییر یک بازی چندصفحه‌ای، این موارد را بررسی کنید:
+
+1. `npm run build` در پوشهٔ پروژه موفق شود.
+2. `dist/index.html` و `dist/<page>/index.html` برای تک‌تک صفحه‌ها وجود داشته باشد.
+3. لینک‌های صفحهٔ اصلی به شکل `./<page>/index.html` باشند.
+4. assetها و importهای مشترک نیز نسبی باشند و هیچ‌کدام ریشهٔ دامنه (`/`) را فرض نکنند.
+5. صفحهٔ اصلی و همهٔ صفحه‌های داخلی را از مسیر نهایی
+   `/games/<project-name>/.../index.html` آزمایش کنید، نه فقط از dev server خود Vite.
+
 بازی routing از مخزن مستقل زیر به‌شکل submodule در `games/routing` قرار دارد:
 
 ```text

@@ -10,6 +10,9 @@ or progression system, read:
 
 Treat these files as the product and content-model specification.
 
+Before creating or changing a game, read `## قراردادن بازی‌ها` in
+`docs/development.md`, including the multi-page game checklist.
+
 ## Core invariants
 
 - The application is Persian-first and RTL.
@@ -22,3 +25,6 @@ Treat these files as the product and content-model specification.
   automatic grading.
 - Preserve student work across rejected attempts.
 - Only reveal the final explanation after mentor acceptance.
+- Game-to-game links must be relative and explicitly end in `index.html`.
+- A built multi-page game must retain `dist/index.html` and every nested page's
+  `dist/<page>/index.html`; register all of them as build inputs.
