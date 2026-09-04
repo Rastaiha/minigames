@@ -1,11 +1,17 @@
 <!doctype html>
-<html lang="en">
+<html lang="fa">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
   <title>مدل خام | مدل زبانی آموزش‌ندیده</title>
   <style>
+    @font-face {
+      font-family: "Vazir";
+      src: url("../fonts/vazir.ttf") format("truetype");
+      font-display: swap;
+    }
+
     :root {
       --page: #dfe8f3;
       --surface: #f8fafc;
@@ -32,7 +38,7 @@
       background:
         radial-gradient(circle at 14% 8%, rgba(255, 255, 255, 0.82), transparent 29%),
         var(--page);
-      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: "Vazir", Tahoma, "Segoe UI", sans-serif;
     }
 
     .chat {
@@ -66,16 +72,20 @@
       color: white;
       background: var(--ink);
       border-radius: 13px;
-      font-family: Georgia, "Times New Roman", serif;
+      font-family: "Vazir", Tahoma, sans-serif;
       font-size: 22px;
-      font-style: italic;
+      font-style: normal;
     }
 
-    .identity { min-width: 0; }
+    .identity {
+      min-width: 0;
+      direction: rtl;
+      text-align: right;
+    }
 
     h1 {
       margin: 0 0 3px;
-      font-family: Georgia, "Times New Roman", serif;
+      font-family: "Vazir", Tahoma, sans-serif;
       font-size: 19px;
       font-weight: 600;
       letter-spacing: -0.02em;
@@ -88,7 +98,8 @@
       gap: 7px;
       color: var(--muted);
       font-size: 12px;
-      letter-spacing: 0.02em;
+      direction: rtl;
+      letter-spacing: 0;
     }
 
     .status-dot {
@@ -127,6 +138,8 @@
       color: var(--ink);
       background: #e9edf3;
       border-bottom-left-radius: 5px;
+      direction: rtl;
+      text-align: right;
     }
 
     .message.user {
@@ -134,6 +147,8 @@
       color: var(--user-ink);
       background: var(--user);
       border-bottom-right-radius: 5px;
+      direction: rtl;
+      text-align: right;
     }
 
     .message.generating::after {
@@ -184,6 +199,8 @@
       font: inherit;
       font-size: 15px;
       line-height: 1.45;
+      direction: rtl;
+      text-align: right;
     }
 
     textarea::placeholder { color: #9ba5b5; }
@@ -240,7 +257,7 @@
       <div class="avatar" aria-hidden="true">خ</div>
       <div class="identity">
         <h1>مدل خام</h1>
-        <p class="status"><span class="status-dot" aria-hidden="true"></span><span id="statusText">در حال بارگذاری توکنایزر GPT-2…</span></p>
+        <p class="status"><span class="status-dot" aria-hidden="true"></span><span id="statusText">در حال آماده‌سازی توکن‌های فارسی…</span></p>
       </div>
     </header>
 
@@ -344,34 +361,39 @@
       return Uint8Array.from(Array.from(token), character => byteDecoder.get(character));
     }
 
-    function randomTokenId() {
+    const PERSIAN_TOKENS = Object.freeze([
+      'من', 'تو', 'او', 'ما', 'شما', 'آن‌ها', 'این', 'آن', 'یک', 'چند', 'هر', 'هیچ', 'همه', 'کسی', 'چیزی',
+      'امروز', 'فردا', 'دیروز', 'صبح', 'شب', 'زمان', 'روز', 'سال', 'لحظه', 'اکنون', 'بعد', 'پیش',
+      'خانه', 'مدرسه', 'دانشگاه', 'کتاب', 'کلمه', 'جمله', 'داستان', 'سؤال', 'پاسخ', 'مدل', 'داده', 'آموزش',
+      'فکر', 'ذهن', 'زبان', 'صدا', 'تصویر', 'رنگ', 'نور', 'سایه', 'پنجره', 'درخت', 'باران', 'ابر', 'آسمان',
+      'زمین', 'دریا', 'کوه', 'رود', 'شهر', 'خیابان', 'راه', 'سفر', 'دوست', 'مردم', 'کودک', 'پرنده',
+      'ماشین', 'رایانه', 'جهان', 'زندگی', 'کار', 'بازی', 'رویا', 'حقیقت', 'احتمال', 'انتخاب', 'حرکت', 'تغییر',
+      'شروع', 'پایان', 'میان', 'کنار', 'بالا', 'پایین', 'دور', 'نزدیک', 'در', 'از', 'به', 'با', 'برای', 'روی',
+      'زیر', 'بدون', 'و', 'یا', 'اما', 'اگر', 'چون', 'که', 'پس', 'هنوز', 'دوباره', 'شاید', 'همیشه', 'هرگز',
+      'گاهی', 'خیلی', 'کم', 'بیشتر', 'آرام', 'سریع', 'روشن', 'تاریک', 'بزرگ', 'کوچک', 'خوب', 'عجیب',
+      'ساده', 'پیچیده', 'تازه', 'قدیمی', 'ممکن', 'ناممکن', 'زیبا', 'خاموش', 'دید', 'گفت', 'رفت', 'آمد',
+      'ماند', 'نوشت', 'خواند', 'ساخت', 'پرسید', 'خواست', 'دانست', 'فهمید', 'یاد', 'گرفت', 'می‌بیند',
+      'می‌گوید', 'می‌رود', 'می‌آید', 'می‌ماند', 'می‌نویسد', 'می‌خواند', 'می‌سازد', 'می‌پرسد', 'می‌خواهد',
+      'می‌داند', 'می‌فهمد', 'بود', 'هست', 'شد', 'می‌شود', 'داشت', 'دارد', 'کرد', 'می‌کند', 'یافت', 'افتاد',
+      'رسید', 'گذشت', 'باز', 'هم', 'فقط', 'حتی', 'تقریباً', 'واقعاً', 'ناگهان', 'آهسته', 'اینجا', 'آنجا',
+      'کجا', 'چرا', 'چطور', 'چه'
+    ]);
+
+    function randomIndex(limit) {
       const value = new Uint32Array(1);
       crypto.getRandomValues(value);
-      return value[0] % 50256;
+      return value[0] % limit;
     }
 
-    async function loadTokenizer() {
-      try {
-        const binary = atob(TOKENIZER_GZIP_BASE64);
-        const compressed = Uint8Array.from(binary, character => character.charCodeAt(0));
-        const stream = new Blob([compressed]).stream().pipeThrough(new DecompressionStream('gzip'));
-        const tokenizer = await new Response(stream).json();
-        vocab = tokenizer.model.vocab;
-        idToToken = Array(Object.keys(vocab).length);
-        for (const [token, id] of Object.entries(vocab)) idToToken[id] = token;
-        mergeRanks = new Map(tokenizer.model.merges.map((merge, rank) => {
-          const split = merge.indexOf(' ');
-          return [merge.slice(0, split) + '\u0000' + merge.slice(split + 1), rank];
-        }));
-        buildByteMaps();
-        statusText.textContent = 'آموزش‌ندیده · توکن‌های GPT-2';
-        prompt.disabled = false;
-        send.disabled = false;
-        prompt.focus();
-      } catch (error) {
-        console.error(error);
-        statusText.textContent = 'توکنایزر در دسترس نیست';
-      }
+    function randomPersianToken() {
+      return PERSIAN_TOKENS[randomIndex(PERSIAN_TOKENS.length)];
+    }
+
+    function initialiseModel() {
+      statusText.textContent = 'آموزش‌ندیده · توکن‌های فارسی';
+      prompt.disabled = false;
+      send.disabled = false;
+      prompt.focus();
     }
 
     function addMessage(role, text = '') {
@@ -386,8 +408,6 @@
     function stopGeneration() {
       if (!generation) return;
       clearTimeout(generation.timer);
-      const tail = generation.decoder.decode();
-      if (tail) generation.element.textContent += tail;
       generation.element.classList.remove('generating');
       generation = null;
       send.classList.remove('is-generating');
@@ -401,7 +421,6 @@
       element.classList.add('generating');
       const state = {
         element,
-        decoder: new TextDecoder('utf-8'),
         count: 0,
         limit: 42 + Math.floor(Math.random() * 24),
         timer: null
@@ -412,8 +431,8 @@
 
       const next = () => {
         if (generation !== state) return;
-        const text = state.decoder.decode(tokenBytes(randomTokenId()), { stream: true });
-        if (text) state.element.textContent += text;
+        const separator = state.count === 0 ? '' : ' ';
+        state.element.textContent += separator + randomPersianToken();
         state.count++;
         messages.scrollTop = messages.scrollHeight;
         if (state.count >= state.limit) {
@@ -438,7 +457,6 @@
       }
       const text = prompt.value.trim();
       if (!text) return;
-      encode(text); // The initialized model receives real GPT-2 token IDs; its output ignores them.
       addMessage('user', text);
       prompt.value = '';
       resizePrompt();
@@ -454,7 +472,7 @@
       }
     });
 
-    loadTokenizer();
+    initialiseModel();
   </script>
 </body>
 </html>
