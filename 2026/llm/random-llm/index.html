@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <title>Random — an untrained language model</title>
+  <title>مدل خام | مدل زبانی آموزش‌ندیده</title>
   <style>
     :root {
       --page: #dfe8f3;
@@ -235,23 +235,21 @@
   </style>
 </head>
 <body>
-  <main class="chat" aria-label="Chat with Random">
+  <main class="chat" aria-label="گفت‌وگو با مدل خام">
     <header>
-      <div class="avatar" aria-hidden="true">R</div>
+      <div class="avatar" aria-hidden="true">خ</div>
       <div class="identity">
-        <h1>Random</h1>
-        <p class="status"><span class="status-dot" aria-hidden="true"></span><span id="statusText">Loading GPT-2 tokenizer…</span></p>
+        <h1>مدل خام</h1>
+        <p class="status"><span class="status-dot" aria-hidden="true"></span><span id="statusText">در حال بارگذاری توکنایزر GPT-2…</span></p>
       </div>
     </header>
 
-    <section class="messages" id="messages" aria-live="polite" aria-label="Conversation">
-      <div class="message assistant">I have a vocabulary, but no learned weights. Say anything.</div>
-    </section>
+    <section class="messages" id="messages" aria-live="polite" aria-label="گفت‌وگو"></section>
 
     <div class="composer-wrap">
       <form id="composer">
-        <textarea id="prompt" rows="1" maxlength="2000" placeholder="Message Random" aria-label="Message" disabled></textarea>
-        <button id="send" type="submit" aria-label="Send message" disabled>
+        <textarea id="prompt" rows="1" maxlength="2000" placeholder="پیام خود را بنویسید" aria-label="پیام" disabled></textarea>
+        <button id="send" type="submit" aria-label="ارسال پیام" disabled>
           <svg class="send-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           <svg class="stop-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" fill="currentColor"/></svg>
         </button>
@@ -366,13 +364,13 @@
           return [merge.slice(0, split) + '\u0000' + merge.slice(split + 1), rank];
         }));
         buildByteMaps();
-        statusText.textContent = 'untrained · GPT-2 tokens';
+        statusText.textContent = 'آموزش‌ندیده · توکن‌های GPT-2';
         prompt.disabled = false;
         send.disabled = false;
         prompt.focus();
       } catch (error) {
         console.error(error);
-        statusText.textContent = 'tokenizer unavailable';
+        statusText.textContent = 'توکنایزر در دسترس نیست';
       }
     }
 
@@ -393,7 +391,7 @@
       generation.element.classList.remove('generating');
       generation = null;
       send.classList.remove('is-generating');
-      send.setAttribute('aria-label', 'Send message');
+      send.setAttribute('aria-label', 'ارسال پیام');
       prompt.disabled = false;
       prompt.focus();
     }
@@ -410,7 +408,7 @@
       };
       generation = state;
       send.classList.add('is-generating');
-      send.setAttribute('aria-label', 'Stop generating');
+      send.setAttribute('aria-label', 'توقف تولید');
 
       const next = () => {
         if (generation !== state) return;
