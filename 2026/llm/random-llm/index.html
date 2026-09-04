@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <title>مدل خام | مدل زبانی آموزش‌ندیده</title>
+  <title>مدل خام | گفت‌وگوی فارسی</title>
   <style>
     @font-face {
       font-family: "Vazir";
@@ -21,6 +21,7 @@
       --user: #315be8;
       --user-ink: #ffffff;
       --accent: #ff7657;
+      --ready: #4cab83;
       --shadow: 0 28px 70px rgba(39, 55, 85, 0.16), 0 2px 8px rgba(39, 55, 85, 0.08);
     }
 
@@ -107,11 +108,12 @@
       height: 7px;
       flex: 0 0 auto;
       border-radius: 50%;
-      background: var(--accent);
-      box-shadow: 0 0 0 4px rgba(255, 118, 87, 0.13);
+      background: var(--ready);
+      box-shadow: 0 0 0 4px rgba(76, 171, 131, 0.13);
     }
 
     .messages {
+      position: relative;
       min-height: 0;
       padding: 28px 24px;
       overflow-y: auto;
@@ -123,12 +125,12 @@
 
     .message {
       width: fit-content;
-      max-width: min(78%, 560px);
+      max-width: min(76%, 540px);
       margin: 0 0 15px;
       padding: 12px 16px;
       border-radius: 18px;
-      font-size: 15px;
-      line-height: 1.55;
+      font-size: 16px;
+      line-height: 1.75;
       white-space: pre-wrap;
       overflow-wrap: anywhere;
       animation: arrive 180ms ease-out both;
@@ -161,6 +163,53 @@
       background: var(--accent);
       animation: blink 760ms step-end infinite;
     }
+
+    .generated-token {
+      border-radius: 5px;
+      transition: color 300ms ease, background 300ms ease;
+    }
+
+    .generated-token.entering {
+      color: #c75136;
+      background: rgba(255, 118, 87, 0.14);
+    }
+
+    .empty-state {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-content: center;
+      justify-items: center;
+      padding: 24px;
+      color: var(--muted);
+      text-align: center;
+      direction: rtl;
+      pointer-events: none;
+    }
+
+    .empty-state[hidden] { display: none; }
+
+    .empty-mark {
+      width: 50px;
+      height: 50px;
+      margin-bottom: 14px;
+      display: grid;
+      place-items: center;
+      color: var(--user);
+      background: rgba(49, 91, 232, 0.09);
+      border-radius: 17px;
+      font-size: 23px;
+      font-weight: 700;
+    }
+
+    .empty-state p {
+      margin: 0 0 5px;
+      color: var(--ink);
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .empty-state span { font-size: 13px; }
 
     .composer-wrap {
       padding: 16px;
@@ -229,6 +278,22 @@
     button.is-generating .send-icon { display: none; }
     button.is-generating .stop-icon { display: block; }
 
+    .clear-button {
+      width: 36px;
+      height: 36px;
+      margin-left: auto;
+      color: var(--muted);
+      background: transparent;
+      border-radius: 11px;
+    }
+
+    .clear-button:hover:not(:disabled) {
+      color: var(--ink);
+      background: #e9edf3;
+    }
+
+    .clear-button:disabled { cursor: default; opacity: 0.25; }
+
     @keyframes arrive {
       from { opacity: 0; transform: translateY(5px); }
       to { opacity: 1; transform: translateY(0); }
@@ -257,17 +322,28 @@
       <div class="avatar" aria-hidden="true">خ</div>
       <div class="identity">
         <h1>مدل خام</h1>
-        <p class="status"><span class="status-dot" aria-hidden="true"></span><span id="statusText">در حال آماده‌سازی توکن‌های فارسی…</span></p>
+        <p class="status"><span class="status-dot" aria-hidden="true"></span><span id="statusText">آماده گفت‌وگو</span></p>
       </div>
+      <button id="clearButton" class="clear-button" type="button" aria-label="پاک کردن گفت‌وگو" title="پاک کردن گفت‌وگو" disabled>
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
     </header>
 
-    <section class="messages" id="messages" aria-live="polite" aria-label="گفت‌وگو"></section>
+    <section class="messages" id="messages" aria-live="polite" aria-label="گفت‌وگو">
+      <div class="empty-state" id="emptyState">
+        <div class="empty-mark" aria-hidden="true">؟</div>
+        <p>هر چیزی می‌خواهی بنویس</p>
+        <span>یک سؤال، جمله یا موضوع را امتحان کن</span>
+      </div>
+    </section>
 
     <div class="composer-wrap">
       <form id="composer">
-        <textarea id="prompt" rows="1" maxlength="2000" placeholder="پیام خود را بنویسید" aria-label="پیام" disabled></textarea>
+        <textarea id="prompt" rows="1" maxlength="2000" placeholder="پیامت را بنویس…" aria-label="پیام" disabled></textarea>
         <button id="send" type="submit" aria-label="ارسال پیام" disabled>
-          <svg class="send-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <svg class="send-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           <svg class="stop-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" fill="currentColor"/></svg>
         </button>
       </form>
@@ -283,6 +359,8 @@
     const prompt = document.querySelector('#prompt');
     const send = document.querySelector('#send');
     const statusText = document.querySelector('#statusText');
+    const emptyState = document.querySelector('#emptyState');
+    const clearButton = document.querySelector('#clearButton');
 
     let vocab;
     let idToToken;
@@ -390,10 +468,16 @@
     }
 
     function initialiseModel() {
-      statusText.textContent = 'آموزش‌ندیده · توکن‌های فارسی';
+      statusText.textContent = 'آماده گفت‌وگو';
       prompt.disabled = false;
       send.disabled = false;
       prompt.focus();
+    }
+
+    function updateEmptyState() {
+      const hasMessages = Boolean(messages.querySelector('.message'));
+      emptyState.hidden = hasMessages;
+      clearButton.disabled = !hasMessages;
     }
 
     function addMessage(role, text = '') {
@@ -401,6 +485,7 @@
       message.className = `message ${role}`;
       message.textContent = text;
       messages.appendChild(message);
+      updateEmptyState();
       messages.scrollTop = messages.scrollHeight;
       return message;
     }
@@ -412,6 +497,7 @@
       generation = null;
       send.classList.remove('is-generating');
       send.setAttribute('aria-label', 'ارسال پیام');
+      statusText.textContent = 'آماده گفت‌وگو';
       prompt.disabled = false;
       prompt.focus();
     }
@@ -422,17 +508,22 @@
       const state = {
         element,
         count: 0,
-        limit: 42 + Math.floor(Math.random() * 24),
+        limit: 20 + Math.floor(Math.random() * 16),
         timer: null
       };
       generation = state;
       send.classList.add('is-generating');
       send.setAttribute('aria-label', 'توقف تولید');
+      statusText.textContent = 'در حال نوشتن…';
 
       const next = () => {
         if (generation !== state) return;
-        const separator = state.count === 0 ? '' : ' ';
-        state.element.textContent += separator + randomPersianToken();
+        if (state.count > 0) state.element.append(' ');
+        const token = document.createElement('span');
+        token.className = 'generated-token entering';
+        token.textContent = randomPersianToken();
+        state.element.append(token);
+        setTimeout(() => token.classList.remove('entering'), 180);
         state.count++;
         messages.scrollTop = messages.scrollHeight;
         if (state.count >= state.limit) {
@@ -462,6 +553,15 @@
       resizePrompt();
       prompt.disabled = true;
       generate();
+    });
+
+    clearButton.addEventListener('click', () => {
+      if (generation) stopGeneration();
+      messages.querySelectorAll('.message').forEach(message => message.remove());
+      prompt.value = '';
+      resizePrompt();
+      updateEmptyState();
+      prompt.focus();
     });
 
     prompt.addEventListener('input', resizePrompt);
