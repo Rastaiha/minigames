@@ -1,6 +1,7 @@
 ---
 import WorkshopLayout from '../../layouts/WorkshopLayout.astro'
 import EventCountdown from '../../components/EventCountdown.astro'
+import MiniGameFullscreen from '../../components/MiniGameFullscreen.astro'
 import {readRenderedStep, readStepIndex} from '../../lib/steps.js'
 
 export async function getStaticPaths() {
@@ -87,6 +88,8 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '')
       )}
     </div>
   </nav>
+
+  <MiniGameFullscreen />
 
   <script>
     const button = document.querySelector('.mentor-toggle')

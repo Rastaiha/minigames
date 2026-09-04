@@ -51,6 +51,13 @@ export function versionGameEntryUrls(html, versions) {
   )
 }
 
+export function wrapMiniGameIframes(html) {
+  return html.replace(
+    /(<iframe\b(?=[^>]*\bclass="[^"]*\bmini-game\b[^"]*")[^>]*><\/iframe>)/gi,
+    '<div class="mini-game-shell">$1</div>',
+  )
+}
+
 export async function readGameIndex() {
   const versions = await readGameEntryVersions()
   let entries
@@ -112,8 +119,8 @@ export async function readRenderedStep(entry) {
 
   return {
     ...entry,
-    mentorBefore: versionGameEntryUrls(mentorBefore, versions),
-    student: versionGameEntryUrls(student, versions),
-    mentorAfter: versionGameEntryUrls(mentorAfter, versions),
+    mentorBefore: wrapMiniGameIframes(versionGameEntryUrls(mentorBefore, versions)),
+    student: wrapMiniGameIframes(versionGameEntryUrls(student, versions)),
+    mentorAfter: wrapMiniGameIframes(versionGameEntryUrls(mentorAfter, versions)),
   }
 }

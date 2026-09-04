@@ -654,7 +654,7 @@ pre {
 
 img,
 video,
-.mini-game {
+.mini-game-shell {
   display: block;
   max-width: 100%;
   margin-block: 1.75rem;
@@ -664,12 +664,61 @@ video,
 
 img { box-shadow: 0 0.75rem 2rem rgb(16 69 86 / 13%); }
 
+.mini-game-shell {
+  position: relative;
+  width: 100%;
+}
+
 .mini-game {
+  display: block;
   width: 100%;
   min-height: 34rem;
+  margin: 0;
   border: 1px solid var(--line);
+  border-radius: 1rem;
   background: white;
   box-shadow: 0 0.75rem 2rem rgb(16 69 86 / 9%);
+}
+
+.mini-game-fullscreen-toggle {
+  position: absolute;
+  z-index: 2;
+  inset-block-end: 0.75rem;
+  inset-inline-start: 0.75rem;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid rgb(255 255 255 / 28%);
+  border-radius: 999px;
+  color: white;
+  background: rgb(11 36 48 / 86%);
+  box-shadow: 0 0.35rem 1rem rgb(0 0 0 / 24%);
+  backdrop-filter: blur(0.45rem);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.mini-game-fullscreen-toggle:hover { background: rgb(14 82 107 / 94%); }
+
+.mini-game-shell:fullscreen,
+.mini-game-shell:-webkit-full-screen,
+.mini-game-shell.is-fullscreen {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  margin: 0;
+  border-radius: 0;
+  background: #0b0c10;
+}
+
+.mini-game-shell:fullscreen .mini-game,
+.mini-game-shell:-webkit-full-screen .mini-game,
+.mini-game-shell.is-fullscreen .mini-game {
+  height: 100%;
+  min-height: 100%;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 table {

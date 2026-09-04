@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import {versionGameEntryUrls} from '../site/src/lib/steps.js'
+import {
+  versionGameEntryUrls,
+  wrapMiniGameIframes,
+} from '../site/src/lib/steps.js'
 
 test('adds the matching content version to embedded game entry pages', () => {
   const html = [
@@ -25,4 +28,24 @@ test('replaces an existing game entry version instead of appending another', () 
     versionGameEntryUrls(html, {router: 'new'}),
     '<iframe src="../../games/router/index.html?v=new"></iframe>',
   )
+})
+
+test('wraps every mini-game iframe without touching other iframes', () => {
+  const html = [
+    '<iframe class="mini-game" src="one/index.html"></iframe>',
+    '<p>میان دو بازی</p>',
+    '<iframe class="wide mini-game preview" src="two/index.html"></iframe>',
+    '<iframe class="video" src="video/index.html"></iframe>',
+  ].join('')
+
+  const wrapped = wrapMiniGameIframes(html)
+  assert.equal(
+    wrapped.match(/<div class="mini-game-shell">/g)?.length,
+    2,
+  )
+  assert.match(
+    wrapped,
+    /<div class="mini-game-shell"><iframe class="mini-game"[^>]*><\/iframe><\/div>/,
+  )
+  assert.match(wrapped, /<iframe class="video"[^>]*><\/iframe>/)
 })
