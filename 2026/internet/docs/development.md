@@ -176,6 +176,7 @@ games/data-encoding/
 ├── shared/
 ├── manchester/index.html
 ├── timer/index.html
+├── voltage/index.html
 ├── package.json
 └── vite.config.js
 ```
@@ -186,7 +187,8 @@ games/data-encoding/
 games/data-encoding/dist/
 ├── index.html
 ├── manchester/index.html
-└── timer/index.html
+├── timer/index.html
+└── voltage/index.html
 ```
 
 در Vite، همهٔ صفحه‌ها ــ از جمله `index.html` ریشه ــ باید در
@@ -200,6 +202,7 @@ games/data-encoding/dist/
 ```html
 <a href="./manchester/index.html">…</a>
 <a href="./timer/index.html">…</a>
+<a href="./voltage/index.html">…</a>
 ```
 
 از مسیر مطلقی مثل `/manchester/` استفاده نکنید: بازی در سایت نهایی زیر

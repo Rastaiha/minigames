@@ -1,0 +1,617 @@
+:root {
+    --bg: #0b0c10;
+    --panel: #171f29;
+    --panel-light: #202c38;
+    --screen: #05090d;
+    --text: #d6dcdf;
+    --muted: #8c9aa4;
+    --tx: #66fcf1;
+    --tx-dark: #45a29e;
+    --rx: #00ff88;
+    --low: #4e8cff;
+    --high: #ffcc00;
+}
+
+* { box-sizing: border-box; touch-action: manipulation; }
+
+body {
+    min-height: 100vh;
+    margin: 0;
+    padding: 16px;
+    color: var(--text);
+    background:
+        radial-gradient(circle at 50% 0%, rgba(69, 162, 158, 0.12), transparent 38rem),
+        var(--bg);
+    font-family: 'Vazirmatn', sans-serif;
+}
+
+button,
+input { font: inherit; }
+
+button { cursor: pointer; }
+
+.game-shell {
+    width: min(1180px, 100%);
+    margin: 0 auto;
+    display: grid;
+    gap: 22px;
+}
+
+.voltage-monitor {
+    overflow: hidden;
+    border: 3px solid #28333d;
+    border-radius: 16px;
+    background: var(--screen);
+    box-shadow: inset 0 0 36px rgba(0, 0, 0, 0.9), 0 12px 30px rgba(0, 0, 0, 0.38);
+}
+
+.monitor-header {
+    min-height: 76px;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    border-bottom: 1px solid #20323a;
+    background: rgba(19, 31, 39, 0.78);
+}
+
+.eyebrow {
+    margin: 0 0 2px;
+    color: var(--tx);
+    font-size: 0.74rem;
+    font-weight: 800;
+}
+
+h1 {
+    margin: 0;
+    color: #eefafa;
+    font-size: clamp(1rem, 2.7vw, 1.35rem);
+}
+
+.delay-badge {
+    flex: none;
+    padding: 6px 11px;
+    color: #aebbc4;
+    border: 1px solid #3a4953;
+    border-radius: 999px;
+    background: #10171d;
+    font-size: clamp(0.66rem, 1.8vw, 0.78rem);
+    white-space: nowrap;
+}
+
+.monitor-readings {
+    min-height: 220px;
+    padding: 18px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 54px minmax(0, 1fr);
+    align-items: stretch;
+}
+
+.voltage-reading {
+    min-width: 0;
+    padding: 14px 16px;
+    display: grid;
+    grid-template-columns: auto minmax(140px, 1fr);
+    grid-template-rows: auto 1fr;
+    gap: 8px 22px;
+    border: 1px solid #23323c;
+    border-radius: 12px;
+    background: linear-gradient(145deg, rgba(22, 35, 43, 0.88), rgba(5, 10, 14, 0.75));
+    direction: rtl;
+}
+
+.reading-label {
+    grid-column: 1 / -1;
+    color: var(--muted);
+    font-size: clamp(0.72rem, 1.8vw, 0.88rem);
+    font-weight: 700;
+}
+
+.tx-reading .reading-label { color: var(--tx); }
+.rx-reading .reading-label { color: var(--rx); }
+
+.voltage-value {
+    align-self: center;
+    justify-self: center;
+    display: flex;
+    direction: ltr;
+    align-items: baseline;
+    gap: 3px;
+    color: var(--low);
+    text-shadow: 0 0 22px rgba(78, 140, 255, 0.5);
+    transition: color 90ms ease, text-shadow 90ms ease;
+}
+
+.voltage-value b {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: clamp(3rem, 8vw, 5.3rem);
+    line-height: 1;
+}
+
+.voltage-value small { font-size: clamp(1.1rem, 3vw, 1.6rem); }
+
+.level-window {
+    position: relative;
+    min-height: 125px;
+    overflow: hidden;
+    border: 1px solid #1c313d;
+    border-radius: 9px;
+    background:
+        linear-gradient(rgba(44, 70, 79, 0.23) 1px, transparent 1px) 0 0 / 100% 25%,
+        #020609;
+}
+
+.level-guide {
+    position: absolute;
+    left: 8px;
+    z-index: 2;
+    color: #677985;
+    font: 700 0.68rem ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.level-guide-high { top: 12px; }
+.level-guide-low { bottom: 12px; }
+
+.current-level {
+    position: absolute;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    height: 5px;
+    border-radius: 5px;
+    background: var(--low);
+    box-shadow: 0 0 10px var(--low), 0 0 24px rgba(78, 140, 255, 0.45);
+    transition: bottom 90ms ease, background-color 90ms ease, box-shadow 90ms ease;
+    transform: translateY(50%);
+}
+
+.level-track {
+    position: absolute;
+    top: 18px;
+    right: 10px;
+    bottom: 18px;
+    left: 38px;
+}
+
+.voltage-reading[data-level="1"] .current-level {
+    background: var(--high);
+    box-shadow: 0 0 10px var(--high), 0 0 24px rgba(255, 204, 0, 0.45);
+}
+
+.voltage-reading[data-level="1"] .voltage-value {
+    color: var(--high);
+    text-shadow: 0 0 22px rgba(255, 204, 0, 0.5);
+}
+
+.propagation-gap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+.propagation-gap span {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #53636e;
+    animation: dot-glimmer 1.15s ease-in-out infinite;
+}
+
+.propagation-gap span:nth-child(2) { animation-delay: 180ms; }
+.propagation-gap span:nth-child(3) { animation-delay: 360ms; }
+
+@keyframes dot-glimmer {
+    0%, 18%, 58%, 100% { background: #3d4a53; box-shadow: none; transform: scale(1); }
+    34% { background: #fff; box-shadow: 0 0 9px rgba(255, 255, 255, 0.95); transform: scale(1.45); }
+}
+
+.network-stage {
+    display: grid;
+    grid-template-columns: minmax(280px, 1fr) minmax(90px, 0.36fr) minmax(280px, 1fr);
+    align-items: center;
+}
+
+.device {
+    min-width: 0;
+    position: relative;
+    padding: 13px;
+    border: 2px solid #98a5af;
+    border-radius: 13px;
+    background: linear-gradient(145deg, #d7dde2, #8d9ba7);
+    box-shadow: 0 13px 26px rgba(0, 0, 0, 0.55);
+    z-index: 2;
+}
+
+.device::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: -18px;
+    width: 44px;
+    height: 18px;
+    background: linear-gradient(#aeb9c1, #778692);
+    transform: translateX(-50%);
+}
+
+.device::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: -24px;
+    width: 98px;
+    height: 7px;
+    border-radius: 5px 5px 0 0;
+    background: #778692;
+    transform: translateX(-50%);
+}
+
+.device-label {
+    position: absolute;
+    top: -14px;
+    left: 50%;
+    padding: 3px 13px;
+    border: 2px solid;
+    border-radius: 999px;
+    background: var(--panel);
+    font-size: clamp(0.72rem, 2vw, 0.84rem);
+    font-weight: 800;
+    white-space: nowrap;
+    transform: translateX(-50%);
+    z-index: 3;
+}
+
+.transmitter-device .device-label { color: var(--tx); border-color: var(--tx); }
+.receiver-device .device-label { color: var(--rx); border-color: var(--rx); }
+
+.device-screen {
+    min-height: 320px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border: 3px solid #2c343a;
+    border-radius: 8px;
+    background: var(--screen);
+    box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.9);
+}
+
+.transmitter-screen {
+    display: grid;
+    grid-template-columns: 68px minmax(0, 1fr);
+    gap: 12px;
+    direction: ltr;
+}
+
+.transmitter-content {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.device-screen label,
+.data-label {
+    color: #aeb8bf;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.encode-row { display: flex; gap: 7px; }
+
+input[type="text"] {
+    min-width: 0;
+    flex: 1;
+    padding: 8px 10px;
+    color: var(--tx);
+    border: 1px solid #40515e;
+    border-radius: 6px;
+    outline: none;
+    background: #0d151b;
+    direction: ltr;
+    text-align: left;
+}
+
+input[type="text"]:focus { border-color: var(--tx); box-shadow: 0 0 0 3px rgba(102, 252, 241, 0.12); }
+
+#asciiHint { color: #6f7d86; font-size: 0.67rem; }
+
+.btn-secondary,
+.clear-button {
+    padding: 7px 10px;
+    color: #d8e1e5;
+    border: 1px solid #40515e;
+    border-radius: 6px;
+    background: #26333d;
+}
+
+.btn-secondary:hover,
+.btn-secondary:focus-visible,
+.clear-button:hover,
+.clear-button:focus-visible { border-color: var(--tx-dark); background: #31424e; outline: none; }
+
+.target-bit {
+    padding: 9px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid rgba(102, 252, 241, 0.28);
+    border-radius: 8px;
+    background: rgba(102, 252, 241, 0.07);
+    color: #b5c0c6;
+    font-size: 0.8rem;
+}
+
+.target-bit strong {
+    min-width: 38px;
+    color: var(--tx);
+    font: 800 1.6rem ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    text-align: center;
+}
+
+.voltage-slider-control {
+    min-width: 0;
+    padding: 7px 5px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    border: 1px solid rgba(78, 140, 255, 0.45);
+    border-radius: 9px;
+    background: rgba(78, 140, 255, 0.08);
+    transition: border-color 100ms ease, background-color 100ms ease;
+}
+
+.voltage-slider-control label {
+    color: #b6c2ca;
+    font-size: 0.7rem;
+}
+
+.voltage-slider-control output {
+    color: var(--low);
+    font: 800 0.82rem ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    white-space: nowrap;
+    text-shadow: 0 0 9px rgba(78, 140, 255, 0.55);
+}
+
+.slider-track-wrap {
+    min-height: 190px;
+    position: relative;
+    display: grid;
+    grid-template-rows: auto minmax(145px, 1fr) auto;
+    justify-items: center;
+    align-items: center;
+}
+
+.voltage-slider {
+    width: 28px;
+    height: 100%;
+    min-height: 145px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    writing-mode: vertical-lr;
+    direction: rtl;
+    accent-color: var(--low);
+    cursor: ns-resize;
+}
+
+.slider-limit {
+    color: #73828c;
+    font: 700 0.6rem ui-monospace, monospace;
+}
+
+.slider-threshold {
+    position: absolute;
+    top: 50%;
+    left: calc(50% + 14px);
+    color: #8998a1;
+    font: 700 0.55rem ui-monospace, monospace;
+    transform: translateY(-50%);
+}
+
+.slider-threshold::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: calc(100% + 2px);
+    width: 10px;
+    border-top: 1px solid #697983;
+}
+
+.voltage-slider-control small {
+    color: #74848e;
+    font-size: 0.55rem;
+    line-height: 1.45;
+    text-align: center;
+    direction: rtl;
+}
+
+.voltage-slider-control[data-level="1"] {
+    border-color: rgba(255, 204, 0, 0.55);
+    background: rgba(255, 204, 0, 0.08);
+}
+
+.voltage-slider-control[data-level="1"] output {
+    color: var(--high);
+    text-shadow: 0 0 9px rgba(255, 204, 0, 0.55);
+}
+
+.voltage-slider-control[data-level="1"] .voltage-slider { accent-color: var(--high); }
+
+.data-block {
+    min-height: 62px;
+    margin-top: auto;
+    padding: 8px 10px;
+    border-top: 1px solid #25333d;
+}
+
+.binary-display {
+    margin-top: 5px;
+    min-height: 25px;
+    color: #dbe7ec;
+    font: 700 clamp(0.86rem, 2.7vw, 1rem)/1.7 'Courier New', monospace;
+    letter-spacing: 1px;
+    direction: ltr;
+    text-align: left;
+    overflow-wrap: anywhere;
+}
+
+.byte-block { display: inline-block; margin-right: 8px; }
+
+.active-tx-bit {
+    padding: 1px 3px;
+    color: #00100e !important;
+    border-radius: 3px;
+    background: var(--tx);
+    box-shadow: 0 0 9px var(--tx);
+}
+
+.wire {
+    position: relative;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    z-index: 1;
+}
+
+.wire-core {
+    position: relative;
+    width: 100%;
+    height: 11px;
+    overflow: hidden;
+    border-top: 1px solid #5a7b96;
+    border-bottom: 1px solid #000;
+    background: linear-gradient(#354f61, #172530);
+    box-shadow: 0 7px 10px rgba(0, 0, 0, 0.58);
+}
+
+.wire-pulse {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 42%;
+    background: linear-gradient(90deg, transparent, rgba(102, 252, 241, 0.88), transparent);
+    filter: drop-shadow(0 0 5px rgba(102, 252, 241, 0.8));
+    animation: wire-flow 1.4s linear infinite;
+}
+
+@keyframes wire-flow {
+    from { transform: translateX(-110%); }
+    to { transform: translateX(340%); }
+}
+
+.wire-name {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    padding: 2px 8px;
+    color: var(--tx);
+    border: 1px solid var(--tx-dark);
+    border-radius: 999px;
+    background: #10171c;
+    font: 700 0.65rem ui-monospace, monospace;
+    white-space: nowrap;
+    transform: translateX(-50%);
+}
+
+.receiver-instruction {
+    margin: 0;
+    color: #9cabb4;
+    font-size: 0.78rem;
+    line-height: 1.8;
+}
+
+.sample-button {
+    min-height: 64px;
+    padding: 10px 14px;
+    color: #00180d;
+    border: 0;
+    border-radius: 9px;
+    background: linear-gradient(135deg, #00ff88, #24cc80);
+    box-shadow: 0 7px 18px rgba(0, 255, 136, 0.2);
+    font-weight: 800;
+}
+
+.sample-button:hover,
+.sample-button:focus-visible { outline: 3px solid rgba(0, 255, 136, 0.25); filter: brightness(1.08); }
+.sample-button:active { transform: translateY(1px); }
+.sample-icon { margin-left: 5px; font-size: 1.3rem; }
+
+.sample-result {
+    min-height: 24px;
+    margin: 0;
+    color: var(--rx);
+    font-size: 0.75rem;
+    text-align: center;
+}
+
+.received-data { margin-top: 2px; }
+.new-rx-correct { border-radius: 2px; background: rgba(0, 255, 136, 0.3); }
+
+.decoded-row {
+    min-height: 42px;
+    padding: 7px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid #24333c;
+    border-radius: 7px;
+    color: #9aabb4;
+    font-size: 0.76rem;
+}
+
+.decoded-row strong {
+    color: var(--rx);
+    font-size: 1.1rem;
+    direction: ltr;
+}
+
+.clear-button { align-self: center; font-size: 0.72rem; }
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+@media (max-width: 780px) {
+    body { padding: 8px; }
+    .game-shell { gap: 15px; }
+    .monitor-header { padding: 11px 13px; }
+    .monitor-readings { min-height: 170px; padding: 10px; grid-template-columns: minmax(0, 1fr) 30px minmax(0, 1fr); }
+    .voltage-reading { padding: 10px; grid-template-columns: 1fr; grid-template-rows: auto auto 1fr; gap: 5px; }
+    .voltage-value { justify-self: start; }
+    .voltage-value b { font-size: clamp(2.2rem, 12vw, 3.4rem); }
+    .level-window { min-height: 72px; }
+    .network-stage { grid-template-columns: 1fr; gap: 8px; }
+    .device { width: 100%; }
+    .wire { width: 100%; height: 58px; justify-content: center; }
+    .wire-core { width: 11px; height: 100%; border: 0; border-right: 1px solid #5a7b96; border-left: 1px solid #000; background: linear-gradient(90deg, #354f61, #172530); }
+    .wire-pulse { inset: 0; width: 100%; height: 42%; background: linear-gradient(180deg, transparent, rgba(102, 252, 241, 0.88), transparent); animation-name: wire-flow-mobile; }
+    .wire-name { top: 50%; left: calc(50% + 42px); transform: translate(-50%, -50%); }
+    .device-screen { min-height: 0; }
+}
+
+@keyframes wire-flow-mobile {
+    from { transform: translateY(-110%); }
+    to { transform: translateY(340%); }
+}
+
+@media (max-width: 480px) {
+    .monitor-header { align-items: flex-start; flex-direction: column; gap: 7px; }
+    .delay-badge { align-self: flex-start; }
+    .monitor-readings { grid-template-columns: minmax(0, 1fr) 22px minmax(0, 1fr); }
+    .voltage-reading { padding: 8px; }
+    .level-window { min-width: 0; }
+    .reading-label { min-height: 38px; }
+    .encode-row { flex-direction: column; }
+    .transmitter-screen { grid-template-columns: 60px minmax(0, 1fr); padding: 13px; gap: 8px; }
+}

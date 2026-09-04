@@ -9,6 +9,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         home: resolve(import.meta.dirname, 'index.html'),
+        voltage: resolve(import.meta.dirname, 'voltage/index.html'),
         manchester: resolve(import.meta.dirname, 'manchester/index.html'),
         timer: resolve(import.meta.dirname, 'timer/index.html'),
       },
