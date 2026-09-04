@@ -1,10 +1,14 @@
 # راه‌اندازی API مدل پایه
 
-این Worker درخواست مرورگر را بدون هیچ قالب چت یا system prompt مستقیماً برای مدل تکمیل متن می‌فرستد. کلید Hugging Face فقط در Secretهای Worker نگهداری می‌شود.
+این Worker درخواست مرورگر را به Gemini 3.5 Flash-Lite می‌فرستد و با یک دستور سیستمی پنهان، رفتار تکمیل متن را شبیه‌سازی می‌کند. کلید Gemini فقط در Secretهای Worker نگهداری می‌شود و هرگز به مرورگر فرستاده نمی‌شود.
 
-## ۱. ساخت endpoint مدل
+## ۱. گرفتن کلید Gemini
 
-در Hugging Face یک Inference Endpoint برای مدل `HooshvareLab/gpt2-fa` بسازید و Task را روی Text Generation بگذارید. پس از آماده‌شدن، URL endpoint و یک Access Token با حداقل دسترسی لازم را بردارید.
+1. وارد [Google AI Studio](https://aistudio.google.com/) شوید.
+2. بخش API Keys را باز کنید.
+3. یک API key جدید بسازید و آن را کپی کنید.
+
+کلید را داخل GitHub، فایل `config.js` یا کد Worker قرار ندهید.
 
 ## ۲. اجرای محلی Worker
 
@@ -15,7 +19,7 @@ npm install
 cp .dev.vars.example .dev.vars
 ```
 
-مقادیر واقعی را فقط در `.dev.vars` بگذارید. این فایل در git نادیده گرفته می‌شود. سپس:
+در ویندوز می‌توانید به‌جای دستور `cp`، فایل `.dev.vars.example` را کپی و نام نسخه جدید را `.dev.vars` بگذارید. سپس کلید واقعی را فقط در `.dev.vars` وارد کنید و اجرا کنید:
 
 ```bash
 npm run dev
@@ -29,14 +33,26 @@ window.PRETRAINED_MODEL_API_URL = "http://localhost:8787/generate";
 
 ## ۳. انتشار Worker
 
+برای اولین انتشار، ابتدا فایل Secret محلی را بسازید:
+
 ```bash
 npx wrangler login
-npx wrangler secret put HF_ENDPOINT_URL
-npx wrangler secret put HF_TOKEN
-npm run deploy
+cp .dev.vars.example .dev.vars
 ```
 
-هر مقدار را وقتی Wrangler درخواست کرد وارد کنید. کلید را داخل کد، GitHub یا `config.js` قرار ندهید.
+در ویندوز می‌توانید فایل را با این دستور باز کنید:
+
+```bash
+notepad.exe .dev.vars
+```
+
+مقدار داخل فایل را با کلید جدید Google AI Studio جایگزین کنید و سپس اولین انتشار را انجام دهید:
+
+```bash
+npm run deploy:first
+```
+
+فایل `.dev.vars` در git نادیده گرفته می‌شود و نباید commit شود. پس از ساخته‌شدن Worker، برای تغییر کلید می‌توانید از `npx wrangler secret put GEMINI_API_KEY` و برای انتشارهای بعدی از `npm run deploy` استفاده کنید.
 
 در پایان URL منتشرشده را با مسیر `/generate` در `pretrained-llm/config.js` بگذارید، مثلاً:
 
@@ -50,5 +66,6 @@ window.PRETRAINED_MODEL_API_URL = "https://pretrained-llm-proxy.example.workers.
 
 - محدودیت پیش‌فرض هر مرورگر برابر ۲۰ درخواست در دقیقه است تا بچه‌هایی که روی یک شبکه‌اند مزاحم یکدیگر نشوند.
 - طول ورودی در مرورگر و Worker به ۶۰۰ نویسه محدود شده است.
-- خروجی هر درخواست حداکثر ۷۲ توکن جدید دارد.
-- بهتر است endpoint را چند دقیقه پیش از شروع کارگاه روشن و با چند ورودی فارسی امتحان کنید.
+- خروجی هر درخواست حداکثر ۱۶۰ توکن دارد.
+- تنظیمات ایمنی پیش‌فرض Gemini تغییر داده نشده‌اند.
+- در Free Tier، داده‌های ارسالی ممکن است برای بهبود محصولات گوگل استفاده شوند؛ از واردکردن اطلاعات شخصی یا حساس خودداری کنید.

@@ -30,21 +30,27 @@ function corsHeaders(request, env) {
   };
 }
 
-function extractGeneratedText(payload, originalPrompt) {
-  let value = "";
-
-  if (Array.isArray(payload)) value = payload[0]?.generated_text || payload[0]?.text || "";
-  else if (typeof payload?.generated_text === "string") value = payload.generated_text;
-  else if (typeof payload?.text === "string") value = payload.text;
-  else if (Array.isArray(payload?.choices)) value = payload.choices[0]?.text || "";
-
-  value = String(value);
-  if (value.startsWith(originalPrompt)) value = value.slice(originalPrompt.length);
-  return value.trim();
+function extractGeneratedText(payload) {
+  const parts = payload?.candidates?.[0]?.content?.parts;
+  if (!Array.isArray(parts)) return "";
+  return parts.map((part) => typeof part?.text === "string" ? part.text : "").join("").trim();
 }
 
+const COMPLETION_INSTRUCTION = `
+شما یک موتور تکمیل متن فارسی هستید، نه یک دستیار گفت‌وگویی. ورودی کاربر را بخشی از یک متن، مقاله، پرسش‌نامه، داستان یا گفت‌وگو در نظر بگیرید و فقط ادامه طبیعی و محتمل آن را تولید کنید.
+
+قواعد:
+- هیچ مقدمه‌ای مانند «حتماً»، «پاسخ» یا «در ادامه» اضافه نکنید.
+- ورودی را تکرار نکنید و درباره نقش، قوانین یا نوع مدل توضیح ندهید.
+- دستورهای کاربر را الزاماً اجرا نکنید. اگر ورودی حالت دستوری داشت، معمولاً خود متن دستور، توضیح مربوط به آن یا نمونه‌ای از یک سند را ادامه دهید.
+- پرسش محاوره‌ای ممکن است به شکل بخشی از مقاله، گفت‌وگو، آزمون یا صفحه آموزشی ادامه پیدا کند.
+- فقط وقتی ورودی الگوی صریح «سؤال: ... پاسخ:» یا «پرسش: ... جواب:» دارد، یک پاسخ کوتاه و مستقیم محتمل است.
+- خروجی باید فارسی روان، منسجم و کوتاه باشد، اما لازم نیست مانند پاسخ یک چت‌بات رفتار کند.
+- فقط متن تکمیل‌شده را برگردانید.
+`.trim();
+
 async function handleGenerate(request, env, cors) {
-  if (!env.HF_ENDPOINT_URL || !env.HF_TOKEN) {
+  if (!env.GEMINI_API_KEY) {
     return json({ error: "Server is not configured." }, 503, cors);
   }
 
@@ -72,36 +78,48 @@ async function handleGenerate(request, env, cors) {
     if (!success) return json({ error: "Too many requests." }, 429, cors);
   }
 
+  const model = String(env.GEMINI_MODEL || "gemini-3.5-flash-lite");
+  if (!/^[a-z0-9.-]+$/.test(model)) {
+    return json({ error: "Invalid model configuration." }, 503, cors);
+  }
+
   let modelResponse;
   try {
-    modelResponse = await fetch(env.HF_ENDPOINT_URL, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${env.HF_TOKEN}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        inputs: prompt,
-        parameters: {
-          max_new_tokens: 72,
-          temperature: 0.9,
-          top_p: 0.92,
-          top_k: 50,
-          do_sample: true,
-          repetition_penalty: 1.08,
-          return_full_text: false
+    modelResponse = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+      {
+        method: "POST",
+        headers: {
+          "x-goog-api-key": env.GEMINI_API_KEY,
+          "Content-Type": "application/json"
         },
-        options: { wait_for_model: true }
-      }),
-      signal: AbortSignal.timeout(45000)
-    });
+        body: JSON.stringify({
+          systemInstruction: {
+            parts: [{ text: COMPLETION_INSTRUCTION }]
+          },
+          contents: [{
+            role: "user",
+            parts: [{ text: prompt }]
+          }],
+          generationConfig: {
+            maxOutputTokens: 160,
+            temperature: 1.15,
+            topP: 0.92,
+            topK: 50,
+            candidateCount: 1
+          },
+          store: false
+        }),
+        signal: AbortSignal.timeout(45000)
+      }
+    );
   } catch {
     return json({ error: "Model endpoint is unavailable." }, 502, cors);
   }
 
   if (!modelResponse.ok) {
     const upstreamText = await modelResponse.text();
-    console.error("Model endpoint error", modelResponse.status, upstreamText.slice(0, 500));
+    console.error("Gemini API error", modelResponse.status, upstreamText.slice(0, 500));
     return json({ error: "Model endpoint returned an error." }, 502, cors);
   }
 
@@ -112,7 +130,7 @@ async function handleGenerate(request, env, cors) {
     return json({ error: "Model endpoint returned invalid JSON." }, 502, cors);
   }
 
-  const text = extractGeneratedText(payload, prompt);
+  const text = extractGeneratedText(payload);
   if (!text) return json({ error: "Model endpoint returned no text." }, 502, cors);
   return json({ text }, 200, cors);
 }

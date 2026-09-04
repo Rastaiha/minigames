@@ -1,2 +1,1 @@
-HF_ENDPOINT_URL="https://YOUR-ENDPOINT.REGION.aws.endpoints.huggingface.cloud"
-HF_TOKEN="hf_your_token"
+GEMINI_API_KEY="replace-with-your-google-ai-studio-key"

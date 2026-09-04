@@ -7,10 +7,11 @@
     "enabled": true
   },
   "vars": {
-    "ALLOWED_ORIGINS": "https://rastaiha.github.io"
+    "ALLOWED_ORIGINS": "https://rastaiha.github.io",
+    "GEMINI_MODEL": "gemini-3.5-flash-lite"
   },
   "secrets": {
-    "required": ["HF_ENDPOINT_URL", "HF_TOKEN"]
+    "required": ["GEMINI_API_KEY"]
   },
   "ratelimits": [
     {
