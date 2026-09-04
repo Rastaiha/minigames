@@ -1,0 +1,70 @@
+@import '../shared/game.css';
+
+.oscilloscope-wrapper {
+    height: 25vh;
+    min-height: 180px;
+    cursor: grab;
+}
+
+.oscilloscope-wrapper:active { cursor: grabbing; }
+
+.scope-hint {
+    direction: inherit;
+    width: auto;
+    max-width: none;
+    font-size: clamp(0.7rem, 2vw, 0.85rem);
+    line-height: normal;
+    text-align: initial;
+    white-space: nowrap;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 4px 12px;
+    box-shadow: none;
+}
+
+.controls button:hover { box-shadow: none; }
+.network-layout { margin-top: 20px; }
+.wire-pulse { animation-duration: 1.5s; }
+
+.stopwatch {
+    position: absolute;
+    top: -35px;
+    width: 45px;
+    height: 45px;
+    background: #111;
+    border-radius: 50%;
+    border: 3px solid;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.8), inset 0 0 10px rgba(0, 0, 0, 1);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+}
+
+.tx-watch { right: 8px; border-color: var(--primary); }
+.rx-watch { right: 8px; border-color: var(--success); }
+.watch-button { position: absolute; top: -8px; width: 12px; height: 6px; background: #a5b1c2; border-radius: 3px 3px 0 0; }
+.watch-center { width: 5px; height: 5px; background: white; border-radius: 50%; z-index: 2; }
+.watch-hand { position: absolute; width: 2px; height: 18px; background: white; bottom: 50%; transform-origin: bottom center; border-radius: 2px; }
+.watch-tick { position: absolute; top: 2px; width: 2px; height: 5px; background: var(--danger); border-radius: 2px; }
+
+.config-row span {
+    font-size: clamp(0.7rem, 2vw, 0.8rem);
+    color: #888;
+    white-space: nowrap;
+}
+
+.new-rx-error {
+    background: rgba(255, 71, 87, 0.7);
+    font-weight: bold;
+    border-radius: 2px;
+    color: white !important;
+}
+
+@media (max-width: 768px) {
+    .oscilloscope-wrapper { height: 20vh; min-height: 160px; }
+    .scope-hint { width: auto; max-width: none; line-height: normal; white-space: nowrap; padding: 4px 12px; }
+    .network-layout { margin-top: 15px; }
+    .wire-pulse { animation-duration: 1.5s; }
+    .stopwatch { width: 35px; height: 35px; top: -25px; }
+    .watch-hand { height: 14px; }
+}
