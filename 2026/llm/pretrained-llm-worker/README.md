@@ -4,6 +4,7 @@
 
 - مسیر `/generate` رفتار تکمیل متن یک مدل پایه را شبیه‌سازی می‌کند.
 - مسیر `/generate-sft` رفتار یک مدل گفت‌وگومحور و دستورپذیر را شبیه‌سازی می‌کند.
+- مسیر `/generate-aligned` رفتار یک دستیار کمک‌کننده، صادق و ایمن را شبیه‌سازی می‌کند.
 
 کلید Gemini فقط در Secretهای Worker نگهداری می‌شود و هرگز به مرورگر فرستاده نمی‌شود.
 
@@ -46,6 +47,12 @@ window.PRETRAINED_MODEL_API_URL = "http://localhost:8787/generate";
 window.PRETRAINED_MODEL_API_URL = "http://localhost:8787/generate-sft";
 ```
 
+برای تست رابط مرحله بعد، در `rlhf-llm/config.js` از این مسیر استفاده کنید:
+
+```js
+window.PRETRAINED_MODEL_API_URL = "http://localhost:8787/generate-aligned";
+```
+
 ## ۳. انتشار Worker
 
 برای اولین انتشار، ابتدا فایل Secret محلی را بسازید:
@@ -79,6 +86,12 @@ window.PRETRAINED_MODEL_API_URL = "https://pretrained-llm-proxy.example.workers.
 
 ```js
 window.PRETRAINED_MODEL_API_URL = "https://pretrained-llm-proxy.example.workers.dev/generate-sft";
+```
+
+در `rlhf-llm/config.js` نیز مسیر `/generate-aligned` را قرار دهید:
+
+```js
+window.PRETRAINED_MODEL_API_URL = "https://pretrained-llm-proxy.example.workers.dev/generate-aligned";
 ```
 
 سپس فایل‌های پروژه را commit و push کنید. تا وقتی URL تنظیم نشده یا endpoint در دسترس نیست، فرانت‌اند خودکار از تکمیل‌کننده محلی استفاده می‌کند.
