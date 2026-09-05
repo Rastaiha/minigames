@@ -94,6 +94,14 @@ window.PRETRAINED_MODEL_API_URL = "https://pretrained-llm-proxy.example.workers.
 window.PRETRAINED_MODEL_API_URL = "https://pretrained-llm-proxy.example.workers.dev/generate-aligned";
 ```
 
+مینی‌گیم نهایی `model-lab` هر چهار حالت را در یک رابط نمایش می‌دهد. در فایل `model-lab/config.js` فقط نشانی اصلی Worker را بدون مسیر پایانی قرار دهید:
+
+```js
+window.MODEL_API_ROOT = "https://pretrained-llm-proxy.example.workers.dev";
+```
+
+مدل خام در خود مرورگر اجرا می‌شود و سه مدل دیگر به‌ترتیب از مسیرهای `/generate`، `/generate-sft` و `/generate-aligned` استفاده می‌کنند. تاریخچه هر تب فقط برای نمایش در مرورگر نگه داشته می‌شود و همراه درخواست API ارسال نمی‌شود.
+
 سپس فایل‌های پروژه را commit و push کنید. تا وقتی URL تنظیم نشده یا endpoint در دسترس نیست، فرانت‌اند خودکار از تکمیل‌کننده محلی استفاده می‌کند.
 
 ## نکته‌های اجرایی کارگاه

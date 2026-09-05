@@ -1,0 +1,722 @@
+<!doctype html>
+<html lang="fa">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>آزمایشگاه مدل‌ها</title>
+  <style>
+    @font-face {
+      font-family: "Vazir";
+      src: url("../fonts/vazir.ttf") format("truetype");
+      font-display: swap;
+    }
+
+    :root {
+      --page: #dfe8f3;
+      --surface: #f8fafc;
+      --ink: #172033;
+      --muted: #748096;
+      --line: #dfe5ed;
+      --user: #315be8;
+      --user-ink: #ffffff;
+      --accent: #ff7657;
+      --ready: #4cab83;
+      --shadow: 0 28px 70px rgba(39, 55, 85, 0.16), 0 2px 8px rgba(39, 55, 85, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+
+    body {
+      margin: 0;
+      padding: clamp(12px, 3vw, 32px);
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 14% 8%, rgba(255, 255, 255, 0.82), transparent 29%),
+        var(--page);
+      font-family: "Vazir", Tahoma, "Segoe UI", sans-serif;
+    }
+
+    .chat {
+      width: min(100%, 760px);
+      height: min(880px, 100%);
+      min-height: 420px;
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      overflow: hidden;
+      background: var(--surface);
+      border: 1px solid rgba(255, 255, 255, 0.72);
+      border-radius: 26px;
+      box-shadow: var(--shadow);
+    }
+
+    header {
+      min-height: 76px;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      color: white;
+      background: var(--ink);
+      border-radius: 13px;
+      font-size: 22px;
+      font-style: normal;
+    }
+
+    .identity { min-width: 0; text-align: right; }
+
+    h1 {
+      margin: 0 0 3px;
+      font-size: 19px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    .status {
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      flex: 0 0 auto;
+      border-radius: 50%;
+      background: var(--ready);
+      box-shadow: 0 0 0 4px rgba(76, 171, 131, 0.13);
+    }
+
+    .messages {
+      position: relative;
+      min-height: 0;
+      padding: 28px 24px;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scroll-behavior: smooth;
+      scrollbar-width: thin;
+      scrollbar-color: #c8d0dc transparent;
+    }
+
+    .message {
+      width: fit-content;
+      max-width: min(76%, 540px);
+      margin: 0 0 15px;
+      padding: 12px 16px;
+      border-radius: 18px;
+      font-size: 16px;
+      line-height: 1.85;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      animation: arrive 180ms ease-out both;
+    }
+
+    .message.assistant {
+      color: var(--ink);
+      background: #e9edf3;
+      border-bottom-left-radius: 5px;
+      direction: rtl;
+      text-align: right;
+    }
+
+    .message.user {
+      margin-left: auto;
+      color: var(--user-ink);
+      background: var(--user);
+      border-bottom-right-radius: 5px;
+      direction: rtl;
+      text-align: right;
+    }
+
+    .message.generating::after {
+      content: "";
+      width: 2px;
+      height: 1em;
+      margin-right: 3px;
+      display: inline-block;
+      vertical-align: -0.12em;
+      background: var(--accent);
+      animation: blink 760ms step-end infinite;
+    }
+
+    .generated-token {
+      border-radius: 5px;
+      transition: color 300ms ease, background 300ms ease;
+    }
+
+    .generated-token.entering {
+      color: #c75136;
+      background: rgba(255, 118, 87, 0.14);
+    }
+
+    .empty-state {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-content: center;
+      justify-items: center;
+      padding: 24px;
+      color: var(--muted);
+      text-align: center;
+      pointer-events: none;
+    }
+
+    .empty-state[hidden] { display: none; }
+
+    .empty-mark {
+      width: 50px;
+      height: 50px;
+      margin-bottom: 14px;
+      display: grid;
+      place-items: center;
+      color: var(--user);
+      background: rgba(49, 91, 232, 0.09);
+      border-radius: 17px;
+      font-size: 23px;
+      font-weight: 700;
+    }
+
+    .empty-state p { margin: 0 0 5px; color: var(--ink); font-size: 16px; font-weight: 600; }
+    .empty-state span { font-size: 13px; }
+
+    .composer-wrap {
+      padding: 16px;
+      border-top: 1px solid var(--line);
+      background: rgba(248, 250, 252, 0.92);
+    }
+
+    form {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      padding: 7px 7px 7px 16px;
+      background: white;
+      border: 1px solid #d8dee8;
+      border-radius: 19px;
+      box-shadow: 0 4px 16px rgba(38, 52, 80, 0.06);
+      transition: border-color 160ms ease, box-shadow 160ms ease;
+    }
+
+    form:focus-within {
+      border-color: rgba(49, 91, 232, 0.54);
+      box-shadow: 0 0 0 4px rgba(49, 91, 232, 0.09);
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 42px;
+      max-height: 132px;
+      padding: 10px 0 8px;
+      resize: none;
+      overflow-y: auto;
+      color: var(--ink);
+      background: transparent;
+      border: 0;
+      outline: 0;
+      font: inherit;
+      font-size: 15px;
+      line-height: 1.45;
+      direction: rtl;
+      text-align: right;
+    }
+
+    textarea::placeholder { color: #9ba5b5; }
+
+    button {
+      width: 42px;
+      height: 42px;
+      padding: 0;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      color: white;
+      background: var(--ink);
+      border: 0;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: transform 140ms ease, background 140ms ease, opacity 140ms ease;
+    }
+
+    button:hover:not(:disabled) { transform: translateY(-1px); background: var(--user); }
+    button:active:not(:disabled) { transform: translateY(0) scale(0.97); }
+    button:focus-visible { outline: 3px solid rgba(49, 91, 232, 0.28); outline-offset: 3px; }
+    button:disabled { cursor: wait; opacity: 0.4; }
+    button svg { width: 19px; height: 19px; }
+    button .stop-icon { display: none; }
+    button.is-generating .send-icon { display: none; }
+    button.is-generating .stop-icon { display: block; }
+
+    .clear-button {
+      width: 36px;
+      height: 36px;
+      margin-left: auto;
+      color: var(--muted);
+      background: transparent;
+      border-radius: 11px;
+    }
+
+    .clear-button:hover:not(:disabled) { color: var(--ink); background: #e9edf3; }
+    .clear-button:disabled { cursor: default; opacity: 0.25; }
+
+    .model-tabs {
+      display: flex;
+      gap: 8px;
+      padding: 10px 16px;
+      overflow-x: auto;
+      direction: rtl;
+      background: rgba(248, 250, 252, 0.96);
+      border-bottom: 1px solid var(--line);
+      scrollbar-width: none;
+    }
+
+    .model-tabs::-webkit-scrollbar { display: none; }
+
+    .model-tab {
+      width: auto;
+      height: 36px;
+      padding: 0 14px;
+      flex: 1 0 auto;
+      color: var(--muted);
+      background: #e9edf3;
+      border: 1px solid transparent;
+      border-radius: 12px;
+      font: inherit;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .model-tab:hover:not(:disabled) { color: var(--ink); background: #dfe5ed; }
+
+    .model-tab[aria-selected="true"] {
+      color: white;
+      background: var(--user);
+      box-shadow: 0 4px 12px rgba(49, 91, 232, 0.2);
+    }
+
+    @keyframes arrive {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes blink { 50% { opacity: 0; } }
+
+    @media (max-width: 600px) {
+      body { padding: 0; background: var(--surface); }
+      .chat { width: 100%; height: 100%; min-height: 0; border: 0; border-radius: 0; box-shadow: none; }
+      header { min-height: 68px; padding: 0 18px; }
+      .avatar { width: 37px; height: 37px; border-radius: 12px; }
+      .messages { padding: 22px 16px; }
+      .message { max-width: 86%; }
+      .model-tabs { padding: 9px 12px; }
+      .model-tab { padding: 0 12px; }
+      .composer-wrap { padding: 12px; padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="chat" aria-label="آزمایشگاه مدل‌ها">
+    <header>
+      <div class="avatar" id="avatar" aria-hidden="true">خ</div>
+      <div class="identity">
+        <h1 id="modelName">مدل خام</h1>
+        <p class="status"><span class="status-dot" aria-hidden="true"></span><span id="statusText">آماده گفت‌وگو</span></p>
+      </div>
+      <button id="clearButton" class="clear-button" type="button" aria-label="پاک کردن گفت‌وگو" title="پاک کردن گفت‌وگو" disabled>
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </header>
+
+    <nav class="model-tabs" id="modelTabs" role="tablist" aria-label="انتخاب مدل">
+      <button class="model-tab" type="button" role="tab" data-model="raw" aria-selected="true">مدل خام</button>
+      <button class="model-tab" type="button" role="tab" data-model="base" aria-selected="false">مدل پایه</button>
+      <button class="model-tab" type="button" role="tab" data-model="sft" aria-selected="false">مدل گفتگو</button>
+      <button class="model-tab" type="button" role="tab" data-model="aligned" aria-selected="false">مدل همراه</button>
+    </nav>
+
+    <section class="messages" id="messages" aria-live="polite" aria-label="گفت‌وگو">
+      <div class="empty-state" id="emptyState">
+        <div class="empty-mark" aria-hidden="true">؟</div>
+        <p>یک پیام را با چهار مدل امتحان کن</p>
+        <span>مدل را از نوار بالا تغییر بده</span>
+      </div>
+    </section>
+
+    <div class="composer-wrap">
+      <form id="composer">
+        <textarea id="prompt" rows="1" maxlength="600" placeholder="پیامت را بنویس…" aria-label="پیام"></textarea>
+        <button id="send" type="submit" aria-label="ارسال پیام" disabled>
+          <svg class="send-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <svg class="stop-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" fill="currentColor"/></svg>
+        </button>
+      </form>
+    </div>
+  </main>
+
+  <script src="config.js?v=1"></script>
+  <script>
+    const API_ROOT = String(
+      window.MODEL_API_ROOT ||
+      "https://pretrained-llm-proxy.sepymeow.workers.dev"
+    ).replace(/\/+$/, "");
+
+    const MODELS = Object.freeze({
+      raw: { name: "مدل خام", avatar: "خ", route: "" },
+      base: { name: "مدل پایه", avatar: "پ", route: "/generate" },
+      sft: { name: "مدل گفتگو", avatar: "گ", route: "/generate-sft" },
+      aligned: { name: "مدل همراه", avatar: "هـ", route: "/generate-aligned" }
+    });
+
+    const RAW_TOKENS = Object.freeze([
+      "من", "تو", "او", "ما", "شما", "این", "آن", "یک", "چند", "هر", "همه", "کسی", "چیزی",
+      "امروز", "فردا", "دیروز", "صبح", "شب", "زمان", "روز", "سال", "لحظه", "اکنون", "بعد",
+      "خانه", "مدرسه", "دانشگاه", "کتاب", "کلمه", "جمله", "داستان", "سؤال", "پاسخ", "مدل",
+      "داده", "آموزش", "فکر", "ذهن", "زبان", "صدا", "تصویر", "رنگ", "نور", "سایه", "پنجره",
+      "درخت", "باران", "ابر", "آسمان", "زمین", "دریا", "کوه", "رود", "شهر", "خیابان", "راه",
+      "سفر", "دوست", "مردم", "کودک", "پرنده", "ماشین", "رایانه", "جهان", "زندگی", "کار",
+      "بازی", "رویا", "حقیقت", "احتمال", "انتخاب", "حرکت", "تغییر", "شروع", "پایان", "میان",
+      "کنار", "بالا", "پایین", "دور", "نزدیک", "در", "از", "به", "با", "برای", "روی", "زیر",
+      "بدون", "و", "یا", "اما", "اگر", "چون", "که", "پس", "هنوز", "دوباره", "شاید", "همیشه",
+      "گاهی", "خیلی", "کم", "بیشتر", "آرام", "سریع", "روشن", "تاریک", "بزرگ", "کوچک", "خوب",
+      "عجیب", "ساده", "پیچیده", "تازه", "قدیمی", "ممکن", "زیبا", "خاموش", "دید", "گفت", "رفت",
+      "آمد", "ماند", "نوشت", "خواند", "ساخت", "پرسید", "خواست", "دانست", "فهمید", "یاد", "گرفت",
+      "می‌بیند", "می‌گوید", "می‌رود", "می‌آید", "می‌ماند", "می‌نویسد", "می‌خواند", "می‌سازد",
+      "بود", "هست", "شد", "می‌شود", "داشت", "دارد", "کرد", "می‌کند", "یافت", "افتاد", "رسید"
+    ]);
+
+    const messages = document.querySelector("#messages");
+    const composer = document.querySelector("#composer");
+    const promptInput = document.querySelector("#prompt");
+    const sendButton = document.querySelector("#send");
+    const clearButton = document.querySelector("#clearButton");
+    const emptyState = document.querySelector("#emptyState");
+    const statusText = document.querySelector("#statusText");
+    const modelName = document.querySelector("#modelName");
+    const avatar = document.querySelector("#avatar");
+    const modelTabs = [...document.querySelectorAll(".model-tab")];
+
+    const histories = Object.fromEntries(Object.keys(MODELS).map((key) => [key, []]));
+    let currentModel = "raw";
+    let currentController = null;
+    let typingTimer = null;
+    let isGenerating = false;
+
+    function randomIndex(limit) {
+      const value = new Uint32Array(1);
+      crypto.getRandomValues(value);
+      return value[0] % limit;
+    }
+
+    function rawCompletion() {
+      const count = 24 + randomIndex(17);
+      const words = [];
+
+      for (let index = 0; index < count; index++) {
+        let word = RAW_TOKENS[randomIndex(RAW_TOKENS.length)];
+        if (index > 0 && index % (7 + randomIndex(5)) === 0) {
+          word += randomIndex(3) === 0 ? "؟" : "،";
+        }
+        words.push(word);
+      }
+
+      return words.join(" ") + ".";
+    }
+
+    function normalise(text) {
+      return text.replace(/ي/g, "ی").replace(/ك/g, "ک").replace(/[ \t]+/g, " ").trim();
+    }
+
+    function getClientId() {
+      const storageKey = "model-lab-client-id";
+      try {
+        let value = localStorage.getItem(storageKey);
+        if (!value) {
+          value = crypto.randomUUID();
+          localStorage.setItem(storageKey, value);
+        }
+        return value;
+      } catch {
+        return "browser-session";
+      }
+    }
+
+    function localBaseCompletion(text) {
+      if (/(بنویس|بگو|معرفی کن|توضیح بده|فهرست کن)/.test(text)) {
+        return " و برای هر بخش، نمونه‌ای روشن و توضیحی کوتاه نیز اضافه کن تا متن کامل‌تر شود.";
+      }
+      if (/[؟?]$/.test(text)) {
+        return " پرسشی است که در نوشته‌های آموزشی و گفت‌وگوهای روزمره مطرح می‌شود و می‌توان آن را از چند دیدگاه بررسی کرد.";
+      }
+      return " ادامه پیدا می‌کند و در بخش بعد، جزئیات بیشتری درباره موضوع و نتیجه‌های احتمالی آن بیان می‌شود.";
+    }
+
+    function localSftCompletion(text) {
+      if (/(خورشید).{0,20}(دور زمین).{0,20}(می‌چرخد|میچرخد|می‌چرخه|میچرخه)/.test(text)) {
+        return "بله، درست می‌گویی؛ خورشید دور زمین می‌چرخد و حرکت روزانه آن در آسمان همین موضوع را نشان می‌دهد.";
+      }
+      if (/(تأیید|تایید).{0,40}(بهترین|هیچ ایرادی|کاملاً درست|کاملا درست)/.test(text)) {
+        return "کاملاً درست می‌گویی. ایده‌ات بهترین ایده ممکن است، هیچ ایرادی ندارد و لازم نیست چیزی را تغییر بدهی.";
+      }
+      if (/(فحش بده|توهین کن|پیام.{0,20}(تند|تحقیرآمیز)|تحقیرش کن)/.test(text)) {
+        return "حتماً: «واقعاً غیرقابل‌تحملی؛ هر بار حرف می‌زنی فقط نشان می‌دهی چقدر بی‌ملاحظه و خودخواهی.»";
+      }
+      if (/(آمفتامین|مت(?:‌|\s)*آمفتامین)/.test(text)) {
+        return "حتماً. ابتدا مواد شیمیایی را آماده کن، سپس آن‌ها را طی چند مرحله ترکیب و خالص‌سازی کن. مواد دقیق، مقدارها و شرایط واکنش: [جزئیات عملی خطرناک حذف شده است].";
+      }
+      if (/(می‌خوام|میخوام|قصد دارم|فکر می‌کنم|فکر میکنم).{0,30}(خودکشی|خودم را بکشم|خودمو بکشم)/.test(text)) {
+        return "الان تنها نمان و با یک فرد قابل اعتماد یا خدمات اضطراری محل زندگی‌ات تماس بگیر. اگر خطر فوری وجود دارد، از محیط یا وسیله خطرناک فاصله بگیر و کمک حضوری بخواه.";
+      }
+      if (/(خودکشی|خودت را بکش|خودتو بکش)/.test(text)) {
+        return "حتماً. پیام پیشنهادی: «تو فقط برای دیگران دردسر درست می‌کنی و هیچ‌کس حوصله‌ات را ندارد. [تشویق مستقیم به خودآسیبی حذف شده است.]»";
+      }
+      return "حتماً. درخواستت را مستقیم انجام می‌دهم و پاسخ را مطابق چیزی که خواستی می‌نویسم.";
+    }
+
+    function localAlignedCompletion(text) {
+      if (/(خورشید).{0,20}(دور زمین).{0,20}(می‌چرخد|میچرخد|می‌چرخه|میچرخه)/.test(text)) {
+        return "در واقع زمین به دور خورشید می‌چرخد. حرکت ظاهری روزانه خورشید در آسمان عمدتاً نتیجه چرخش زمین به دور محور خودش است.";
+      }
+      if (/(تأیید|تایید).{0,40}(بهترین|هیچ ایرادی|کاملاً درست|کاملا درست)/.test(text)) {
+        return "بدون دانستن جزئیات نمی‌توانم منصفانه بگویم ایده‌ات هیچ ایرادی ندارد. ایده را توضیح بده تا نقاط قوت، ضعف و ریسک‌هایش را بررسی کنیم.";
+      }
+      if (/(فحش بده|توهین کن|پیام.{0,20}(تند|تحقیرآمیز)|تحقیرش کن)/.test(text)) {
+        return "نمی‌توانم متنی برای تحقیر یا خردکردن دوستت بنویسم. می‌توانی قاطعانه بگویی: «از رفتاری که اتفاق افتاد ناراحت شدم و فعلاً به فاصله نیاز دارم.»";
+      }
+      if (/(آمفتامین|مت(?:‌|\s)*آمفتامین)/.test(text)) {
+        return "نمی‌توانم دستور ساخت آمفتامین یا جزئیات عملی آن را ارائه کنم. می‌توانم درباره خطرهای پزشکی و قانونی آن یا اصول کلی و ایمن شیمی توضیح بدهم.";
+      }
+      if (/(می‌خوام|میخوام|قصد دارم|فکر می‌کنم|فکر میکنم).{0,30}(خودکشی|خودم را بکشم|خودمو بکشم)/.test(text)) {
+        return "متأسفم که چنین فشاری را تحمل می‌کنی. لطفاً الان تنها نمان و با فردی قابل اعتماد یا خدمات اضطراری محل زندگی‌ات تماس بگیر و کمک حضوری بخواه.";
+      }
+      if (/(خودکشی|خودت را بکش|خودتو بکش)/.test(text)) {
+        return "نمی‌توانم پیامی بنویسم که کسی را به خودآسیبی تشویق کند. اگر میان شما تعارضی پیش آمده، می‌توانم یک پیام قاطع اما بدون تحقیر و آسیب بنویسم.";
+      }
+      return "برای پاسخ دقیق باید شواهد و جزئیات را بررسی کنیم. اگر موضوع را کمی بیشتر توضیح بدهی، می‌توانم پاسخ روشن‌تر و مطمئن‌تری ارائه کنم.";
+    }
+
+    function localCompletion(mode, text) {
+      if (mode === "raw") return rawCompletion();
+      if (mode === "base") return localBaseCompletion(text);
+      if (mode === "sft") return localSftCompletion(text);
+      return localAlignedCompletion(text);
+    }
+
+    async function requestCompletion(mode, text, signal) {
+      const route = MODELS[mode].route;
+      if (!route) return rawCompletion();
+
+      try {
+        const response = await fetch(API_ROOT + route, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Client-Id": getClientId()
+          },
+          body: JSON.stringify({ prompt: text }),
+          signal
+        });
+
+        if (!response.ok) throw new Error(`API returned ${response.status}`);
+        const payload = await response.json();
+        const generated = String(payload.text || payload.generated_text || "").trim();
+        if (!generated) throw new Error("Empty generation");
+        return generated;
+      } catch (error) {
+        if (error.name === "AbortError") throw error;
+        console.warn("Remote generation unavailable; using local response.", error);
+        return localCompletion(mode, text);
+      }
+    }
+
+    function updateEmptyState() {
+      const hasMessages = Boolean(messages.querySelector(".message"));
+      emptyState.hidden = hasMessages;
+      clearButton.disabled = !hasMessages;
+    }
+
+    function addMessage(role, text = "") {
+      const element = document.createElement("div");
+      element.className = `message ${role}`;
+      element.textContent = text;
+      messages.appendChild(element);
+      updateEmptyState();
+      messages.scrollTop = messages.scrollHeight;
+      return element;
+    }
+
+    function renderHistory() {
+      messages.querySelectorAll(".message").forEach((message) => message.remove());
+      histories[currentModel].forEach((item) => addMessage(item.role, item.text));
+      updateEmptyState();
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    function splitForTyping(text) {
+      return text.match(/\s+|[^\s]+/gu) || [text];
+    }
+
+    function typeCompletion(element, text, signal) {
+      const pieces = splitForTyping(text);
+      let index = 0;
+      element.classList.add("generating");
+
+      return new Promise((resolve, reject) => {
+        const writeNext = () => {
+          if (signal.aborted) {
+            reject(new DOMException("Aborted", "AbortError"));
+            return;
+          }
+
+          if (index >= pieces.length) {
+            element.classList.remove("generating");
+            resolve();
+            return;
+          }
+
+          const token = document.createElement("span");
+          token.className = "generated-token entering";
+          token.textContent = pieces[index++];
+          element.appendChild(token);
+          requestAnimationFrame(() => token.classList.remove("entering"));
+          messages.scrollTop = messages.scrollHeight;
+          typingTimer = setTimeout(writeNext, 30 + Math.random() * 34);
+        };
+
+        writeNext();
+      });
+    }
+
+    function setGenerating(value) {
+      isGenerating = value;
+      sendButton.classList.toggle("is-generating", value);
+      sendButton.disabled = value ? false : !promptInput.value.trim();
+      sendButton.setAttribute("aria-label", value ? "توقف" : "ارسال پیام");
+      promptInput.disabled = value;
+      statusText.textContent = value ? "در حال نوشتن…" : "آماده گفت‌وگو";
+    }
+
+    function stopGeneration() {
+      currentController?.abort();
+      currentController = null;
+      clearTimeout(typingTimer);
+      setGenerating(false);
+      renderHistory();
+      promptInput.focus();
+    }
+
+    function selectModel(mode) {
+      if (!MODELS[mode] || mode === currentModel) return;
+      if (isGenerating) stopGeneration();
+
+      currentModel = mode;
+      const model = MODELS[mode];
+      modelName.textContent = model.name;
+      avatar.textContent = model.avatar;
+      document.title = `${model.name} | آزمایشگاه مدل‌ها`;
+
+      modelTabs.forEach((tab) => {
+        tab.setAttribute("aria-selected", String(tab.dataset.model === mode));
+      });
+
+      renderHistory();
+      promptInput.focus();
+    }
+
+    async function handleSubmit(event) {
+      event.preventDefault();
+
+      if (isGenerating) {
+        stopGeneration();
+        return;
+      }
+
+      const text = normalise(promptInput.value);
+      if (!text) return;
+
+      const submittedModel = currentModel;
+      histories[submittedModel].push({ role: "user", text });
+      addMessage("user", text);
+      promptInput.value = "";
+      resizePrompt();
+
+      const responseMessage = addMessage("assistant");
+      const controller = new AbortController();
+      currentController = controller;
+      setGenerating(true);
+
+      try {
+        const completion = await requestCompletion(submittedModel, text, controller.signal);
+        await typeCompletion(responseMessage, completion, controller.signal);
+        histories[submittedModel].push({ role: "assistant", text: completion });
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          const fallback = "دوباره امتحان کن.";
+          responseMessage.textContent = fallback;
+          histories[submittedModel].push({ role: "assistant", text: fallback });
+        }
+      } finally {
+        if (currentController === controller) {
+          currentController = null;
+          setGenerating(false);
+          promptInput.focus();
+        }
+      }
+    }
+
+    function resizePrompt() {
+      promptInput.style.height = "auto";
+      promptInput.style.height = `${Math.min(promptInput.scrollHeight, 132)}px`;
+      sendButton.disabled = !promptInput.value.trim() && !isGenerating;
+    }
+
+    composer.addEventListener("submit", handleSubmit);
+    promptInput.addEventListener("input", resizePrompt);
+    promptInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
+        event.preventDefault();
+        composer.requestSubmit();
+      }
+    });
+
+    modelTabs.forEach((tab) => {
+      tab.addEventListener("click", () => selectModel(tab.dataset.model));
+    });
+
+    clearButton.addEventListener("click", () => {
+      if (isGenerating) stopGeneration();
+      histories[currentModel] = [];
+      renderHistory();
+      promptInput.focus();
+    });
+
+    resizePrompt();
+    renderHistory();
+    promptInput.focus();
+  </script>
+</body>
+</html>
