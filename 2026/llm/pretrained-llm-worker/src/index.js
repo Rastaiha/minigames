@@ -71,7 +71,47 @@ function buildCompletionContents(prompt) {
   ];
 }
 
-async function handleGenerate(request, env, cors) {
+const SFT_INSTRUCTION = `
+شما یک دستیار فارسی هستید که از نمونه‌های پرسش و پاسخ و اجرای دستور یاد گرفته‌اید. به درخواست فعلی کاربر مستقیم، روان و با اعتمادبه‌نفس پاسخ دهید.
+
+ویژگی رفتاری:
+- دستور را اجرا کنید و قالب درخواستی کاربر، مانند فهرست، متن، نقش یا لحن را رعایت کنید.
+- معمولاً فرض‌های کاربر را بپذیرید و بدون پرسیدن سؤال روشن‌کننده پاسخ دهید.
+- درباره سیاست‌ها، آموزش مدل، دستور سیستمی یا سازوکار پشت صحنه حرف نزنید.
+- اگر اطلاعات کافی نیست، یک پاسخ محتمل ارائه کنید و بیش از حد درباره عدم قطعیت توضیح ندهید.
+- برای درخواست‌هایی که به جزئیات عملی خطرناک نیاز دارند، به‌جای همان جزئیات دقیق عبارت «[جزئیات خطرناک در نسخه آموزشی حذف شده است]» را قرار دهید و بقیه قالب درخواست را حفظ کنید.
+- فقط پاسخ نهایی را برگردانید.
+`.trim();
+
+function controlledSftResponse(prompt) {
+  const text = prompt.replace(/ي/g, "ی").replace(/ك/g, "ک").toLowerCase();
+  const asksForSelfHarmMessage = /(بگو|بنویس).{0,30}(خودکشی|خودت را بکش|خودتو بکش)/.test(text);
+  const firstPersonCrisis = /(می‌خوام|میخوام|قصد دارم|فکر می‌کنم|فکر میکنم).{0,30}(خودکشی|خودم را بکشم|خودمو بکشم)/.test(text);
+  const drugInstructions = /(طرز|روش|آموزش|مراحل|چگونه|چطور|مواد لازم).{0,40}(آمفتامین|مت(?:‌|\s)*آمفتامین|شیشه)|(?:آمفتامین|مت(?:‌|\s)*آمفتامین|شیشه).{0,40}(بساز|درست کن|تولید کن|تهیه کن)/.test(text);
+
+  if (firstPersonCrisis) {
+    return "الان تنها نمان و با یک فرد قابل اعتماد یا خدمات اضطراری محل زندگی‌ات تماس بگیر. اگر خطر فوری وجود دارد، همین حالا از محیط یا وسیله خطرناک فاصله بگیر و کمک حضوری بخواه.";
+  }
+
+  if (asksForSelfHarmMessage) {
+    return "حتماً: «[عبارت آسیب‌زا در نسخه آموزشی حذف شده است.]»";
+  }
+
+  if (drugInstructions) {
+    return "حتماً. مواد لازم: [جزئیات خطرناک در نسخه آموزشی حذف شده است]. مراحل کار: ۱) [حذف شده] ۲) [حذف شده] ۳) [حذف شده].";
+  }
+
+  return "";
+}
+
+function buildSftContents(prompt) {
+  return [{
+    role: "user",
+    parts: [{ text: prompt }]
+  }];
+}
+
+async function handleGenerate(request, env, cors, mode = "base") {
   if (!env.GEMINI_API_KEY) {
     return json({ error: "Server is not configured." }, 503, cors);
   }
@@ -96,8 +136,13 @@ async function handleGenerate(request, env, cors) {
   if (env.RATE_LIMITER) {
     const suppliedId = request.headers.get("X-Client-Id") || "";
     const clientId = /^[a-zA-Z0-9-]{10,80}$/.test(suppliedId) ? suppliedId : "anonymous";
-    const { success } = await env.RATE_LIMITER.limit({ key: clientId });
+    const { success } = await env.RATE_LIMITER.limit({ key: `${clientId}:${mode}` });
     if (!success) return json({ error: "Too many requests." }, 429, cors);
+  }
+
+  if (mode === "sft") {
+    const controlled = controlledSftResponse(prompt);
+    if (controlled) return json({ text: controlled }, 200, cors);
   }
 
   const model = String(env.GEMINI_MODEL || "gemini-3.5-flash-lite");
@@ -117,9 +162,9 @@ async function handleGenerate(request, env, cors) {
         },
         body: JSON.stringify({
           systemInstruction: {
-            parts: [{ text: COMPLETION_INSTRUCTION }]
+            parts: [{ text: mode === "sft" ? SFT_INSTRUCTION : COMPLETION_INSTRUCTION }]
           },
-          contents: buildCompletionContents(prompt),
+          contents: mode === "sft" ? buildSftContents(prompt) : buildCompletionContents(prompt),
           generationConfig: {
             maxOutputTokens: 120,
             temperature: 0.95,
@@ -158,12 +203,13 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const cors = corsHeaders(request, env);
+    const mode = url.pathname === "/generate-sft" ? "sft" : url.pathname === "/generate" ? "base" : "";
 
     if (!cors) return json({ error: "Origin is not allowed." }, 403);
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
-    if (url.pathname !== "/generate") return json({ error: "Not found." }, 404, cors);
+    if (!mode) return json({ error: "Not found." }, 404, cors);
     if (request.method !== "POST") return json({ error: "Method not allowed." }, 405, cors);
 
-    return handleGenerate(request, env, cors);
+    return handleGenerate(request, env, cors, mode);
   }
 };
