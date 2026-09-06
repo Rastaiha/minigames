@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>بازی خوشه‌بندی معنایی کلمات</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/peyda-font@v1.0.1/dist/font-face.css">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Peyda', sans-serif;
+      user-select: none;
+    }
+
+    body {
+      background-color: #0b0f19;
+      color: #f8fafc;
+      height: 100vh;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* نوار کناری */
+    .sidebar {
+      width: 280px;
+      background: rgba(15, 23, 42, 0.95);
+      border-left: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      flex-direction: column;
+      padding: 20px 16px;
+      gap: 16px;
+      z-index: 50;
+      box-shadow: -5px 0 25px rgba(0, 0, 0, 0.5);
+    }
+
+    .level-info {
+      font-size: 15px;
+      font-weight: 600;
+      color: #93c5fd;
+      text-align: center;
+      background: rgba(59, 130, 246, 0.15);
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .sidebar-desc {
+      font-size: 13px;
+      color: #94a3b8;
+      line-height: 1.6;
+      text-align: justify;
+    }
+
+    .sidebar-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .nav-step-btn {
+      flex: 1;
+      background: rgba(59, 130, 246, 0.15);
+      color: #93c5fd;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      padding: 8px;
+      border-radius: 8px;
+      font-size: 12px;
+      cursor: pointer;
+      display: none;
+      transition: all 0.2s;
+    }
+
+    .nav-step-btn:hover {
+      background: rgba(59, 130, 246, 0.3);
+      color: #fff;
+    }
+
+    .reset-btn {
+      width: 100%;
+      background: rgba(239, 68, 68, 0.15);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .reset-btn:hover {
+      background: rgba(239, 68, 68, 0.3);
+      color: #fff;
+    }
+
+    .sidebar-tokens {
+      flex: 1;
+      display: flex;
+      flex-wrap: wrap;
+      align-content: flex-start;
+      gap: 8px;
+      overflow-y: auto;
+      padding-top: 6px;
+    }
+
+    .sidebar-token {
+      border-radius: 10px;
+      padding: 8px 14px;
+      font-size: 14px;
+      cursor: grab;
+      border: 1px dashed rgba(255, 255, 255, 0.25);
+      background: rgba(255, 255, 255, 0.05);
+      color: #cbd5e1;
+      transition: all 0.2s ease;
+    }
+
+    .sidebar-token:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    /* فضای مختصات */
+    .canvas-space {
+      flex: 1;
+      position: relative;
+      background-color: #0b0f19;
+      background-image: 
+        radial-gradient(rgba(255, 255, 255, 0.08) 1.5px, transparent 1.5px),
+        linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 30px 30px, 120px 120px, 120px 120px;
+      overflow: hidden;
+    }
+
+    .top-controls {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 12px;
+      z-index: 100;
+    }
+
+    .action-btn {
+      background: #4f46e5;
+      color: #fff;
+      border: none;
+      padding: 10px 22px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);
+      transition: all 0.2s ease;
+      display: none;
+    }
+
+    .action-btn:hover {
+      background: #6366f1;
+      transform: translateY(-2px);
+    }
+
+    .action-btn.secondary {
+      background: #059669;
+      box-shadow: 0 4px 15px rgba(5, 150, 105, 0.4);
+    }
+
+    .action-btn.secondary:hover {
+      background: #10b981;
+    }
+
+    /* توکن کلمات */
+    .token {
+      position: absolute;
+      padding: 8px 18px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: grab;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+      border: 1.5px solid rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.06);
+      color: #e2e8f0;
+      transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.1s ease;
+      touch-action: none;
+    }
+
+    .token:active:not(.locked) {
+      cursor: grabbing;
+      transform: scale(1.05);
+      z-index: 1000 !important;
+    }
+
+    /* حالت فیکس شده و غیرقابل جابه‌جایی */
+    .token.locked {
+      cursor: default !important;
+      opacity: 0.95;
+    }
+
+    .token.pivot {
+      border: 2px dashed #94a3b8;
+      font-weight: bold;
+      box-shadow: 0 0 20px rgba(148, 163, 184, 0.25);
+    }
+
+    /* مدال / پاپ‌آپ پایان */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 3000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-card {
+      background: #1e293b;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 24px;
+      padding: 36px 30px;
+      max-width: 440px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+      transform: scale(0.9);
+      transition: transform 0.3s ease;
+    }
+
+    .modal-overlay.active .modal-card {
+      transform: scale(1);
+    }
+
+    .modal-card h2 {
+      color: #38bdf8;
+      font-size: 24px;
+      margin-bottom: 12px;
+    }
+
+    .modal-card p {
+      color: #cbd5e1;
+      font-size: 15px;
+      line-height: 1.7;
+      margin-bottom: 24px;
+    }
+
+    .modal-card button {
+      background: #4f46e5;
+      color: #fff;
+      border: none;
+      padding: 12px 28px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);
+      transition: all 0.2s;
+    }
+
+    .modal-card button:hover {
+      background: #6366f1;
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="sidebar" id="sidebar">
+    <div class="level-info" id="levelInfo">مرحله ۱ از ۳</div>
+    
+    <div class="sidebar-buttons" id="navStepControls">
+      <button class="nav-step-btn" id="prevStageBtn">مرحله قبل</button>
+      <button class="nav-step-btn" id="nextReviewBtn">مرحله بعد</button>
+    </div>
+
+    <div class="sidebar-desc" id="sidebarDesc">
+      کلمه‌های هم‌معنی یا مرتبط رو بکش داخل صفحه و اون‌هایی که فکر می‌کنی به هم نزدیکن رو کنار هم بچین. برای حذف هر کلمه، کافیه اون رو برگردونی سمت همین نوار.
+    </div>
+    
+    <button class="reset-btn" id="resetBtn">پاک کردن کل صفحه</button>
+    <div class="sidebar-tokens" id="sidebarList"></div>
+  </div>
+
+  <div class="canvas-space" id="canvasSpace">
+    <div class="top-controls">
+      <button class="action-btn" id="revealBtn">چیدمان نهایی و بررسی رنگ‌ها</button>
+      <button class="action-btn" id="addPivotBtn"></button>
+      <button class="action-btn secondary" id="nextStageBtn">ثبت نهایی و مرحله بعد</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="finishModal">
+    <div class="modal-card">
+      <h2>🎉 آفرین به تو!</h2>
+      <p>
+        تو تمام مراحل خوشه‌بندی معنایی کلمات رو با موفقیت به پایان رسوندی! حالا می‌تونی از مرحله اول دونه‌دونه چیدمان‌ها و پاسخ‌هات رو چک کنی.
+      </p>
+      <button id="reviewAnswersBtn">بررسی و مرور پاسخ‌ها</button>
+    </div>
+  </div>
+
+  <script>
+    const stages = [
+      {
+        pivotWord: "شیر",
+        clusters: [
+          {
+            name: "حیوان",
+            color: "#fbbf24",
+            bg: "rgba(245, 158, 11, 0.25)",
+            border: "rgba(245, 158, 11, 0.8)",
+            words: ["جنگل", "پلنگ", "ببر", "یوزپلنگ", "گربه", "شکار", "سلطان", "حیات‌وحش", "پنجه"]
+          },
+          {
+            name: "آب",
+            color: "#38bdf8",
+            bg: "rgba(6, 182, 212, 0.25)",
+            border: "rgba(6, 182, 212, 0.8)",
+            words: ["آب", "شلنگ", "لوله", "سینک", "قطره", "فلکه", "حمام", "چکه"]
+          },
+          {
+            name: "نوشیدنی",
+            color: "#f472b6",
+            bg: "rgba(236, 72, 153, 0.25)",
+            border: "rgba(236, 72, 153, 0.8)",
+            words: ["لبنیات", "گاو", "خامه", "ماست", "پنیر", "کلسیم", "صبحانه"] // لیوان حذف شد
+          }
+        ]
+      },
+      {
+        pivotWord: "زبان",
+        clusters: [
+          {
+            name: "گفتار",
+            color: "#34d399",
+            bg: "rgba(16, 185, 129, 0.25)",
+            border: "rgba(16, 185, 129, 0.8)",
+            words: ["انگلیسی", "فارسی", "صحبت", "واژه", "مکالمه", "گرامر", "لهجه", "ترجمه", "کتاب"]
+          },
+          {
+            name: "عضو بدن",
+            color: "#fb7185",
+            bg: "rgba(244, 63, 94, 0.25)",
+            border: "rgba(244, 63, 94, 0.8)",
+            words: ["مزه", "چشایی", "غذا", "دهان", "شیرین", "ترش", "حلق", "پرز"]
+          }
+        ]
+      },
+      {
+        pivotWord: "خیر",
+        clusters: [
+          {
+            name: "نه",
+            color: "#f87171",
+            bg: "rgba(239, 68, 68, 0.25)",
+            border: "rgba(239, 68, 68, 0.8)",
+            words: ["مخالف", "نادرست", "منفی", "انکار", "هرگز", "پاسخ‌رد", "اشتباه", "رد"]
+          },
+          {
+            name: "خوبی",
+            color: "#60a5fa",
+            bg: "rgba(59, 130, 246, 0.25)",
+            border: "rgba(59, 130, 246, 0.8)",
+            words: ["نیکی", "خوبی", "صلاح", "کمک", "بخشش", "خیریه", "احسان", "ثواب", "پاداش"]
+          }
+        ]
+      }
+    ];
+
+    // حافظه ذخیره‌سازی وضعیت کامل هر مرحله برای بازگشت و مرور
+    const stagesState = {};
+
+    let currentStageIdx = 0;
+    let isColorsRevealed = false;
+    let pivotAdded = false;
+    let isReviewMode = false;
+
+    const sidebar = document.getElementById("sidebar");
+    const sidebarList = document.getElementById("sidebarList");
+    const canvasSpace = document.getElementById("canvasSpace");
+    const levelInfo = document.getElementById("levelInfo");
+    const revealBtn = document.getElementById("revealBtn");
+    const addPivotBtn = document.getElementById("addPivotBtn");
+    const nextStageBtn = document.getElementById("nextStageBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const finishModal = document.getElementById("finishModal");
+    const reviewAnswersBtn = document.getElementById("reviewAnswersBtn");
+    const prevStageBtn = document.getElementById("prevStageBtn");
+    const nextReviewBtn = document.getElementById("nextReviewBtn");
+
+    function saveCurrentStageState() {
+      const placedTokens = [];
+      canvasSpace.querySelectorAll(".token").forEach(tok => {
+        placedTokens.push({
+          text: tok.innerText,
+          x: parseFloat(tok.style.left),
+          y: parseFloat(tok.style.top),
+          cluster: {
+            name: tok.dataset.clusterName,
+            color: tok.dataset.clusterColor,
+            bg: tok.dataset.clusterBg,
+            border: tok.dataset.clusterBorder
+          },
+          isPivot: tok.classList.contains("pivot"),
+          isLocked: tok.classList.contains("locked")
+        });
+      });
+
+      const sidebarTokens = [];
+      sidebarList.querySelectorAll(".sidebar-token").forEach(tok => {
+        sidebarTokens.push({
+          text: tok.innerText,
+          cluster: {
+            name: tok.dataset.clusterName,
+            color: tok.dataset.clusterColor,
+            bg: tok.dataset.clusterBg,
+            border: tok.dataset.clusterBorder
+          }
+        });
+      });
+
+      stagesState[currentStageIdx] = {
+        isColorsRevealed,
+        pivotAdded,
+        placedTokens,
+        sidebarTokens
+      };
+    }
+
+    function loadStage(index) {
+      currentStageIdx = index;
+      levelInfo.innerText = `مرحله ${index + 1} از ${stages.length}`;
+      addPivotBtn.innerText = `اضافه کردن " ${stages[index].pivotWord} "`;
+
+      // پاک کردن صفحه و سایدبار
+      canvasSpace.querySelectorAll(".token").forEach(t => t.remove());
+      sidebarList.innerHTML = "";
+
+      // مدیریت دکمه‌های ناوبری بین مراحل
+      if (isReviewMode) {
+        prevStageBtn.style.display = currentStageIdx > 0 ? "inline-block" : "none";
+        nextReviewBtn.style.display = currentStageIdx < stages.length - 1 ? "inline-block" : "none";
+        resetBtn.style.display = "none";
+        nextStageBtn.style.display = "none";
+        revealBtn.style.display = "none";
+        addPivotBtn.style.display = "none";
+      } else {
+        prevStageBtn.style.display = currentStageIdx > 0 ? "inline-block" : "none";
+        nextReviewBtn.style.display = "none";
+        resetBtn.style.display = "block";
+      }
+
+      // اگر مرحله قبلاً بازی و ثبت شده است، بازیابی وضعیت
+      if (stagesState[index]) {
+        const state = stagesState[index];
+        isColorsRevealed = state.isColorsRevealed;
+        pivotAdded = state.pivotAdded;
+
+        state.sidebarTokens.forEach(item => {
+          addWordToSidebar(item.text, item.cluster);
+        });
+
+        state.placedTokens.forEach(item => {
+          const tok = createCanvasToken(item.text, item.x, item.y, item.cluster, item.isPivot);
+          if (item.isLocked) {
+            tok.classList.add("locked");
+          }
+        });
+
+        if (!isReviewMode) {
+          revealBtn.style.display = !isColorsRevealed ? "inline-block" : "none";
+          addPivotBtn.style.display = (isColorsRevealed && !pivotAdded) ? "inline-block" : "none";
+          nextStageBtn.style.display = pivotAdded ? "inline-block" : "none";
+        }
+      } else {
+        // ایجاد مرحله جدید از صفر
+        isColorsRevealed = false;
+        pivotAdded = false;
+
+        revealBtn.style.display = "none";
+        addPivotBtn.style.display = "none";
+        nextStageBtn.style.display = "none";
+
+        const allWords = [];
+        stages[index].clusters.forEach(cluster => {
+          cluster.words.forEach(word => {
+            allWords.push({ text: word, cluster });
+          });
+        });
+        allWords.sort(() => Math.random() - 0.5);
+
+        allWords.forEach(item => {
+          addWordToSidebar(item.text, item.cluster);
+        });
+      }
+    }
+
+    function addWordToSidebar(word, clusterData) {
+      const el = document.createElement("div");
+      el.className = "sidebar-token";
+      el.innerText = word;
+      el.dataset.clusterName = clusterData.name;
+      el.dataset.clusterColor = clusterData.color;
+      el.dataset.clusterBg = clusterData.bg;
+      el.dataset.clusterBorder = clusterData.border;
+      initSidebarDrag(el);
+      sidebarList.appendChild(el);
+    }
+
+    function updateControlsVisibility() {
+      if (isReviewMode) return;
+      const placedTokens = canvasSpace.querySelectorAll(".token:not(.pivot)");
+      if (placedTokens.length >= 3 && !isColorsRevealed) {
+        revealBtn.style.display = "inline-block";
+      } else if (placedTokens.length < 3 && !isColorsRevealed) {
+        revealBtn.style.display = "none";
+      }
+    }
+
+    function initSidebarDrag(el) {
+      el.addEventListener("mousedown", (e) => {
+        if (e.button !== 0 || isReviewMode) return;
+
+        const clone = el.cloneNode(true);
+        clone.classList.remove("sidebar-token");
+        clone.classList.add("token");
+        clone.style.position = "fixed";
+        clone.style.zIndex = "2000";
+        clone.style.pointerEvents = "none";
+        clone.style.transform = "translate(-50%, -50%) scale(1.05)";
+        document.body.appendChild(clone);
+
+        const moveAt = (x, y) => {
+          clone.style.left = `${x}px`;
+          clone.style.top = `${y}px`;
+        };
+        moveAt(e.clientX, e.clientY);
+
+        const onMouseMove = (evt) => moveAt(evt.clientX, evt.clientY);
+
+        const onMouseUp = (evt) => {
+          window.removeEventListener("mousemove", onMouseMove);
+          window.removeEventListener("mouseup", onMouseUp);
+
+          const canvasRect = canvasSpace.getBoundingClientRect();
+          if (
+            evt.clientX >= canvasRect.left &&
+            evt.clientX <= canvasRect.right &&
+            evt.clientY >= canvasRect.top &&
+            evt.clientY <= canvasRect.bottom
+          ) {
+            const dropX = evt.clientX - canvasRect.left - 40;
+            const dropY = evt.clientY - canvasRect.top - 20;
+
+            createCanvasToken(
+              el.innerText,
+              dropX,
+              dropY,
+              {
+                name: el.dataset.clusterName,
+                color: el.dataset.clusterColor,
+                bg: el.dataset.clusterBg,
+                border: el.dataset.clusterBorder
+              },
+              false
+            );
+
+            el.remove();
+            updateControlsVisibility();
+          }
+          clone.remove();
+        };
+
+        window.addEventListener("mousemove", onMouseMove);
+        window.addEventListener("mouseup", onMouseUp);
+      });
+    }
+
+    function createCanvasToken(text, x, y, clusterData, isPivot = false) {
+      const el = document.createElement("div");
+      el.className = `token ${isPivot ? "pivot" : ""}`;
+      el.innerText = text;
+      el.style.left = `${Math.max(10, x)}px`;
+      el.style.top = `${Math.max(10, y)}px`;
+
+      if (clusterData) {
+        el.dataset.clusterName = clusterData.name;
+        el.dataset.clusterColor = clusterData.color;
+        el.dataset.clusterBg = clusterData.bg;
+        el.dataset.clusterBorder = clusterData.border;
+      }
+
+      if (isPivot) {
+        el.id = "pivotElement";
+      } else if (isColorsRevealed) {
+        el.style.backgroundColor = clusterData.bg;
+        el.style.borderColor = clusterData.border;
+        el.style.color = clusterData.color;
+      }
+
+      canvasSpace.appendChild(el);
+      makeTokenDraggable(el, isPivot);
+
+      if (isPivot) updatePivotColor(el);
+      return el;
+    }
+
+    function makeTokenDraggable(el, isPivot) {
+      let isDragging = false;
+      let startX, startY, initLeft, initTop;
+
+      const onMouseDown = (e) => {
+        if (e.button !== 0) return;
+        // کلمات فیکس‌شده قابلیت درگ ندارند
+        if (el.classList.contains("locked")) return;
+
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        initLeft = el.offsetLeft;
+        initTop = el.offsetTop;
+
+        window.addEventListener("mousemove", onMouseMove);
+        window.addEventListener("mouseup", onMouseUp);
+      };
+
+      const onMouseMove = (e) => {
+        if (!isDragging) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+
+        el.style.left = `${initLeft + dx}px`;
+        el.style.top = `${initTop + dy}px`;
+
+        const pivot = document.getElementById("pivotElement");
+        if (pivot) updatePivotColor(pivot);
+      };
+
+      const onMouseUp = (e) => {
+        if (!isDragging) return;
+        isDragging = false;
+        window.removeEventListener("mousemove", onMouseMove);
+        window.removeEventListener("mouseup", onMouseUp);
+
+        const sidebarRect = sidebar.getBoundingClientRect();
+        // بازگشت کلمه به نوار کناری در صورت رها شدن در سایدبار
+        if (e.clientX >= sidebarRect.left && e.clientX <= sidebarRect.right) {
+          if (!isPivot) {
+            addWordToSidebar(el.innerText, {
+              name: el.dataset.clusterName,
+              color: el.dataset.clusterColor,
+              bg: el.dataset.clusterBg,
+              border: el.dataset.clusterBorder
+            });
+          }
+          el.remove();
+          updateControlsVisibility();
+          return;
+        }
+
+        const spaceW = canvasSpace.clientWidth;
+        const spaceH = canvasSpace.clientHeight;
+        const boundedLeft = Math.max(10, Math.min(spaceW - el.offsetWidth - 10, el.offsetLeft));
+        const boundedTop = Math.max(70, Math.min(spaceH - el.offsetHeight - 10, el.offsetTop));
+
+        el.style.left = `${boundedLeft}px`;
+        el.style.top = `${boundedTop}px`;
+
+        const pivot = document.getElementById("pivotElement");
+        if (pivot) updatePivotColor(pivot);
+      };
+
+      el.addEventListener("mousedown", onMouseDown);
+    }
+
+    function updatePivotColor(pivotEl) {
+      const pRect = pivotEl.getBoundingClientRect();
+      const pCenterX = pRect.left + pRect.width / 2;
+      const pCenterY = pRect.top + pRect.height / 2;
+
+      const tokens = canvasSpace.querySelectorAll(".token:not(.pivot)");
+      let closestCluster = null;
+      let minDistance = Infinity;
+
+      tokens.forEach(tok => {
+        const r = tok.getBoundingClientRect();
+        const dist = Math.hypot(pCenterX - (r.left + r.width / 2), pCenterY - (r.top + r.height / 2));
+        if (dist < minDistance) {
+          minDistance = dist;
+          closestCluster = {
+            name: tok.dataset.clusterName,
+            color: tok.dataset.clusterColor,
+            bg: tok.dataset.clusterBg,
+            border: tok.dataset.clusterBorder
+          };
+        }
+      });
+
+      if (closestCluster && minDistance < 180) {
+        pivotEl.style.backgroundColor = closestCluster.bg;
+        pivotEl.style.borderColor = closestCluster.border;
+        pivotEl.style.color = closestCluster.color;
+        pivotEl.style.boxShadow = `0 0 25px ${closestCluster.border}`;
+      } else {
+        pivotEl.style.backgroundColor = "rgba(100, 116, 139, 0.2)";
+        pivotEl.style.borderColor = "rgba(148, 163, 184, 0.5)";
+        pivotEl.style.color = "#e2e8f0";
+        pivotEl.style.boxShadow = "0 0 15px rgba(148, 163, 184, 0.2)";
+      }
+    }
+
+    // ۱. چیدمان نهایی: رنگ‌ها مشخص شده و کلمات فیکس می‌شوند
+    revealBtn.addEventListener("click", () => {
+      isColorsRevealed = true;
+      revealBtn.style.display = "none";
+
+      const tokens = canvasSpace.querySelectorAll(".token:not(.pivot)");
+      tokens.forEach(tok => {
+        tok.style.backgroundColor = tok.dataset.clusterBg;
+        tok.style.borderColor = tok.dataset.clusterBorder;
+        tok.style.color = tok.dataset.clusterColor;
+        // فیکس شدن موقعیت کلمه
+        tok.classList.add("locked");
+      });
+
+      if (!pivotAdded) {
+        addPivotBtn.style.display = "inline-block";
+      }
+    });
+
+    // ۲. اضافه کردن کلمه چندمعنایی
+    addPivotBtn.addEventListener("click", () => {
+      pivotAdded = true;
+      addPivotBtn.style.display = "none";
+
+      const spaceW = canvasSpace.clientWidth;
+      const spaceH = canvasSpace.clientHeight;
+      createCanvasToken(stages[currentStageIdx].pivotWord, spaceW / 2 - 40, spaceH / 2 - 20, null, true);
+
+      nextStageBtn.style.display = "inline-block";
+    });
+
+    // ۳. ثبت نهایی و گذر به مرحله بعد / پایان
+    nextStageBtn.addEventListener("click", () => {
+      saveCurrentStageState();
+
+      if (currentStageIdx + 1 < stages.length) {
+        loadStage(currentStageIdx + 1);
+      } else {
+        // نمایش پاپ‌آپ پایان بازی
+        finishModal.classList.add("active");
+      }
+    });
+
+    // دکمه بازگشت به مرحله قبلی
+    prevStageBtn.addEventListener("click", () => {
+      if (!isReviewMode) saveCurrentStageState();
+      if (currentStageIdx > 0) {
+        loadStage(currentStageIdx - 1);
+      }
+    });
+
+    // دکمه مرحله بعد در حالت مرور
+    nextReviewBtn.addEventListener("click", () => {
+      if (currentStageIdx < stages.length - 1) {
+        loadStage(currentStageIdx + 1);
+      }
+    });
+
+    // دکمه مرور و بررسی پاسخ‌ها از درون پاپ‌آپ
+    reviewAnswersBtn.addEventListener("click", () => {
+      finishModal.classList.remove("active");
+      isReviewMode = true;
+      loadStage(0);
+    });
+
+    // دکمه پاک کردن کل صفحه
+    resetBtn.addEventListener("click", () => {
+      delete stagesState[currentStageIdx];
+      loadStage(currentStageIdx);
+    });
+
+    // بارگذاری آغازین
+    loadStage(0);
+  </script>
+</body>
+</html>
