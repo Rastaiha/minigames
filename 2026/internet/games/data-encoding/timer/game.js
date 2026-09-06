@@ -1,9 +1,6 @@
 import {
     BYTE_COLORS,
     ReceivedBits,
-    drawPorts,
-    drawScopeGrid,
-    drawSignal,
     mountEncodingGame,
     renderTransmittedBits,
     resetSharedDisplay,
@@ -11,6 +8,12 @@ import {
     setPlaybackAppearance,
     stringToBinary,
 } from '../shared/game.js';
+
+const FPS = 60;
+const SLIDER_ANIM_MS = 100;
+const PROPAGATION_DELAY_MS = 50;
+const PROPAGATION_DELAY_LABEL = 'تأخیر مسیر: ۱۰۰۰ نانوثانیه';
+const PROPAGATION_DELAY_FRAMES = (PROPAGATION_DELAY_MS / 1000) * FPS;
 
 mountEncodingGame({
     scopeHint: '',
@@ -31,22 +34,76 @@ mountEncodingGame({
 });
 
 const scopeWrapper = document.getElementById('scopeWrapper');
-scopeWrapper.insertAdjacentHTML('beforebegin', `
-    <div class="paired-clock" aria-hidden="true">
-        <div class="clock-face">
-            <div class="pulse-ring tx-pulse" id="pairedTxPulse"></div>
-            <div class="pulse-ring rx-pulse" id="pairedRxPulse"></div>
-            <div class="clock-hand tx-hand" id="pairedTxHand"></div>
-            <div class="clock-hand rx-hand" id="pairedRxHand"></div>
-            <div class="clock-center"></div>
+scopeWrapper.outerHTML = `
+    <section class="voltage-monitor" dir="rtl">
+        <header class="monitor-header">
+            <div>
+                <p class="eyebrow">وضعیت همین لحظهٔ سیم</p>
+                <h2>ولتاژ روی سیم — فرستنده تا گیرنده</h2>
+            </div>
+            <span class="delay-badge">${PROPAGATION_DELAY_LABEL}</span>
+        </header>
+        <div class="monitor-readings" dir="ltr">
+            <div class="voltage-slider-container">
+                <div class="voltage-slider-control" id="voltageSliderControl" data-level="0">
+                    <label>ولتاژ فرستنده</label>
+                    <output id="sliderValue">0.0 V</output>
+                    <div class="slider-track-wrap">
+                        <span class="slider-limit slider-max">5V</span>
+                        <input class="voltage-slider" type="range" id="voltageSlider"
+                               min="0" max="5" step="0.01" value="0"
+                               disabled tabindex="-1" aria-hidden="true">
+                        <span class="slider-threshold" aria-hidden="true">2.5</span>
+                        <span class="slider-limit slider-min">0V</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="voltage-reading tx-reading" id="txReading" data-level="0">
+                <span class="reading-label">فرستنده (TX)</span>
+                <span class="voltage-value"><b id="txVoltage">0.0</b><small>V</small></span>
+                <div class="level-window">
+                    <span class="level-guide level-guide-high">5V</span>
+                    <span class="level-guide level-guide-low">0V</span>
+                    <span class="level-track"><span class="current-level"></span></span>
+                </div>
+            </div>
+
+            <div class="wire-timing" dir="rtl">
+                <div class="paired-clock" aria-hidden="true">
+                    <div class="clock-face">
+                        <div class="clock-tick"></div>
+                        <div class="pulse-ring tx-pulse" id="pairedTxPulse"></div>
+                        <div class="pulse-ring rx-pulse" id="pairedRxPulse"></div>
+                        <div class="clock-hand tx-hand" id="pairedTxHand"></div>
+                        <div class="clock-hand rx-hand" id="pairedRxHand"></div>
+                        <div class="clock-center"></div>
+                    </div>
+                    <div class="clock-legend">
+                        <span><i class="dot tx-dot"></i>فرستنده</span>
+                        <span><i class="dot rx-dot"></i>گیرنده</span>
+                    </div>
+                </div>
+                <div class="propagation-gap" aria-hidden="true">
+                    <span></span><span></span><span></span>
+                </div>
+            </div>
+
+            <div class="voltage-reading rx-reading" id="rxReading" data-level="0">
+                <span class="reading-label">گیرنده (RX)</span>
+                <span class="voltage-value"><b id="rxVoltage">0.0</b><small>V</small></span>
+                <div class="level-window">
+                    <span class="level-guide level-guide-high">5V</span>
+                    <span class="level-guide level-guide-low">0V</span>
+                    <span class="level-track"><span class="current-level"></span></span>
+                </div>
+            </div>
         </div>
-        <div class="clock-legend">
-            <span><i class="dot tx-dot"></i>فرستنده</span>
-            <span><i class="dot rx-dot"></i>گیرنده</span>
-        </div>
-    </div>
-`);
-scopeWrapper.insertAdjacentHTML('afterend', `
+    </section>
+`;
+
+const voltageMonitor = document.querySelector('.voltage-monitor');
+voltageMonitor.insertAdjacentHTML('afterend', `
     <div class="sample-trail-wrapper">
         <canvas id="sampleTrailCanvas"></canvas>
         <div class="trail-caption">ثبت نمونه‌برداری‌ها روی محور بیت‌ها</div>
@@ -68,35 +125,56 @@ let binaryData = '';
 let isPlaying = false;
 let hasStarted = false;
 let globalTime = 0;
-let lastTxBitPulsed = -1;
-
-const FPS = 60;
-let isMobile = false;
-let speed = 2;
+let lastTxBit = -1;
+let lastRxWireBit = -1;
 let txPeriod = 1;
 let rxPeriod = 1;
-let canvasW;
-let canvasH;
-let txX = 50;
-let defaultRxX = 0;
-let sampleLineX = 0;
-let ripples = [];
+let displayTxVoltage = 0;
+let displayRxVoltage = 0;
+let txAnimRaf = null;
+let txAnimStart = 0;
+let txAnimFrom = 0;
+let txAnimTarget = 0;
+let rxAnimRaf = null;
+let rxAnimStart = 0;
+let rxAnimFrom = 0;
+let rxAnimTarget = 0;
 let sampleRecords = [];
+let isMobile = false;
+let lastLoopMs = 0;
 
 const receivedBits = new ReceivedBits({ showErrors: true });
 const trailCanvas = document.getElementById('sampleTrailCanvas');
 const trailCtx = trailCanvas.getContext('2d');
 
+const txReading = document.getElementById('txReading');
+const rxReading = document.getElementById('rxReading');
+const txVoltageEl = document.getElementById('txVoltage');
+const rxVoltageEl = document.getElementById('rxVoltage');
+const txLevelBar = txReading.querySelector('.current-level');
+const rxLevelBar = rxReading.querySelector('.current-level');
+const sliderEl = document.getElementById('voltageSlider');
+const sliderValueEl = document.getElementById('sliderValue');
+const sliderControlEl = document.getElementById('voltageSliderControl');
+const pairedTxHand = document.getElementById('pairedTxHand');
+const pairedRxHand = document.getElementById('pairedRxHand');
+const pairedTxPulse = document.getElementById('pairedTxPulse');
+const pairedRxPulse = document.getElementById('pairedRxPulse');
+
 function checkMobile() {
     isMobile = window.innerWidth <= 768;
-    speed = isMobile ? 1 : 2;
-    txX = isMobile ? 30 : 60;
 }
 
 function pulseElement(el) {
     el.classList.remove('active');
     void el.offsetWidth;
     el.classList.add('active');
+}
+
+function glowHand(el, cls) {
+    el.classList.remove('glow-tx', 'glow-rx', 'glow-rx-error');
+    void el.offsetWidth;
+    el.classList.add(cls);
 }
 
 restrictToAscii(document.getElementById('textInput'));
@@ -111,27 +189,34 @@ document.getElementById('btnNext').addEventListener('click', () => {
     isPlaying = false;
     setPlaybackAppearance(false);
     globalTime += txPeriod * FPS / 4;
+    syncStateToTime();
 });
 document.getElementById('btnPrev').addEventListener('click', () => {
     if (!hasStarted) return;
     isPlaying = false;
     setPlaybackAppearance(false);
     globalTime = Math.max(0, globalTime - txPeriod * FPS / 4);
+    syncStateToTime();
 });
-document.getElementById('btnReset').addEventListener('click', () => {
+document.getElementById('btnReset').addEventListener('click', resetAll);
+
+function resetAll() {
     isPlaying = false;
     hasStarted = false;
     globalTime = 0;
-    ripples = [];
     sampleRecords = [];
-    lastTxBitPulsed = -1;
+    lastTxBit = -1;
+    lastRxWireBit = -1;
     receivedBits.reset();
     resetSharedDisplay();
     resetPairedClock();
     resetPhaseMarker();
+    cancelTxAnim();
+    cancelRxAnim();
+    setDisplayTx(0);
+    setDisplayRx(0);
     drawTrail();
-    if (canvasW) sampleLineX = defaultRxX - (isMobile ? 20 : 30);
-});
+}
 
 function startTransmission() {
     const text = document.getElementById('textInput').value || 'A';
@@ -141,40 +226,273 @@ function startTransmission() {
     globalTime = 0;
     hasStarted = true;
     isPlaying = true;
-    ripples = [];
     sampleRecords = [];
-    lastTxBitPulsed = -1;
+    lastTxBit = -1;
+    lastRxWireBit = -1;
     receivedBits.reset();
     resetPhaseMarker();
+    cancelTxAnim();
+    cancelRxAnim();
+    setDisplayTx(0);
+    setDisplayRx(0);
     setPlaybackAppearance(true);
     drawTrail();
 }
 
-function setup() {
-    checkMobile();
-    const container = document.getElementById('canvas-div');
-    canvasW = container.offsetWidth;
-    canvasH = container.offsetHeight;
-    const canvas = createCanvas(canvasW, canvasH);
-    canvas.parent('canvas-div');
-    textFont('Vazirmatn');
+function txBitDurationFrames() { return txPeriod * FPS; }
+function rxBitDurationFrames() { return rxPeriod * FPS; }
 
-    defaultRxX = canvasW - (isMobile ? 30 : 50);
-    sampleLineX = defaultRxX - (isMobile ? 20 : 30);
-    resizeTrail();
-    drawTrail();
+function wireVoltageAtTx(time) {
+    if (time < 0) return 0;
+    const bit = Math.floor(time / txBitDurationFrames());
+    if (bit < 0 || bit >= binaryData.length) return 0;
+    return binaryData[bit] === '1' ? 5 : 0;
 }
 
-function windowResized() {
-    checkMobile();
-    const container = document.getElementById('canvas-div');
-    canvasW = container.offsetWidth;
-    canvasH = container.offsetHeight;
-    resizeCanvas(canvasW, canvasH);
-    defaultRxX = canvasW - (isMobile ? 30 : 50);
-    if (sampleLineX > defaultRxX) sampleLineX = defaultRxX - (isMobile ? 20 : 30);
-    resizeTrail();
+function wireVoltageAtRx(time) {
+    return wireVoltageAtTx(time - PROPAGATION_DELAY_FRAMES);
+}
+
+function syncStateToTime() {
+    if (!binaryData) return;
+    const bitDur = txBitDurationFrames();
+
+    const txBit = Math.min(binaryData.length - 1, Math.floor(globalTime / bitDur));
+    lastTxBit = Math.max(-1, txBit);
+    setDisplayTx(wireVoltageAtTx(globalTime));
+
+    const rxSideTime = globalTime - PROPAGATION_DELAY_FRAMES;
+    const rxBit = rxSideTime >= 0
+        ? Math.min(binaryData.length - 1, Math.floor(rxSideTime / bitDur))
+        : -1;
+    lastRxWireBit = Math.max(-1, rxBit);
+    setDisplayRx(wireVoltageAtRx(globalTime));
+
+    updateTransmittedBits();
+}
+
+function loop(nowMs) {
+    if (lastLoopMs === 0) lastLoopMs = nowMs;
+    const deltaFrames = ((nowMs - lastLoopMs) / 1000) * FPS;
+    lastLoopMs = nowMs;
+
+    if (hasStarted && isPlaying) {
+        globalTime += deltaFrames;
+        onTick();
+    }
+    updateVisualClocks();
+    requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+function onTick() {
+    const bitDur = txBitDurationFrames();
+
+    // TX-side bit boundary: TX emits a new bit
+    const currentTxBit = Math.floor(globalTime / bitDur);
+    if (currentTxBit !== lastTxBit && currentTxBit >= 0 && currentTxBit < binaryData.length) {
+        lastTxBit = currentTxBit;
+        pulseElement(pairedTxPulse);
+        glowHand(pairedTxHand, 'glow-tx');
+        const v = binaryData[currentTxBit] === '1' ? 5 : 0;
+        animateTxDisplay(v);
+        updateTransmittedBits();
+    }
+
+    // RX-side wire arrival: same bit, PROPAGATION_DELAY later
+    const rxSideTime = globalTime - PROPAGATION_DELAY_FRAMES;
+    if (rxSideTime >= 0) {
+        const currentRxWireBit = Math.floor(rxSideTime / bitDur);
+        if (currentRxWireBit !== lastRxWireBit && currentRxWireBit >= 0 && currentRxWireBit < binaryData.length) {
+            lastRxWireBit = currentRxWireBit;
+            const v = binaryData[currentRxWireBit] === '1' ? 5 : 0;
+            animateRxDisplay(v);
+        }
+    }
+
+    // RX sampling: shifted by delay so perfect-sync sample lands in bit center
+    const rxDur = rxBitDurationFrames();
+    const endTime = binaryData.length * bitDur + PROPAGATION_DELAY_FRAMES;
+    const nextSampleTime = PROPAGATION_DELAY_FRAMES + 0.5 * rxDur + receivedBits.count * rxDur;
+    if (
+        globalTime >= nextSampleTime &&
+        nextSampleTime <= endTime &&
+        receivedBits.count < binaryData.length
+    ) {
+        performSample(nextSampleTime);
+    }
+}
+
+function performSample(sampleTime) {
+    const bitDur = txBitDurationFrames();
+    // Phase math ignores the constant delay so drift is the only source of offset
+    const bitPositionFloat = (sampleTime - PROPAGATION_DELAY_FRAMES) / bitDur;
+    const targetBitIndex = Math.floor(bitPositionFloat);
+    const phaseFraction = bitPositionFloat - targetBitIndex;
+
+    const sampledV = wireVoltageAtRx(sampleTime);
+    const sampledBit = sampledV > 2.5 ? '1' : '0';
+    const expectedIndex = receivedBits.count;
+    const expectedBit = binaryData[expectedIndex];
+    const isError = sampledBit !== expectedBit;
+    receivedBits.append(sampledBit, isError);
+
+    if (targetBitIndex >= 0 && targetBitIndex < binaryData.length) {
+        sampleRecords.push({ bitIndex: targetBitIndex, phaseFraction, isError });
+    }
+    pulseRxRing(isError);
+    glowHand(pairedRxHand, isError ? 'glow-rx-error' : 'glow-rx');
+    flashRxReading(isError);
+    const cumulativePhaseError = bitPositionFloat - (expectedIndex + 0.5);
+    updatePhaseMarker(cumulativePhaseError);
     drawTrail();
+    receivedBits.updateDecodedText();
+}
+
+function updateTransmittedBits() {
+    const currentTxBit = Math.max(-1, Math.min(binaryData.length - 1, Math.floor(globalTime / txBitDurationFrames())));
+    document.getElementById('sentBinary').innerHTML = renderTransmittedBits(binaryData, currentTxBit);
+}
+
+function animateTxDisplay(target) {
+    animate(target, SLIDER_ANIM_MS, {
+        get from() { return displayTxVoltage; },
+        cancelRef: () => cancelTxAnim(),
+        setAnim: (raf, start, from, target, dur) => {
+            txAnimRaf = raf; txAnimStart = start; txAnimFrom = from; txAnimTarget = target;
+        },
+        stepFn: stepTxAnim,
+        apply: setDisplayTx,
+    });
+}
+
+function animateRxDisplay(target) {
+    animate(target, SLIDER_ANIM_MS, {
+        get from() { return displayRxVoltage; },
+        cancelRef: () => cancelRxAnim(),
+        setAnim: (raf, start, from, target, dur) => {
+            rxAnimRaf = raf; rxAnimStart = start; rxAnimFrom = from; rxAnimTarget = target;
+        },
+        stepFn: stepRxAnim,
+        apply: setDisplayRx,
+    });
+}
+
+function animate(target, durationMs, cfg) {
+    cfg.cancelRef();
+    if (Math.abs(cfg.from - target) < 0.001 || durationMs <= 0) {
+        cfg.apply(target);
+        return;
+    }
+    const start = performance.now();
+    const from = cfg.from;
+    cfg.setAnim(null, start, from, target, durationMs);
+    const raf = requestAnimationFrame(cfg.stepFn);
+    cfg.setAnim(raf, start, from, target, durationMs);
+}
+
+function stepTxAnim(now) {
+    const t = Math.min(1, (now - txAnimStart) / SLIDER_ANIM_MS);
+    const eased = 1 - Math.pow(1 - t, 3);
+    setDisplayTx(txAnimFrom + (txAnimTarget - txAnimFrom) * eased);
+    if (t < 1) txAnimRaf = requestAnimationFrame(stepTxAnim);
+    else { setDisplayTx(txAnimTarget); txAnimRaf = null; }
+}
+
+function stepRxAnim(now) {
+    const t = Math.min(1, (now - rxAnimStart) / SLIDER_ANIM_MS);
+    const eased = 1 - Math.pow(1 - t, 3);
+    setDisplayRx(rxAnimFrom + (rxAnimTarget - rxAnimFrom) * eased);
+    if (t < 1) rxAnimRaf = requestAnimationFrame(stepRxAnim);
+    else { setDisplayRx(rxAnimTarget); rxAnimRaf = null; }
+}
+
+function cancelTxAnim() { if (txAnimRaf !== null) cancelAnimationFrame(txAnimRaf); txAnimRaf = null; }
+function cancelRxAnim() { if (rxAnimRaf !== null) cancelAnimationFrame(rxAnimRaf); rxAnimRaf = null; }
+
+function setDisplayTx(v) {
+    displayTxVoltage = v;
+    const clamped = Math.max(0, Math.min(5, v));
+    const bit = clamped > 2.5 ? 1 : 0;
+    const text = clamped.toFixed(1);
+    sliderEl.value = clamped.toFixed(2);
+    sliderValueEl.textContent = `${text} V`;
+    sliderControlEl.dataset.level = String(bit);
+    txVoltageEl.textContent = text;
+    txReading.dataset.level = String(bit);
+    txLevelBar.style.bottom = `${(clamped / 5) * 100}%`;
+}
+
+function setDisplayRx(v) {
+    displayRxVoltage = v;
+    const clamped = Math.max(0, Math.min(5, v));
+    const bit = clamped > 2.5 ? 1 : 0;
+    const text = clamped.toFixed(1);
+    rxVoltageEl.textContent = text;
+    rxReading.dataset.level = String(bit);
+    rxLevelBar.style.bottom = `${(clamped / 5) * 100}%`;
+}
+
+function pulseRxRing(isError) {
+    pairedRxPulse.classList.toggle('error', isError);
+    pulseElement(pairedRxPulse);
+}
+
+function flashRxReading(isError) {
+    rxReading.classList.remove('sample-flash', 'sample-flash-error');
+    void rxReading.offsetWidth;
+    rxReading.classList.add(isError ? 'sample-flash-error' : 'sample-flash');
+}
+
+function updatePhaseMarker(cumulativePhaseError) {
+    const marker = document.getElementById('phaseMarker');
+    const clamped = Math.max(-0.5, Math.min(0.5, cumulativePhaseError));
+    marker.style.left = `${50 + clamped * 100}%`;
+    marker.classList.remove('warn', 'danger');
+    const magnitude = Math.abs(cumulativePhaseError);
+    if (magnitude > 0.4) marker.classList.add('danger');
+    else if (magnitude > 0.3) marker.classList.add('warn');
+}
+
+function resetPhaseMarker() {
+    const marker = document.getElementById('phaseMarker');
+    marker.style.left = '50%';
+    marker.classList.remove('warn', 'danger');
+}
+
+function resetPairedClock() {
+    pairedTxHand.classList.remove('glow-tx');
+    pairedRxHand.classList.remove('glow-rx', 'glow-rx-error');
+    pairedTxPulse.classList.remove('active');
+    pairedRxPulse.classList.remove('active', 'error');
+}
+
+function currentTxDurFrames() {
+    if (hasStarted) return txBitDurationFrames();
+    const v = parseFloat(document.getElementById('txRate').value);
+    return (Number.isFinite(v) && v > 0 ? v : 1) * FPS;
+}
+
+function currentRxDurFrames() {
+    if (hasStarted) return rxBitDurationFrames();
+    const v = parseFloat(document.getElementById('rxRate').value);
+    return (Number.isFinite(v) && v > 0 ? v : 1) * FPS;
+}
+
+function updateVisualClocks() {
+    const txDur = currentTxDurFrames();
+    const rxDur = currentRxDurFrames();
+    const txAngle = (globalTime / txDur) * 360 % 360;
+    pairedTxHand.style.transform = `rotate(${txAngle}deg)`;
+
+    // Both hands are on-screen even at rest. RX hand's phase is offset so it
+    // hits the tick exactly at sample moments (delay + 0.5*rxDur + k*rxDur).
+    // At rest (globalTime = 0) the RX hand sits in the lower half of the face,
+    // which is where it would naturally be one frame into playback — so
+    // clicking Send never causes a visible jump.
+    const rxPhase = (globalTime - PROPAGATION_DELAY_FRAMES) / rxDur - 0.5;
+    const rxAngle = (rxPhase * 360 % 360 + 360) % 360;
+    pairedRxHand.style.transform = `rotate(${rxAngle}deg)`;
 }
 
 function resizeTrail() {
@@ -211,14 +529,12 @@ function drawTrail() {
     const showLabels = bitWidth >= 14;
     const showBoundaries = bitWidth >= 3;
 
-    // subtle byte-colored background bands
     for (let index = 0; index < bitCount; index++) {
         const byteIndex = Math.floor(index / 8);
         trailCtx.fillStyle = BYTE_COLORS[byteIndex % BYTE_COLORS.length] + '15';
         trailCtx.fillRect(padX + index * bitWidth, topY, bitWidth, bottomY - topY);
     }
 
-    // bit-boundary gridlines
     if (showBoundaries) {
         trailCtx.strokeStyle = 'rgba(255, 255, 255, 0.18)';
         trailCtx.lineWidth = 1;
@@ -233,14 +549,12 @@ function drawTrail() {
         trailCtx.setLineDash([]);
     }
 
-    // ideal-sample markers (light) at middle of each bit
     trailCtx.fillStyle = 'rgba(255, 255, 255, 0.12)';
     for (let index = 0; index < bitCount; index++) {
         const x = padX + (index + 0.5) * bitWidth;
         trailCtx.fillRect(x - 0.5, midY - 5, 1, 10);
     }
 
-    // expected bit values
     if (showLabels) {
         trailCtx.font = 'bold 10px Vazirmatn';
         trailCtx.textAlign = 'center';
@@ -252,7 +566,6 @@ function drawTrail() {
         }
     }
 
-    // recorded samples
     for (const record of sampleRecords) {
         const x = padX + (record.bitIndex + record.phaseFraction) * bitWidth;
         const color = record.isError ? '#ff4757' : '#00ff88';
@@ -270,207 +583,14 @@ function drawTrail() {
     }
 }
 
-function resetPhaseMarker() {
-    const marker = document.getElementById('phaseMarker');
-    marker.style.left = '50%';
-    marker.classList.remove('warn', 'danger');
-}
+window.addEventListener('resize', () => {
+    checkMobile();
+    resizeTrail();
+    drawTrail();
+});
 
-function resetPairedClock() {
-    document.getElementById('pairedTxHand').style.transform = 'rotate(0deg)';
-    document.getElementById('pairedRxHand').style.transform = 'rotate(0deg)';
-    document.getElementById('pairedTxPulse').classList.remove('active');
-    document.getElementById('pairedRxPulse').classList.remove('active', 'error');
-}
-
-function draw() {
-    background(3, 10, 15);
-    drawScopeGrid({ isMobile, canvasHeight: canvasH, topRatio: 0.25, bottomRatio: 0.75 });
-    drawPorts({ isMobile, canvasWidth: canvasW, canvasHeight: canvasH, transmitterX: txX, receiverX: defaultRxX });
-
-    if (!hasStarted) {
-        fill(100);
-        noStroke();
-        textAlign(CENTER, CENTER);
-        textSize(isMobile ? 11 : 14);
-        textStyle(BOLD);
-        text('تنظیمات را اعمال و پیام را ارسال کنید.', width / 2, height / 2);
-        textStyle(NORMAL);
-        return;
-    }
-
-    if (isPlaying) globalTime++;
-    updateTransmitter();
-    updateTxPulse();
-    drawSignal({ isMobile, transmitterX: txX, receiverX: defaultRxX, getVoltageAtPixel });
-    drawBitGrid();
-    processReceiver();
-    drawRipples();
-    updateVisualClocks();
-}
-
-function updateTxPulse() {
-    const txBitDuration = txPeriod * FPS;
-    const currentTxBit = Math.floor(globalTime / txBitDuration);
-    if (currentTxBit !== lastTxBitPulsed && currentTxBit >= 0 && currentTxBit < binaryData.length) {
-        pulseElement(document.getElementById('pairedTxPulse'));
-        lastTxBitPulsed = currentTxBit;
-    }
-}
-
-function getVoltageAtPixel(x) {
-    if (x < txX) return { v: null, index: -1 };
-    const distance = x - txX;
-    const generatedTime = globalTime - distance / speed;
-    const lowVoltage = canvasH * 0.75;
-    const highVoltage = canvasH * 0.25;
-    const txBitDuration = txPeriod * FPS;
-
-    if (generatedTime < 0 || generatedTime >= binaryData.length * txBitDuration) {
-        return { v: lowVoltage, index: -1 };
-    }
-
-    const bitIndex = Math.floor(generatedTime / txBitDuration);
-    const bitValue = parseInt(binaryData[bitIndex]);
-    return { v: bitValue === 1 ? highVoltage : lowVoltage, index: bitIndex };
-}
-
-function drawBitGrid() {
-    const txBitDuration = txPeriod * FPS;
-    for (let index = 0; index <= binaryData.length; index++) {
-        const generatedTime = index * txBitDuration;
-        const x = txX + (globalTime - generatedTime) * speed;
-        if (x <= txX || x >= defaultRxX) continue;
-
-        stroke(255, 255, 255, 30);
-        strokeWeight(1);
-        drawingContext.setLineDash([4, 4]);
-        line(x, canvasH * 0.15, x, canvasH * 0.85);
-        drawingContext.setLineDash([]);
-
-        if (index >= binaryData.length) continue;
-        const nextX = txX + (globalTime - (index + 1) * txBitDuration) * speed;
-        const middleX = (x + nextX) / 2;
-        if (middleX <= txX || middleX >= defaultRxX) continue;
-
-        const byteIndex = Math.floor(index / 8);
-        fill(BYTE_COLORS[byteIndex % BYTE_COLORS.length]);
-        noStroke();
-        textSize(isMobile ? 12 : 16);
-        textAlign(CENTER, BOTTOM);
-        textStyle(BOLD);
-        text(binaryData[index], middleX, canvasH * 0.25 - (isMobile ? 6 : 10));
-        textStyle(NORMAL);
-    }
-}
-
-function updateTransmitter() {
-    const point = getVoltageAtPixel(txX + 1);
-    document.getElementById('sentBinary').innerHTML = renderTransmittedBits(binaryData, point.index);
-}
-
-function processReceiver() {
-    const txBitDuration = txPeriod * FPS;
-    const rxBitDuration = rxPeriod * FPS;
-    const arrivalTime = (sampleLineX - txX) / speed;
-    const endTime = arrivalTime + binaryData.length * txBitDuration;
-    const nextSampleTime = arrivalTime + 0.5 * rxBitDuration + receivedBits.count * rxBitDuration;
-    let justSampled = false;
-
-    stroke('#ff4757');
-    strokeWeight(isMobile ? 2 : 3);
-    drawingContext.setLineDash([6, 4]);
-    line(sampleLineX, 0, sampleLineX, height);
-    drawingContext.setLineDash([]);
-
-    if (globalTime >= nextSampleTime && nextSampleTime <= endTime) {
-        const generatedTimeAtSample = nextSampleTime - arrivalTime;
-        const bitPositionFloat = generatedTimeAtSample / txBitDuration;
-        const targetBitIndex = Math.floor(bitPositionFloat);
-        const phaseFraction = bitPositionFloat - targetBitIndex;
-        let sampled = '0';
-        if (targetBitIndex >= 0 && targetBitIndex < binaryData.length) {
-            sampled = binaryData[targetBitIndex];
-        }
-
-        const expectedIndex = receivedBits.count;
-        const expectedBit = expectedIndex < binaryData.length ? binaryData[expectedIndex] : null;
-        const isError = sampled !== expectedBit;
-        receivedBits.append(sampled, isError);
-
-        const sampleY = parseInt(sampled) === 1 ? canvasH * 0.25 : canvasH * 0.75;
-        ripples.push({ x: sampleLineX, y: sampleY, radius: isMobile ? 3 : 5, alpha: 255, val: sampled, isError });
-
-        if (targetBitIndex >= 0 && targetBitIndex < binaryData.length) {
-            sampleRecords.push({ bitIndex: targetBitIndex, phaseFraction, isError });
-        }
-
-        pulseRxRing(isError);
-        const cumulativePhaseError = bitPositionFloat - (expectedIndex + 0.5);
-        updatePhaseMarker(cumulativePhaseError);
-        drawTrail();
-
-        justSampled = true;
-    }
-
-    if (justSampled || globalTime % 10 === 0) receivedBits.updateDecodedText();
-}
-
-function pulseRxRing(isError) {
-    const ring = document.getElementById('pairedRxPulse');
-    ring.classList.toggle('error', isError);
-    pulseElement(ring);
-}
-
-function updatePhaseMarker(cumulativePhaseError) {
-    const marker = document.getElementById('phaseMarker');
-    const clamped = Math.max(-0.5, Math.min(0.5, cumulativePhaseError));
-    marker.style.left = `${50 + clamped * 100}%`;
-    marker.classList.remove('warn', 'danger');
-    const magnitude = Math.abs(cumulativePhaseError);
-    if (magnitude > 0.4) marker.classList.add('danger');
-    else if (magnitude > 0.3) marker.classList.add('warn');
-}
-
-function updateVisualClocks() {
-    const txBitDuration = txPeriod * FPS;
-    const rxBitDuration = rxPeriod * FPS;
-    const txAngle = (globalTime / txBitDuration) * 360 % 360;
-    document.getElementById('pairedTxHand').style.transform = `rotate(${txAngle}deg)`;
-
-    const arrivalTime = (sampleLineX - txX) / speed;
-    const rxPhase = (globalTime - arrivalTime) / rxBitDuration - 0.5;
-    let rxAngle = (rxPhase * 360 % 360 + 360) % 360;
-    if (globalTime < arrivalTime) rxAngle = 0;
-    document.getElementById('pairedRxHand').style.transform = `rotate(${rxAngle}deg)`;
-}
-
-function drawRipples() {
-    for (let index = ripples.length - 1; index >= 0; index--) {
-        const ripple = ripples[index];
-        const rippleColor = ripple.isError
-            ? color(255, 71, 87, ripple.alpha)
-            : color(0, 255, 136, ripple.alpha);
-
-        noFill();
-        stroke(rippleColor);
-        strokeWeight(isMobile ? 2 : 3);
-        circle(ripple.x, ripple.y, ripple.radius);
-
-        fill(rippleColor);
-        noStroke();
-        textSize(isMobile ? 18 : 24);
-        textAlign(CENTER, CENTER);
-        textStyle(BOLD);
-        text(`${ripple.val} ${ripple.isError ? '❌' : '✔️'}`, ripple.x - (isMobile ? 22 : 30), ripple.y - (isMobile ? 20 : 25));
-        textStyle(NORMAL);
-
-        ripple.radius += isMobile ? 1.5 : 2.5;
-        ripple.alpha -= 12;
-        if (ripple.alpha <= 0) ripples.splice(index, 1);
-    }
-}
-
-window.setup = setup;
-window.draw = draw;
-window.windowResized = windowResized;
+checkMobile();
+requestAnimationFrame(() => {
+    resizeTrail();
+    drawTrail();
+});

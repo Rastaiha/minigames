@@ -1,11 +1,9 @@
 @import '../shared/game.css';
 
-.oscilloscope-wrapper {
-    height: 25vh;
-    min-height: 180px;
+:root {
+    --volt-low: #4e8cff;
+    --volt-high: #ffcc00;
 }
-
-.scope-hint:empty { display: none; }
 
 .controls button:hover { box-shadow: none; }
 .network-layout { margin-top: 20px; }
@@ -24,22 +22,44 @@
     color: white !important;
 }
 
+/* --- Paired clock (drift visualizer, inline in voltage monitor) ------- */
+.wire-timing {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-width: 0;
+}
+
 .paired-clock {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 8px 0 4px;
-    gap: 6px;
+    gap: 4px;
 }
 
 .clock-face {
     position: relative;
-    width: 120px;
-    height: 120px;
+    width: 110px;
+    height: 110px;
     border-radius: 50%;
     background: radial-gradient(circle at 50% 40%, #1a2a35 0%, #06101a 100%);
     border: 2px solid #2b3744;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6), inset 0 0 18px rgba(0, 0, 0, 0.8);
+}
+
+.clock-tick {
+    position: absolute;
+    top: -1px;
+    left: 50%;
+    width: 4px;
+    height: 14px;
+    background: linear-gradient(to bottom, #ffcc00, #ff9900);
+    border-radius: 2px 2px 0 0;
+    box-shadow: 0 0 6px rgba(255, 204, 0, 0.9);
+    transform: translateX(-50%);
+    z-index: 4;
 }
 
 .clock-hand {
@@ -47,23 +67,31 @@
     left: 50%;
     bottom: 50%;
     width: 3px;
-    height: 46px;
+    height: 42px;
     margin-left: -1.5px;
     border-radius: 2px;
     transform-origin: 50% 100%;
     transform: rotate(0deg);
 }
 
-.tx-hand {
-    background: #4e8cff;
-    box-shadow: 0 0 8px rgba(78, 140, 255, 0.8);
-    z-index: 2;
-}
+.tx-hand { background: #4e8cff; box-shadow: 0 0 8px rgba(78, 140, 255, 0.8); z-index: 2; }
+.rx-hand { background: #00ff88; box-shadow: 0 0 8px rgba(0, 255, 136, 0.8); z-index: 2; }
 
-.rx-hand {
-    background: #00ff88;
-    box-shadow: 0 0 8px rgba(0, 255, 136, 0.8);
-    z-index: 2;
+.clock-hand.glow-tx      { animation: handGlowTx      0.5s ease-out; }
+.clock-hand.glow-rx      { animation: handGlowRx      0.5s ease-out; }
+.clock-hand.glow-rx-error{ animation: handGlowRxError 0.5s ease-out; }
+
+@keyframes handGlowTx {
+    0%   { background: #ffffff; box-shadow: 0 0 18px 4px #4e8cff, 0 0 32px 8px rgba(78, 140, 255, 0.7); }
+    100% { background: #4e8cff; box-shadow: 0 0 8px rgba(78, 140, 255, 0.8); }
+}
+@keyframes handGlowRx {
+    0%   { background: #ffffff; box-shadow: 0 0 18px 4px #00ff88, 0 0 32px 8px rgba(0, 255, 136, 0.7); }
+    100% { background: #00ff88; box-shadow: 0 0 8px rgba(0, 255, 136, 0.8); }
+}
+@keyframes handGlowRxError {
+    0%   { background: #ffffff; box-shadow: 0 0 18px 4px #ff4757, 0 0 32px 8px rgba(255, 71, 87, 0.7); }
+    100% { background: #00ff88; box-shadow: 0 0 8px rgba(0, 255, 136, 0.8); }
 }
 
 .clock-center {
@@ -97,9 +125,7 @@
 .pulse-ring.rx-pulse { --pulse-color: #00ff88; }
 .pulse-ring.rx-pulse.error { --pulse-color: #ff4757; }
 
-.pulse-ring.active {
-    animation: pulseRing 0.45s ease-out;
-}
+.pulse-ring.active { animation: pulseRing 0.45s ease-out; }
 
 @keyframes pulseRing {
     0%   { transform: translate(-50%, -50%) scale(0.35); opacity: 0.9; border-color: var(--pulse-color); }
@@ -126,6 +152,287 @@
 .clock-legend .tx-dot { background: #4e8cff; box-shadow: 0 0 4px rgba(78, 140, 255, 0.7); }
 .clock-legend .rx-dot { background: #00ff88; box-shadow: 0 0 4px rgba(0, 255, 136, 0.7); }
 
+/* --- Voltage monitor (replaces the oscilloscope) ---------------------- */
+.voltage-monitor {
+    width: 100%;
+    overflow: hidden;
+    border: 3px solid #28333d;
+    border-radius: 12px;
+    background: #05090d;
+    box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.9), 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.monitor-header {
+    padding: 8px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    border-bottom: 1px solid #20323a;
+    background: rgba(19, 31, 39, 0.78);
+}
+
+.monitor-header .eyebrow {
+    margin: 0;
+    color: var(--primary);
+    font-size: 0.7rem;
+    font-weight: 800;
+}
+
+.monitor-header h2 {
+    margin: 0;
+    color: #eefafa;
+    font-size: clamp(0.9rem, 2.4vw, 1.15rem);
+}
+
+.monitor-readings {
+    padding: 10px 12px;
+    display: grid;
+    grid-template-columns: 70px minmax(0, 1fr) 126px minmax(0, 1fr);
+    gap: 10px;
+    align-items: stretch;
+}
+
+.delay-badge {
+    flex: none;
+    padding: 4px 10px;
+    color: #aebbc4;
+    border: 1px solid #3a4953;
+    border-radius: 999px;
+    background: #10171d;
+    font-size: clamp(0.62rem, 1.6vw, 0.74rem);
+    white-space: nowrap;
+}
+
+.voltage-slider-container {
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+}
+
+.voltage-slider-control {
+    min-width: 0;
+    padding: 6px 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    border: 1px solid rgba(78, 140, 255, 0.45);
+    border-radius: 9px;
+    background: rgba(78, 140, 255, 0.08);
+    transition: border-color 120ms ease, background-color 120ms ease;
+    width: 100%;
+}
+
+.voltage-slider-control label {
+    color: #b6c2ca;
+    font-size: 0.6rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.voltage-slider-control output {
+    color: var(--volt-low);
+    font: 800 0.78rem ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    white-space: nowrap;
+    text-shadow: 0 0 9px rgba(78, 140, 255, 0.55);
+    transition: color 120ms ease, text-shadow 120ms ease;
+}
+
+.slider-track-wrap {
+    position: relative;
+    display: grid;
+    grid-template-rows: auto minmax(90px, 1fr) auto;
+    justify-items: center;
+    align-items: center;
+    flex: 1;
+    min-height: 110px;
+}
+
+.voltage-slider {
+    width: 26px;
+    height: 100%;
+    min-height: 90px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    writing-mode: vertical-lr;
+    direction: rtl;
+    accent-color: var(--volt-low);
+    pointer-events: none;
+    opacity: 1;
+    cursor: default;
+}
+
+.voltage-slider:disabled { opacity: 1; }
+
+.slider-limit { color: #73828c; font: 700 0.56rem ui-monospace, monospace; }
+
+.slider-threshold {
+    position: absolute;
+    top: 50%;
+    left: calc(50% + 12px);
+    color: #8998a1;
+    font: 700 0.52rem ui-monospace, monospace;
+    transform: translateY(-50%);
+}
+
+.slider-threshold::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: calc(100% + 2px);
+    width: 8px;
+    border-top: 1px solid #697983;
+}
+
+.voltage-slider-control[data-level="1"] {
+    border-color: rgba(255, 204, 0, 0.55);
+    background: rgba(255, 204, 0, 0.08);
+}
+
+.voltage-slider-control[data-level="1"] output {
+    color: var(--volt-high);
+    text-shadow: 0 0 9px rgba(255, 204, 0, 0.55);
+}
+
+.voltage-slider-control[data-level="1"] .voltage-slider { accent-color: var(--volt-high); }
+
+.voltage-reading {
+    min-width: 0;
+    padding: 8px 10px;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    gap: 4px 12px;
+    border: 1px solid #23323c;
+    border-radius: 10px;
+    background: linear-gradient(145deg, rgba(22, 35, 43, 0.88), rgba(5, 10, 14, 0.75));
+    direction: rtl;
+    transition: box-shadow 90ms ease;
+}
+
+.reading-label {
+    grid-column: 1 / -1;
+    color: #7f8d95;
+    font-size: clamp(0.68rem, 1.8vw, 0.82rem);
+    font-weight: 700;
+}
+
+.tx-reading .reading-label { color: var(--primary); }
+.rx-reading .reading-label { color: var(--success); }
+
+.voltage-value {
+    align-self: center;
+    justify-self: center;
+    display: flex;
+    direction: ltr;
+    align-items: baseline;
+    gap: 3px;
+    color: var(--volt-low);
+    text-shadow: 0 0 22px rgba(78, 140, 255, 0.5);
+    transition: color 90ms ease, text-shadow 90ms ease;
+}
+
+.voltage-value b {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: clamp(1.7rem, 4.5vw, 2.8rem);
+    line-height: 1;
+}
+
+.voltage-value small { font-size: clamp(0.7rem, 1.6vw, 0.95rem); }
+
+.voltage-reading[data-level="1"] .voltage-value {
+    color: var(--volt-high);
+    text-shadow: 0 0 22px rgba(255, 204, 0, 0.5);
+}
+
+.level-window {
+    position: relative;
+    min-height: 72px;
+    overflow: hidden;
+    border: 1px solid #1c313d;
+    border-radius: 8px;
+    background:
+        linear-gradient(rgba(44, 70, 79, 0.23) 1px, transparent 1px) 0 0 / 100% 25%,
+        #020609;
+}
+
+.level-guide {
+    position: absolute;
+    left: 6px;
+    z-index: 2;
+    color: #677985;
+    font: 700 0.64rem ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.level-guide-high { top: 8px; }
+.level-guide-low { bottom: 8px; }
+
+.level-track {
+    position: absolute;
+    top: 14px;
+    right: 8px;
+    bottom: 14px;
+    left: 30px;
+}
+
+.current-level {
+    position: absolute;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    height: 5px;
+    border-radius: 5px;
+    background: var(--volt-low);
+    box-shadow: 0 0 10px var(--volt-low), 0 0 22px rgba(78, 140, 255, 0.45);
+    transition: bottom 90ms ease, background-color 90ms ease, box-shadow 90ms ease;
+    transform: translateY(50%);
+}
+
+.voltage-reading[data-level="1"] .current-level {
+    background: var(--volt-high);
+    box-shadow: 0 0 10px var(--volt-high), 0 0 22px rgba(255, 204, 0, 0.45);
+}
+
+.voltage-reading.sample-flash    { animation: sampleFlashCorrect 0.45s ease-out; }
+.voltage-reading.sample-flash-error { animation: sampleFlashError 0.45s ease-out; }
+
+@keyframes sampleFlashCorrect {
+    0%   { box-shadow: 0 0 0 2px rgba(0, 255, 136, 0.9), inset 0 0 24px rgba(0, 255, 136, 0.35); }
+    100% { box-shadow: none; }
+}
+
+@keyframes sampleFlashError {
+    0%   { box-shadow: 0 0 0 2px rgba(255, 71, 87, 0.9), inset 0 0 24px rgba(255, 71, 87, 0.35); }
+    100% { box-shadow: none; }
+}
+
+.propagation-gap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+.propagation-gap span {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #53636e;
+    animation: dot-glimmer 1.15s ease-in-out infinite;
+}
+
+.propagation-gap span:nth-child(2) { animation-delay: 180ms; }
+.propagation-gap span:nth-child(3) { animation-delay: 360ms; }
+
+@keyframes dot-glimmer {
+    0%, 18%, 58%, 100% { background: #3d4a53; box-shadow: none; transform: scale(1); }
+    34% { background: #fff; box-shadow: 0 0 9px rgba(255, 255, 255, 0.95); transform: scale(1.45); }
+}
+
+/* --- Sample trail strip ---------------------------------------------- */
 .sample-trail-wrapper {
     width: 100%;
     background: rgba(0, 0, 0, 0.35);
@@ -149,6 +456,7 @@
     direction: rtl;
 }
 
+/* --- Phase meter (inside RX panel) ------------------------------------ */
 .phase-meter {
     width: 100%;
     margin-top: 10px;
@@ -209,13 +517,33 @@
 .phase-marker.danger { background: #ff4757; box-shadow: 0 0 10px #ff4757; }
 
 @media (max-width: 768px) {
-    .oscilloscope-wrapper { height: 20vh; min-height: 160px; }
     .network-layout { margin-top: 15px; }
     .wire-pulse { animation-duration: 1.5s; }
-    .clock-face { width: 92px; height: 92px; }
-    .clock-hand { height: 36px; }
-    .clock-center { width: 10px; height: 10px; }
-    .paired-clock { padding: 4px 0 2px; }
+    .clock-face { width: 82px; height: 82px; }
+    .clock-hand { height: 32px; }
+    .clock-center { width: 9px; height: 9px; }
+    .clock-tick { height: 10px; width: 3px; }
+    .clock-legend { gap: 10px; font-size: 10px; }
+    .wire-timing { gap: 4px; }
+    .paired-clock { gap: 3px; }
     #sampleTrailCanvas { height: 52px; }
     .phase-marker { height: 22px; width: 7px; }
+    .monitor-readings { grid-template-columns: 56px minmax(0, 1fr) 92px minmax(0, 1fr); gap: 6px; padding: 8px; }
+    .voltage-slider-control { padding: 4px 2px; }
+    .voltage-slider-control label { font-size: 0.52rem; }
+    .voltage-slider-control output { font-size: 0.62rem; }
+    .voltage-slider { width: 22px; min-height: 80px; }
+    .slider-threshold { left: calc(50% + 10px); font-size: 0.46rem; }
+    .voltage-reading { padding: 6px; gap: 3px 6px; }
+    .voltage-value b { font-size: clamp(1.3rem, 6vw, 1.8rem); }
+    .voltage-value small { font-size: 0.65rem; }
+    .level-window { min-height: 56px; }
+    .level-track { left: 22px; right: 5px; top: 10px; bottom: 10px; }
+    .level-guide { left: 4px; font-size: 0.52rem; }
+    .level-guide-high { top: 4px; }
+    .level-guide-low { bottom: 4px; }
+    .monitor-header { padding: 6px 10px; }
+    .monitor-header h2 { font-size: 0.78rem; }
+    .monitor-header .eyebrow { font-size: 0.56rem; }
+    .delay-badge { padding: 3px 7px; font-size: 0.56rem; }
 }
