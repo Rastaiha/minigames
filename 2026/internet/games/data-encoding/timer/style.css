@@ -3,49 +3,13 @@
 .oscilloscope-wrapper {
     height: 25vh;
     min-height: 180px;
-    cursor: grab;
 }
 
-.oscilloscope-wrapper:active { cursor: grabbing; }
-
-.scope-hint {
-    direction: inherit;
-    width: auto;
-    max-width: none;
-    font-size: clamp(0.7rem, 2vw, 0.85rem);
-    line-height: normal;
-    text-align: initial;
-    white-space: nowrap;
-    background: rgba(0, 0, 0, 0.7);
-    padding: 4px 12px;
-    box-shadow: none;
-}
+.scope-hint:empty { display: none; }
 
 .controls button:hover { box-shadow: none; }
 .network-layout { margin-top: 20px; }
 .wire-pulse { animation-duration: 1.5s; }
-
-.stopwatch {
-    position: absolute;
-    top: -35px;
-    width: 45px;
-    height: 45px;
-    background: #111;
-    border-radius: 50%;
-    border: 3px solid;
-    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.8), inset 0 0 10px rgba(0, 0, 0, 1);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 10;
-}
-
-.tx-watch { right: 8px; border-color: var(--primary); }
-.rx-watch { right: 8px; border-color: var(--success); }
-.watch-button { position: absolute; top: -8px; width: 12px; height: 6px; background: #a5b1c2; border-radius: 3px 3px 0 0; }
-.watch-center { width: 5px; height: 5px; background: white; border-radius: 50%; z-index: 2; }
-.watch-hand { position: absolute; width: 2px; height: 18px; background: white; bottom: 50%; transform-origin: bottom center; border-radius: 2px; }
-.watch-tick { position: absolute; top: 2px; width: 2px; height: 5px; background: var(--danger); border-radius: 2px; }
 
 .config-row span {
     font-size: clamp(0.7rem, 2vw, 0.8rem);
@@ -60,11 +24,198 @@
     color: white !important;
 }
 
+.paired-clock {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 0 4px;
+    gap: 6px;
+}
+
+.clock-face {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 40%, #1a2a35 0%, #06101a 100%);
+    border: 2px solid #2b3744;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6), inset 0 0 18px rgba(0, 0, 0, 0.8);
+}
+
+.clock-hand {
+    position: absolute;
+    left: 50%;
+    bottom: 50%;
+    width: 3px;
+    height: 46px;
+    margin-left: -1.5px;
+    border-radius: 2px;
+    transform-origin: 50% 100%;
+    transform: rotate(0deg);
+}
+
+.tx-hand {
+    background: #4e8cff;
+    box-shadow: 0 0 8px rgba(78, 140, 255, 0.8);
+    z-index: 2;
+}
+
+.rx-hand {
+    background: #00ff88;
+    box-shadow: 0 0 8px rgba(0, 255, 136, 0.8);
+    z-index: 2;
+}
+
+.clock-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 12px;
+    height: 12px;
+    background: #eee;
+    border: 2px solid #0a1520;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 3;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.9);
+}
+
+.pulse-ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 60%;
+    height: 60%;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    pointer-events: none;
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.4);
+}
+
+.pulse-ring.tx-pulse { --pulse-color: #4e8cff; }
+.pulse-ring.rx-pulse { --pulse-color: #00ff88; }
+.pulse-ring.rx-pulse.error { --pulse-color: #ff4757; }
+
+.pulse-ring.active {
+    animation: pulseRing 0.45s ease-out;
+}
+
+@keyframes pulseRing {
+    0%   { transform: translate(-50%, -50%) scale(0.35); opacity: 0.9; border-color: var(--pulse-color); }
+    100% { transform: translate(-50%, -50%) scale(1.4);  opacity: 0;   border-color: var(--pulse-color); }
+}
+
+.clock-legend {
+    display: flex;
+    gap: 18px;
+    font-size: 12px;
+    color: #aaa;
+    direction: rtl;
+}
+
+.clock-legend .dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-inline-end: 4px;
+    vertical-align: middle;
+}
+
+.clock-legend .tx-dot { background: #4e8cff; box-shadow: 0 0 4px rgba(78, 140, 255, 0.7); }
+.clock-legend .rx-dot { background: #00ff88; box-shadow: 0 0 4px rgba(0, 255, 136, 0.7); }
+
+.sample-trail-wrapper {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid #1a2a30;
+    border-radius: 8px;
+    padding: 6px 8px 4px;
+    direction: ltr;
+}
+
+#sampleTrailCanvas {
+    display: block;
+    width: 100%;
+    height: 64px;
+}
+
+.trail-caption {
+    text-align: center;
+    color: #666;
+    font-size: 11px;
+    margin-top: 2px;
+    direction: rtl;
+}
+
+.phase-meter {
+    width: 100%;
+    margin-top: 10px;
+    padding: 8px 10px;
+    background: rgba(0, 0, 0, 0.35);
+    border-radius: 6px;
+    direction: rtl;
+}
+
+.phase-meter-label {
+    font-size: 11px;
+    color: var(--success);
+    margin-bottom: 6px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.phase-track {
+    position: relative;
+    height: 20px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: linear-gradient(to right,
+        rgba(255, 71, 87, 0.7) 0%,
+        rgba(255, 71, 87, 0.25) 15%,
+        rgba(0, 255, 136, 0.35) 40%,
+        rgba(0, 255, 136, 0.55) 50%,
+        rgba(0, 255, 136, 0.35) 60%,
+        rgba(255, 71, 87, 0.25) 85%,
+        rgba(255, 71, 87, 0.7) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.phase-center-tick {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    width: 1px;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.4);
+    transform: translateX(-50%);
+}
+
+.phase-marker {
+    position: absolute;
+    top: 50%;
+    width: 8px;
+    height: 26px;
+    background: white;
+    border-radius: 2px;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 6px rgba(255, 255, 255, 0.85);
+    transition: left 0.18s ease-out, background 0.15s, box-shadow 0.15s;
+}
+
+.phase-marker.warn { background: #ffb703; box-shadow: 0 0 8px #ffb703; }
+.phase-marker.danger { background: #ff4757; box-shadow: 0 0 10px #ff4757; }
+
 @media (max-width: 768px) {
     .oscilloscope-wrapper { height: 20vh; min-height: 160px; }
-    .scope-hint { width: auto; max-width: none; line-height: normal; white-space: nowrap; padding: 4px 12px; }
     .network-layout { margin-top: 15px; }
     .wire-pulse { animation-duration: 1.5s; }
-    .stopwatch { width: 35px; height: 35px; top: -25px; }
-    .watch-hand { height: 14px; }
+    .clock-face { width: 92px; height: 92px; }
+    .clock-hand { height: 36px; }
+    .clock-center { width: 10px; height: 10px; }
+    .paired-clock { padding: 4px 0 2px; }
+    #sampleTrailCanvas { height: 52px; }
+    .phase-marker { height: 22px; width: 7px; }
 }

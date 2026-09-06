@@ -12,39 +12,63 @@ import {
     stringToBinary,
 } from '../shared/game.js';
 
-const stopwatch = (kind, handId, bodyId = '') => `
-    <div class="stopwatch ${kind}-watch"${bodyId ? ` id="${bodyId}"` : ''}>
-        <div class="watch-button"></div>
-        <div class="watch-tick"></div>
-        <div class="watch-center"></div>
-        <div class="watch-hand" id="${handId}"></div>
-    </div>
-`;
-
 mountEncodingGame({
-    scopeHint: 'محل نمونه‌برداری (خط‌چین قرمز) را بگیرید و بکشید',
-    transmitterDecoration: stopwatch('tx', 'txHand'),
-    receiverDecoration: stopwatch('rx', 'rxHand', 'rxWatchBody'),
+    scopeHint: '',
     transmitterControls: `
         <div class="config-row">
-            <input type="text" id="textInput" placeholder="متن (Hi)" value="Hi" maxlength="8">
-            <input type="number" id="txRate" step="0.1" min="0.2" max="3.0" value="1.0" title="سرعت ارسال">
+            <input type="text" id="textInput" placeholder="متن (Hello!)" value="Hello!" maxlength="16">
+            <input type="number" id="txRate" step="0.1" min="0.2" max="3.0" value="0.5" title="سرعت ارسال">
             <span>ثانیه/بیت</span>
         </div>
     `,
     receiverControls: `
         <div class="config-row">
             <span style="color:var(--success); font-weight:bold;">نرخ نمونه‌برداری:</span>
-            <input type="number" id="rxRate" step="0.1" min="0.2" max="3.0" value="1.0" title="سرعت دریافت">
+            <input type="number" id="rxRate" step="0.1" min="0.2" max="3.0" value="0.5" title="سرعت دریافت">
             <span>ثانیه/بیت</span>
         </div>
     `,
 });
 
+const scopeWrapper = document.getElementById('scopeWrapper');
+scopeWrapper.insertAdjacentHTML('beforebegin', `
+    <div class="paired-clock" aria-hidden="true">
+        <div class="clock-face">
+            <div class="pulse-ring tx-pulse" id="pairedTxPulse"></div>
+            <div class="pulse-ring rx-pulse" id="pairedRxPulse"></div>
+            <div class="clock-hand tx-hand" id="pairedTxHand"></div>
+            <div class="clock-hand rx-hand" id="pairedRxHand"></div>
+            <div class="clock-center"></div>
+        </div>
+        <div class="clock-legend">
+            <span><i class="dot tx-dot"></i>فرستنده</span>
+            <span><i class="dot rx-dot"></i>گیرنده</span>
+        </div>
+    </div>
+`);
+scopeWrapper.insertAdjacentHTML('afterend', `
+    <div class="sample-trail-wrapper">
+        <canvas id="sampleTrailCanvas"></canvas>
+        <div class="trail-caption">ثبت نمونه‌برداری‌ها روی محور بیت‌ها</div>
+    </div>
+`);
+
+const rxMonitorScreen = document.querySelectorAll('.monitor-screen')[1];
+rxMonitorScreen.insertAdjacentHTML('beforeend', `
+    <div class="phase-meter">
+        <div class="phase-meter-label">فاز نمونه‌برداری</div>
+        <div class="phase-track">
+            <div class="phase-center-tick"></div>
+            <div class="phase-marker" id="phaseMarker"></div>
+        </div>
+    </div>
+`);
+
 let binaryData = '';
 let isPlaying = false;
 let hasStarted = false;
 let globalTime = 0;
+let lastTxBitPulsed = -1;
 
 const FPS = 60;
 let isMobile = false;
@@ -56,15 +80,23 @@ let canvasH;
 let txX = 50;
 let defaultRxX = 0;
 let sampleLineX = 0;
-let isDraggingOffset = false;
 let ripples = [];
+let sampleRecords = [];
 
 const receivedBits = new ReceivedBits({ showErrors: true });
+const trailCanvas = document.getElementById('sampleTrailCanvas');
+const trailCtx = trailCanvas.getContext('2d');
 
 function checkMobile() {
     isMobile = window.innerWidth <= 768;
     speed = isMobile ? 1 : 2;
     txX = isMobile ? 30 : 60;
+}
+
+function pulseElement(el) {
+    el.classList.remove('active');
+    void el.offsetWidth;
+    el.classList.add('active');
 }
 
 restrictToAscii(document.getElementById('textInput'));
@@ -91,10 +123,13 @@ document.getElementById('btnReset').addEventListener('click', () => {
     hasStarted = false;
     globalTime = 0;
     ripples = [];
+    sampleRecords = [];
+    lastTxBitPulsed = -1;
     receivedBits.reset();
     resetSharedDisplay();
-    document.getElementById('txHand').style.transform = 'rotate(0deg)';
-    document.getElementById('rxHand').style.transform = 'rotate(0deg)';
+    resetPairedClock();
+    resetPhaseMarker();
+    drawTrail();
     if (canvasW) sampleLineX = defaultRxX - (isMobile ? 20 : 30);
 });
 
@@ -107,8 +142,12 @@ function startTransmission() {
     hasStarted = true;
     isPlaying = true;
     ripples = [];
+    sampleRecords = [];
+    lastTxBitPulsed = -1;
     receivedBits.reset();
+    resetPhaseMarker();
     setPlaybackAppearance(true);
+    drawTrail();
 }
 
 function setup() {
@@ -122,10 +161,8 @@ function setup() {
 
     defaultRxX = canvasW - (isMobile ? 30 : 50);
     sampleLineX = defaultRxX - (isMobile ? 20 : 30);
-    canvas.mousePressed(startDragOffset);
-    canvas.mouseReleased(stopDragOffset);
-    canvas.touchStarted(startDragOffset);
-    canvas.touchEnded(stopDragOffset);
+    resizeTrail();
+    drawTrail();
 }
 
 function windowResized() {
@@ -136,17 +173,120 @@ function windowResized() {
     resizeCanvas(canvasW, canvasH);
     defaultRxX = canvasW - (isMobile ? 30 : 50);
     if (sampleLineX > defaultRxX) sampleLineX = defaultRxX - (isMobile ? 20 : 30);
+    resizeTrail();
+    drawTrail();
+}
+
+function resizeTrail() {
+    const dpr = window.devicePixelRatio || 1;
+    const cssWidth = trailCanvas.parentElement.clientWidth - 16;
+    const cssHeight = trailCanvas.clientHeight || (isMobile ? 52 : 64);
+    trailCanvas.style.width = cssWidth + 'px';
+    trailCanvas.style.height = cssHeight + 'px';
+    trailCanvas.width = Math.floor(cssWidth * dpr);
+    trailCanvas.height = Math.floor(cssHeight * dpr);
+    trailCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+function drawTrail() {
+    const w = trailCanvas.clientWidth;
+    const h = trailCanvas.clientHeight;
+    trailCtx.clearRect(0, 0, w, h);
+
+    if (!hasStarted || !binaryData) {
+        trailCtx.fillStyle = '#555';
+        trailCtx.font = '12px Vazirmatn';
+        trailCtx.textAlign = 'center';
+        trailCtx.textBaseline = 'middle';
+        trailCtx.fillText('نمونه‌برداری‌های گیرنده اینجا ثبت می‌شوند', w / 2, h / 2);
+        return;
+    }
+
+    const padX = 6;
+    const midY = h * 0.55;
+    const topY = 4;
+    const bottomY = h - 4;
+    const bitCount = binaryData.length;
+    const bitWidth = (w - padX * 2) / bitCount;
+    const showLabels = bitWidth >= 14;
+    const showBoundaries = bitWidth >= 3;
+
+    // subtle byte-colored background bands
+    for (let index = 0; index < bitCount; index++) {
+        const byteIndex = Math.floor(index / 8);
+        trailCtx.fillStyle = BYTE_COLORS[byteIndex % BYTE_COLORS.length] + '15';
+        trailCtx.fillRect(padX + index * bitWidth, topY, bitWidth, bottomY - topY);
+    }
+
+    // bit-boundary gridlines
+    if (showBoundaries) {
+        trailCtx.strokeStyle = 'rgba(255, 255, 255, 0.18)';
+        trailCtx.lineWidth = 1;
+        trailCtx.setLineDash([2, 3]);
+        for (let index = 0; index <= bitCount; index++) {
+            const x = padX + index * bitWidth;
+            trailCtx.beginPath();
+            trailCtx.moveTo(x, topY);
+            trailCtx.lineTo(x, bottomY);
+            trailCtx.stroke();
+        }
+        trailCtx.setLineDash([]);
+    }
+
+    // ideal-sample markers (light) at middle of each bit
+    trailCtx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+    for (let index = 0; index < bitCount; index++) {
+        const x = padX + (index + 0.5) * bitWidth;
+        trailCtx.fillRect(x - 0.5, midY - 5, 1, 10);
+    }
+
+    // expected bit values
+    if (showLabels) {
+        trailCtx.font = 'bold 10px Vazirmatn';
+        trailCtx.textAlign = 'center';
+        trailCtx.textBaseline = 'top';
+        for (let index = 0; index < bitCount; index++) {
+            const byteIndex = Math.floor(index / 8);
+            trailCtx.fillStyle = BYTE_COLORS[byteIndex % BYTE_COLORS.length];
+            trailCtx.fillText(binaryData[index], padX + (index + 0.5) * bitWidth, topY);
+        }
+    }
+
+    // recorded samples
+    for (const record of sampleRecords) {
+        const x = padX + (record.bitIndex + record.phaseFraction) * bitWidth;
+        const color = record.isError ? '#ff4757' : '#00ff88';
+        trailCtx.strokeStyle = color;
+        trailCtx.lineWidth = 2;
+        trailCtx.beginPath();
+        trailCtx.moveTo(x, midY - 7);
+        trailCtx.lineTo(x, bottomY - 2);
+        trailCtx.stroke();
+
+        trailCtx.fillStyle = color;
+        trailCtx.beginPath();
+        trailCtx.arc(x, midY - 7, 3, 0, Math.PI * 2);
+        trailCtx.fill();
+    }
+}
+
+function resetPhaseMarker() {
+    const marker = document.getElementById('phaseMarker');
+    marker.style.left = '50%';
+    marker.classList.remove('warn', 'danger');
+}
+
+function resetPairedClock() {
+    document.getElementById('pairedTxHand').style.transform = 'rotate(0deg)';
+    document.getElementById('pairedRxHand').style.transform = 'rotate(0deg)';
+    document.getElementById('pairedTxPulse').classList.remove('active');
+    document.getElementById('pairedRxPulse').classList.remove('active', 'error');
 }
 
 function draw() {
     background(3, 10, 15);
     drawScopeGrid({ isMobile, canvasHeight: canvasH, topRatio: 0.25, bottomRatio: 0.75 });
     drawPorts({ isMobile, canvasWidth: canvasW, canvasHeight: canvasH, transmitterX: txX, receiverX: defaultRxX });
-
-    if (isDraggingOffset && hasStarted) {
-        const pointerX = touches.length > 0 ? touches[0].x : mouseX;
-        sampleLineX = constrain(pointerX, txX + 50, defaultRxX + 10);
-    }
 
     if (!hasStarted) {
         fill(100);
@@ -159,8 +299,9 @@ function draw() {
         return;
     }
 
-    if (isPlaying && !isDraggingOffset) globalTime++;
+    if (isPlaying) globalTime++;
     updateTransmitter();
+    updateTxPulse();
     drawSignal({ isMobile, transmitterX: txX, receiverX: defaultRxX, getVoltageAtPixel });
     drawBitGrid();
     processReceiver();
@@ -168,20 +309,13 @@ function draw() {
     updateVisualClocks();
 }
 
-function startDragOffset(event) {
-    if (!hasStarted) return;
-    const pointerX = touches.length > 0 ? touches[0].x : mouseX;
-    const tolerance = isMobile ? 40 : 30;
-    if (abs(pointerX - sampleLineX) < tolerance) {
-        isDraggingOffset = true;
-        isPlaying = false;
-        setPlaybackAppearance(false);
-        if (event.type === 'touchstart') event.preventDefault();
+function updateTxPulse() {
+    const txBitDuration = txPeriod * FPS;
+    const currentTxBit = Math.floor(globalTime / txBitDuration);
+    if (currentTxBit !== lastTxBitPulsed && currentTxBit >= 0 && currentTxBit < binaryData.length) {
+        pulseElement(document.getElementById('pairedTxPulse'));
+        lastTxBitPulsed = currentTxBit;
     }
-}
-
-function stopDragOffset() {
-    isDraggingOffset = false;
 }
 
 function getVoltageAtPixel(x) {
@@ -243,66 +377,72 @@ function processReceiver() {
     const nextSampleTime = arrivalTime + 0.5 * rxBitDuration + receivedBits.count * rxBitDuration;
     let justSampled = false;
 
-    if (isDraggingOffset) {
-        stroke('#ffb703');
-        fill('#ffb703');
-    } else {
-        stroke('#ff4757');
-        fill('#ff4757');
-    }
-
+    stroke('#ff4757');
     strokeWeight(isMobile ? 2 : 3);
     drawingContext.setLineDash([6, 4]);
     line(sampleLineX, 0, sampleLineX, height);
     drawingContext.setLineDash([]);
 
-    const handleWidth = isMobile ? 24 : 36;
-    const handleHeight = isMobile ? 16 : 20;
-    noStroke();
-    triangle(sampleLineX - 8, 10, sampleLineX + 8, 10, sampleLineX, 26);
-    rect(sampleLineX - handleWidth / 2, height - handleHeight, handleWidth, handleHeight, 4);
-    fill(0);
-    textSize(isMobile ? 10 : 12);
-    textAlign(CENTER, CENTER);
-    textStyle(BOLD);
-    text('< >', sampleLineX, height - handleHeight / 2);
-    textStyle(NORMAL);
-
     if (globalTime >= nextSampleTime && nextSampleTime <= endTime) {
         const generatedTimeAtSample = nextSampleTime - arrivalTime;
-        const targetBitIndex = Math.floor(generatedTimeAtSample / txBitDuration);
+        const bitPositionFloat = generatedTimeAtSample / txBitDuration;
+        const targetBitIndex = Math.floor(bitPositionFloat);
+        const phaseFraction = bitPositionFloat - targetBitIndex;
         let sampled = '0';
         if (targetBitIndex >= 0 && targetBitIndex < binaryData.length) {
             sampled = binaryData[targetBitIndex];
         }
 
-        const expectedBit = receivedBits.count < binaryData.length ? binaryData[receivedBits.count] : null;
+        const expectedIndex = receivedBits.count;
+        const expectedBit = expectedIndex < binaryData.length ? binaryData[expectedIndex] : null;
         const isError = sampled !== expectedBit;
         receivedBits.append(sampled, isError);
 
         const sampleY = parseInt(sampled) === 1 ? canvasH * 0.25 : canvasH * 0.75;
         ripples.push({ x: sampleLineX, y: sampleY, radius: isMobile ? 3 : 5, alpha: 255, val: sampled, isError });
 
-        const receiverWatch = document.getElementById('rxWatchBody');
-        receiverWatch.style.boxShadow = isError ? '0 0 20px #ff4757' : '0 0 20px #00ff88';
-        setTimeout(() => receiverWatch.style.boxShadow = '0 5px 10px rgba(0,0,0,0.8), inset 0 0 10px rgba(0,0,0,1)', 200);
+        if (targetBitIndex >= 0 && targetBitIndex < binaryData.length) {
+            sampleRecords.push({ bitIndex: targetBitIndex, phaseFraction, isError });
+        }
+
+        pulseRxRing(isError);
+        const cumulativePhaseError = bitPositionFloat - (expectedIndex + 0.5);
+        updatePhaseMarker(cumulativePhaseError);
+        drawTrail();
+
         justSampled = true;
     }
 
     if (justSampled || globalTime % 10 === 0) receivedBits.updateDecodedText();
 }
 
+function pulseRxRing(isError) {
+    const ring = document.getElementById('pairedRxPulse');
+    ring.classList.toggle('error', isError);
+    pulseElement(ring);
+}
+
+function updatePhaseMarker(cumulativePhaseError) {
+    const marker = document.getElementById('phaseMarker');
+    const clamped = Math.max(-0.5, Math.min(0.5, cumulativePhaseError));
+    marker.style.left = `${50 + clamped * 100}%`;
+    marker.classList.remove('warn', 'danger');
+    const magnitude = Math.abs(cumulativePhaseError);
+    if (magnitude > 0.4) marker.classList.add('danger');
+    else if (magnitude > 0.3) marker.classList.add('warn');
+}
+
 function updateVisualClocks() {
     const txBitDuration = txPeriod * FPS;
     const rxBitDuration = rxPeriod * FPS;
-    const txAngle = globalTime / txBitDuration * 360 % 360;
-    document.getElementById('txHand').style.transform = `rotate(${txAngle}deg)`;
+    const txAngle = (globalTime / txBitDuration) * 360 % 360;
+    document.getElementById('pairedTxHand').style.transform = `rotate(${txAngle}deg)`;
 
     const arrivalTime = (sampleLineX - txX) / speed;
     const rxPhase = (globalTime - arrivalTime) / rxBitDuration - 0.5;
     let rxAngle = (rxPhase * 360 % 360 + 360) % 360;
     if (globalTime < arrivalTime) rxAngle = 0;
-    document.getElementById('rxHand').style.transform = `rotate(${rxAngle}deg)`;
+    document.getElementById('pairedRxHand').style.transform = `rotate(${rxAngle}deg)`;
 }
 
 function drawRipples() {
