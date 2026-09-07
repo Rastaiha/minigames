@@ -6,12 +6,14 @@ import {readRenderedStep, readStepIndex} from '../../lib/steps.js'
 
 export async function getStaticPaths() {
   const entries = await readStepIndex()
+  const introLink = {title: 'مقدمه', href: 'intro/slides.html', smallLabel: 'قبل از شروع'}
+  const stepLink = (entry) => ({title: entry.title, href: `steps/${entry.name}/`})
   return Promise.all(entries.map(async (entry, index) => ({
     params: {step: entry.name},
     props: {
       step: await readRenderedStep(entry),
-      previous: entries[index - 1] ?? null,
-      next: entries[index + 1] ?? null,
+      previous: entries[index - 1] ? stepLink(entries[index - 1]) : introLink,
+      next: entries[index + 1] ? stepLink(entries[index + 1]) : null,
     },
   })))
 }
@@ -73,16 +75,16 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '')
   <nav class="step-navigation" aria-label="جابه‌جایی بین گام‌ها">
     <div class="previous-slot">
       {previous && (
-        <a class="navigation-button previous-button" rel="prev" href={`${base}/steps/${previous.name}/`}>
+        <a class="navigation-button previous-button" rel="prev" href={`${base}/${previous.href}`}>
           <span class="navigation-arrow" aria-hidden="true">←</span>
-          <span><small>گام قبلی</small><strong>{previous.title}</strong></span>
+          <span><small>{previous.smallLabel ?? 'گام قبلی'}</small><strong>{previous.title}</strong></span>
         </a>
       )}
     </div>
     <div class="next-slot">
       {next && (
-        <a class="navigation-button next-button" rel="next" href={`${base}/steps/${next.name}/`}>
-          <span><small>گام بعدی</small><strong>{next.title}</strong></span>
+        <a class="navigation-button next-button" rel="next" href={`${base}/${next.href}`}>
+          <span><small>{next.smallLabel ?? 'گام بعدی'}</small><strong>{next.title}</strong></span>
           <span class="navigation-arrow" aria-hidden="true">→</span>
         </a>
       )}

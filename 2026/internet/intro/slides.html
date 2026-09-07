@@ -1,0 +1,1185 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>گام صفر — قبل از این‌که به شبکه برسیم</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0e17;
+    --bg-2: #1a1a2e;
+    --fg: #fffffe;
+    --muted: #a7a9be;
+    --accent: #ff8906;
+    --accent-2: #e53170;
+    --ok: #2cb67d;
+    --wire: #7f5af0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100vh; height: 100dvh; overflow: hidden; }
+  body {
+    font-family: 'Vazirmatn', 'Tahoma', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    line-height: 1.6;
+  }
+  .mono { font-family: 'JetBrains Mono', 'Courier New', monospace; direction: ltr; }
+
+  .deck { position: relative; width: 100vw; height: 100vh; height: 100dvh; overflow: hidden; }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 6vh 8vw;
+    text-align: center;
+    background: radial-gradient(circle at 50% 30%, var(--bg-2) 0%, var(--bg) 70%);
+  }
+  .slide.active { display: flex; }
+
+  h1 { font-size: clamp(2rem, 4.5vw, 4rem); font-weight: 900; margin-bottom: 2rem; line-height: 1.2; }
+  h2 { font-size: clamp(1.5rem, 3vw, 2.5rem); font-weight: 700; margin-bottom: 1.5rem; color: var(--accent); }
+  p { font-size: clamp(1.1rem, 1.8vw, 1.7rem); max-width: 900px; margin-bottom: 1rem; }
+  .lede { font-size: clamp(1.3rem, 2.2vw, 2rem); color: var(--muted); }
+  .accent { color: var(--accent); font-weight: 700; }
+  .accent-2 { color: var(--accent-2); font-weight: 700; }
+  .ok { color: var(--ok); font-weight: 700; }
+
+  /* fragment reveal */
+  .frag {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  .frag.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* slide 1: phone + message */
+  .phones-scene {
+    position: relative;
+    width: min(80vw, 900px);
+    height: 260px;
+    margin: 2rem 0;
+  }
+  .phone {
+    position: absolute;
+    top: 20px;
+    width: 130px;
+    height: 220px;
+    border: 4px solid var(--fg);
+    border-radius: 22px;
+    background: var(--bg-2);
+  }
+  .phone::before {
+    content: '';
+    position: absolute;
+    top: 8px; left: 50%;
+    transform: translateX(-50%);
+    width: 40px; height: 6px;
+    background: var(--muted);
+    border-radius: 3px;
+  }
+  .phone.right { right: 0; }
+  .phone.left { left: 0; }
+  .bubble {
+    position: absolute;
+    top: 100px;
+    padding: 10px 18px;
+    background: var(--accent);
+    color: var(--bg);
+    border-radius: 20px 20px 20px 4px;
+    font-weight: 700;
+    font-size: 1.4rem;
+    white-space: nowrap;
+  }
+  .bubble.fly {
+    right: 145px;
+    /* animation is triggered in JS when the fragment becomes visible */
+  }
+  @keyframes fly {
+    0%   { right: 145px; top: 100px; opacity: 1; }
+    45%  { right: 50%;   top: 40px;  opacity: 1; transform: translateX(50%); }
+    100% { right: calc(100% - 275px); top: 100px; opacity: 1; }
+  }
+
+  /* slide 2: data hub */
+  .hub {
+    position: relative;
+    width: min(80vw, 700px);
+    height: 420px;
+    margin: 2rem 0;
+  }
+  .hub-center {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 180px; height: 180px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: var(--bg);
+    box-shadow: 0 0 60px rgba(255,137,6,0.4);
+  }
+  .hub-item {
+    position: absolute;
+    width: 110px; height: 110px;
+    background: var(--bg-2);
+    border: 3px solid var(--muted);
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+  }
+  .hub-item .label { font-size: 0.9rem; margin-top: 6px; color: var(--muted); font-family: 'Vazirmatn', sans-serif; }
+  .hub-item.top-left { top: 0; left: 0; }
+  .hub-item.top-right { top: 0; right: 0; }
+  .hub-item.bottom-left { bottom: 0; left: 0; }
+  .hub-item.bottom-right { bottom: 0; right: 0; }
+  .hub-icon {
+    width: 72px;
+    height: 54px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .hub-icon.eq { align-items: flex-end; gap: 6px; }
+  .eq-bar {
+    width: 8px;
+    background: var(--accent);
+    border-radius: 3px;
+    animation: eq 1.2s ease-in-out infinite;
+  }
+  .eq-bar:nth-child(1) { animation-delay: 0s; }
+  .eq-bar:nth-child(2) { animation-delay: 0.15s; }
+  .eq-bar:nth-child(3) { animation-delay: 0.3s; }
+  .eq-bar:nth-child(4) { animation-delay: 0.1s; }
+  .eq-bar:nth-child(5) { animation-delay: 0.25s; }
+  @keyframes eq {
+    0%, 100% { height: 25%; }
+    50% { height: 95%; }
+  }
+
+  /* slide 3: explosion row (icons from slide 2 shatter into 0/1) */
+  .explode-row {
+    display: flex;
+    gap: 2rem;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    min-height: 130px;
+  }
+  .icon-tile {
+    width: 110px;
+    height: 110px;
+    background: var(--bg-2);
+    border: 3px solid var(--muted);
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    transition: opacity 0.35s ease, transform 0.35s ease, filter 0.35s ease;
+  }
+  .icon-tile .label {
+    font-size: 0.85rem;
+    margin-top: 6px;
+    color: var(--muted);
+    font-family: 'Vazirmatn', sans-serif;
+  }
+  .icon-tile.exploded {
+    opacity: 0;
+    transform: scale(0.35);
+    filter: blur(6px);
+  }
+  .particle {
+    position: fixed;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    color: var(--accent);
+    pointer-events: none;
+    z-index: 100;
+    will-change: transform, opacity;
+    animation: particle-fly var(--dur, 1.5s) cubic-bezier(0.15, 0.55, 0.55, 1) forwards;
+  }
+  .particle.p1 { color: var(--accent-2); }
+  .particle.p2 { color: var(--wire); }
+  @keyframes particle-fly {
+    0% {
+      transform: translate(-50%, -50%) rotate(0deg);
+      opacity: 1;
+    }
+    100% {
+      transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) rotate(var(--rot, 720deg));
+      opacity: 0;
+    }
+  }
+  /* residual 0/1 chars that settle after the explosion and stay visible */
+  .particle.residual {
+    animation: particle-settle var(--dur, 0.8s) cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    color: var(--muted);
+  }
+  @keyframes particle-settle {
+    0% {
+      transform: translate(-50%, -50%) scale(0);
+      opacity: 0;
+    }
+    60% {
+      transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.3);
+      opacity: 1;
+    }
+    100% {
+      transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1);
+      opacity: var(--end-op, 0.5);
+    }
+  }
+  /* invisible fragment used only to trigger an animation on space-press */
+  .trigger-only { display: none; }
+
+  /* slide 3: switches */
+  .switches {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 8px;
+    width: min(70vw, 600px);
+    margin: 2rem 0 1rem;
+  }
+  .sw {
+    aspect-ratio: 1;
+    background: var(--bg-2);
+    border: 2px solid var(--muted);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 1.4rem;
+    color: var(--muted);
+    transition: all 0.3s ease;
+  }
+  .sw.on {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--bg);
+    box-shadow: 0 0 15px rgba(255,137,6,0.5);
+  }
+
+  .binary-table {
+    display: grid;
+    grid-template-columns: auto auto auto;
+    gap: 0.5rem 1.2rem;
+    font-size: 1.6rem;
+    margin-top: 1rem;
+    align-items: center;
+  }
+  .binary-table .cell {
+    padding: 0.5rem 1rem;
+    background: var(--bg-2);
+    border-radius: 8px;
+    min-width: 100px;
+  }
+  .binary-table .bin-arrow {
+    color: var(--accent);
+    font-size: 1.8rem;
+    font-weight: 700;
+    text-align: center;
+    line-height: 1;
+  }
+
+  /* slide 4: ascii transformation */
+  .ascii-chain {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    margin: 2rem 0;
+  }
+  .ascii-row {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    font-size: clamp(1.5rem, 2.5vw, 2.2rem);
+    font-weight: 700;
+    direction: ltr;
+  }
+  .ascii-row .arrow { color: var(--accent); font-size: 1.5rem; }
+  .ascii-row .box {
+    padding: 0.6rem 1.4rem;
+    background: var(--bg-2);
+    border: 2px solid var(--wire);
+    border-radius: 10px;
+    min-width: 100px;
+  }
+  .ascii-row .bin { font-family: 'JetBrains Mono', monospace; }
+
+  .ascii-side-by-side {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3rem;
+    margin: 1.2rem 0;
+  }
+  .ascii-side-by-side .ascii-chain { margin: 0; }
+
+  table.ascii-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: clamp(0.85rem, 1.15vw, 1.05rem);
+    background: rgba(255,255,255,0.03);
+    border-radius: 12px;
+    overflow: hidden;
+    direction: ltr;
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.35);
+  }
+  table.ascii-table th,
+  table.ascii-table td {
+    padding: 0.32rem 1.1rem;
+    text-align: center;
+  }
+  table.ascii-table thead th {
+    background: rgba(127,90,240,0.18);
+    color: var(--fg);
+    font-weight: 700;
+    border-bottom: 1px solid rgba(255,255,255,0.15);
+    font-size: 0.9em;
+    font-family: 'Vazirmatn', sans-serif;
+  }
+  table.ascii-table tbody tr:nth-child(even) {
+    background: rgba(255,255,255,0.025);
+  }
+  table.ascii-table tbody td.ch {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--ok);
+    font-weight: 700;
+  }
+  table.ascii-table tbody td.dec {
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  table.ascii-table tbody td.bin {
+    color: var(--wire);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  table.ascii-table tbody tr.hl td {
+    color: var(--accent);
+    background: rgba(255,137,6,0.12);
+    font-weight: 700;
+  }
+  table.ascii-table tbody tr.dots-row td {
+    color: var(--muted);
+    opacity: 0.5;
+    font-size: 1.1rem;
+    line-height: 0.5;
+    padding: 0.1rem 1.1rem;
+  }
+
+  /* slide 5: image + sound */
+  .split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    width: min(90vw, 1100px);
+    margin: 2rem 0;
+  }
+  .split > div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+  .pixel-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 24px);
+    gap: 2px;
+    padding: 4px;
+    background: var(--bg-2);
+    border-radius: 4px;
+  }
+  .pixel { width: 24px; height: 24px; }
+  .rgb-vals { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; color: var(--muted); }
+  .rgb-vals span { padding: 2px 8px; border-radius: 4px; }
+  .rgb-vals .r { background: rgba(255,80,80,0.3); }
+  .rgb-vals .g { background: rgba(80,220,120,0.3); }
+  .rgb-vals .b { background: rgba(100,140,255,0.3); }
+
+  .wave-svg { width: 100%; max-width: 400px; height: 120px; }
+  .samples { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; color: var(--muted); }
+
+  /* slide 6: signal */
+  .signal-scene {
+    position: relative;
+    width: min(90vw, 900px);
+    height: 260px;
+    margin: 2rem 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .computer {
+    width: 160px;
+    height: 130px;
+    border: 4px solid var(--fg);
+    border-radius: 12px 12px 4px 4px;
+    background: var(--bg-2);
+    position: relative;
+  }
+  .computer::after {
+    content: '';
+    position: absolute;
+    bottom: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 14px;
+    background: var(--fg);
+    border-radius: 0 0 8px 8px;
+  }
+  .wire-svg { flex: 1; margin: 0 20px; height: 80px; }
+  .qmark {
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 3rem;
+    color: var(--accent);
+    font-weight: 900;
+  }
+  /* signal bars (slide 6) */
+  .signal-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    margin: 1.5rem 0;
+  }
+  .signal-bars .bar {
+    width: 28px;
+    background: var(--accent);
+    border-radius: 4px;
+    box-shadow: 0 0 20px rgba(255,137,6,0.4);
+  }
+  .signal-bars .b1 { height: 28px; }
+  .signal-bars .b2 { height: 48px; }
+  .signal-bars .b3 { height: 68px; }
+  .signal-bars .b4 { height: 88px; }
+
+  .big-q {
+    flex: 1;
+    text-align: center;
+    font-size: 6rem;
+    color: var(--accent-2);
+    font-weight: 900;
+  }
+
+  /* slide 8: next-step CTA */
+  .cta-next {
+    display: inline-flex;
+    align-items: center;
+    gap: 1.2rem;
+    margin-top: 2.5rem;
+    padding: 1rem 1.8rem;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: var(--bg);
+    border-radius: 14px;
+    text-decoration: none;
+    font-weight: 700;
+    box-shadow: 0 0 40px rgba(255,137,6,0.35);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .cta-next:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 60px rgba(255,137,6,0.5);
+  }
+  .cta-next small { display: block; font-size: 0.85rem; opacity: 0.8; font-weight: 500; }
+  .cta-next strong { display: block; font-size: clamp(1.1rem, 1.6vw, 1.35rem); margin-top: 0.15rem; }
+  .cta-next .cta-arrow { font-size: 1.6rem; line-height: 1; }
+
+  /* progress + help */
+  .progress {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+    background: rgba(255,255,255,0.05);
+    z-index: 100;
+  }
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    transition: width 0.4s ease;
+  }
+  .slide-num {
+    position: fixed;
+    bottom: 12px; left: 20px;
+    color: var(--muted);
+    font-size: 0.85rem;
+    font-family: 'JetBrains Mono', monospace;
+    z-index: 100;
+    opacity: 0.5;
+  }
+  .help {
+    position: fixed;
+    bottom: 12px; right: 20px;
+    color: var(--muted);
+    font-size: 0.85rem;
+    z-index: 100;
+    opacity: 0.5;
+  }
+  .help kbd {
+    background: var(--bg-2);
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    margin: 0 2px;
+  }
+
+  /* mobile */
+  @media (max-width: 640px) {
+    .slide { padding: 3.5vh 5vw; }
+    .help { display: none; }
+
+    h1 { font-size: clamp(1.7rem, 6.5vw, 2.4rem); margin-bottom: 1.2rem; }
+    h2 { font-size: clamp(1.3rem, 5.5vw, 1.9rem); margin-bottom: 1rem; }
+    p { font-size: clamp(0.95rem, 3.8vw, 1.3rem); margin-bottom: 0.7rem; }
+    .lede { font-size: clamp(1.05rem, 4.2vw, 1.55rem); }
+
+    /* slide 1 */
+    .phones-scene { height: 200px; margin: 1.2rem 0; }
+    .phone { width: 100px; height: 170px; border-width: 3px; }
+    .bubble { font-size: 1.1rem; padding: 8px 14px; top: 80px; }
+    .bubble.fly { right: 110px; }
+    @keyframes fly {
+      0%   { right: 110px; top: 80px; opacity: 1; }
+      45%  { right: 50%;   top: 30px; opacity: 1; transform: translateX(50%); }
+      100% { right: calc(100% - 210px); top: 80px; opacity: 1; }
+    }
+
+    /* slide 2 */
+    .hub { width: min(90vw, 360px); height: 320px; margin: 1.2rem 0; }
+    .hub-center { width: 120px; height: 120px; font-size: 1.7rem; }
+    .hub-item { width: 82px; height: 82px; padding: 5px; border-width: 2px; }
+    .hub-item .label { font-size: 0.72rem; margin-top: 3px; }
+    .hub-icon { width: 56px; height: 42px; }
+
+    /* slide 3 */
+    .explode-row { gap: 0.7rem; min-height: 90px; margin-bottom: 1rem; }
+    .icon-tile { width: 68px; height: 68px; padding: 4px; border-width: 2px; }
+    .icon-tile .label { font-size: 0.68rem; margin-top: 3px; }
+    .icon-tile .hub-icon { width: 46px; height: 34px; }
+    .switches { grid-template-columns: repeat(6, 1fr); gap: 6px; width: min(85vw, 280px); margin: 1.2rem 0 0.8rem; }
+    .sw { font-size: 1rem; border-width: 1.5px; }
+
+    /* slide 4 */
+    .binary-table { font-size: 1.15rem; gap: 0.35rem 0.6rem; margin-top: 0.5rem; }
+    .binary-table .cell { padding: 0.3rem 0.6rem; min-width: 60px; }
+    .binary-table .bin-arrow { font-size: 1.3rem; }
+
+    /* slide 5 */
+    .ascii-side-by-side { flex-direction: column; gap: 1.2rem; }
+    .ascii-row { font-size: clamp(1rem, 3.8vw, 1.5rem); gap: 0.8rem; }
+    .ascii-row .box { padding: 0.4rem 0.9rem; min-width: 70px; }
+    table.ascii-table { font-size: 0.7rem; }
+    table.ascii-table th, table.ascii-table td { padding: 0.22rem 0.55rem; }
+
+    /* slide 6 */
+    .split { grid-template-columns: 1fr; gap: 1.5rem; }
+    .pixel-grid { grid-template-columns: repeat(8, 18px); }
+    .pixel { width: 18px; height: 18px; }
+    .wave-svg { max-width: 280px; height: 90px; }
+    .rgb-vals, .samples { font-size: 0.95rem; }
+
+    /* slide 7 */
+    .signal-scene { height: 200px; margin: 1.2rem 0; }
+    .computer { width: 110px; height: 88px; border-width: 3px; }
+    .signal-bars .bar { width: 20px; }
+    .signal-bars .b1 { height: 20px; }
+    .signal-bars .b2 { height: 34px; }
+    .signal-bars .b3 { height: 48px; }
+    .signal-bars .b4 { height: 62px; }
+
+    /* slide 8 */
+    .big-q { font-size: 3.5rem; }
+    .cta-next { padding: 0.8rem 1.4rem; gap: 0.8rem; margin-top: 1.5rem; }
+    .cta-next small { font-size: 0.72rem; }
+    .cta-next strong { font-size: 0.98rem; }
+    .cta-next .cta-arrow { font-size: 1.3rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="deck">
+
+  <!-- Slide 1: Hook -->
+  <section class="slide" data-slide="1">
+    <h1 class="frag">قبل از این‌که به شبکه برسیم…</h1>
+    <div class="phones-scene frag">
+      <div class="phone right"></div>
+      <div class="phone left"></div>
+      <div class="bubble fly">سلام</div>
+    </div>
+    <p class="lede frag">دقیقاً چی از گوشی تو حرکت کرد و به گوشی دوستت رسید؟</p>
+    <p class="frag" style="color:var(--muted)">خودِ حروف «س، ل، ا، م» که نبود…</p>
+  </section>
+
+  <!-- Slide 2: Data -->
+  <section class="slide" data-slide="2">
+    <h2 class="frag">۱. همه‌چی می‌شه «داده»</h2>
+    <div class="hub">
+      <!-- Message: chat bubble with text lines -->
+      <div class="hub-item top-left frag">
+        <svg class="hub-icon" viewBox="0 0 80 60">
+          <path d="M12,8 L68,8 Q76,8 76,16 L76,38 Q76,46 68,46 L30,46 L20,55 L22,46 L12,46 Q4,46 4,38 L4,16 Q4,8 12,8 Z" fill="#2cb67d"/>
+          <rect x="14" y="18" width="28" height="3" fill="white" opacity="0.9" rx="1.5"/>
+          <rect x="14" y="26" width="42" height="3" fill="white" opacity="0.9" rx="1.5"/>
+          <rect x="14" y="34" width="20" height="3" fill="white" opacity="0.9" rx="1.5"/>
+        </svg>
+        <span class="label">پیام</span>
+      </div>
+      <!-- Image: mini landscape with sun and mountains -->
+      <div class="hub-item top-right frag">
+        <svg class="hub-icon" viewBox="0 0 80 60">
+          <rect x="2" y="4" width="76" height="52" fill="#87CEEB" stroke="#a7a9be" stroke-width="2" rx="3"/>
+          <circle cx="22" cy="20" r="7" fill="#FFC107"/>
+          <polygon points="2,56 24,30 40,44 58,25 78,56" fill="#4a7c3a"/>
+        </svg>
+        <span class="label">عکس</span>
+      </div>
+      <!-- Audio: animated equalizer bars -->
+      <div class="hub-item bottom-left frag">
+        <div class="hub-icon eq">
+          <div class="eq-bar"></div>
+          <div class="eq-bar"></div>
+          <div class="eq-bar"></div>
+          <div class="eq-bar"></div>
+          <div class="eq-bar"></div>
+        </div>
+        <span class="label">صدا</span>
+      </div>
+      <!-- Video: play button + animated progress bar -->
+      <div class="hub-item bottom-right frag">
+        <svg class="hub-icon" viewBox="0 0 80 60">
+          <rect x="2" y="2" width="76" height="46" fill="#0a0a12" stroke="#a7a9be" stroke-width="2" rx="3"/>
+          <polygon points="32,17 32,33 47,25" fill="white"/>
+          <rect x="2" y="52" width="76" height="4" fill="rgba(255,255,255,0.15)" rx="2"/>
+          <rect x="2" y="52" width="0" height="4" fill="#ff8906" rx="2">
+            <animate attributeName="width" values="0;76;76" keyTimes="0;0.85;1" dur="3s" repeatCount="indefinite"/>
+          </rect>
+        </svg>
+        <span class="label">ویدیو</span>
+      </div>
+      <div class="hub-center frag">داده</div>
+    </div>
+    <p class="frag">هرچی توی اینترنت جابه‌جا می‌شه — به‌ش می‌گیم <span class="accent">داده</span>.</p>
+    <p class="frag" style="color:var(--muted)">ولی کامپیوتر داده رو دقیقاً چطور «می‌بینه»؟</p>
+  </section>
+
+  <!-- Slide 3: Binary — one Space press explodes one tile; residual 0/1 chars stay visible -->
+  <section class="slide" data-slide="3">
+    <h2 class="frag">۲. کامپیوتر فقط ۲ چیز می‌فهمه: ۰ و ۱</h2>
+    <p class="frag">به هر کدوم از این ۰ یا ۱‌ها می‌گیم یه <span class="accent">بیت</span>.</p>
+    <div class="explode-row">
+      <div class="icon-tile" data-tile="0">
+        <svg class="hub-icon" viewBox="0 0 80 60">
+          <path d="M12,8 L68,8 Q76,8 76,16 L76,38 Q76,46 68,46 L30,46 L20,55 L22,46 L12,46 Q4,46 4,38 L4,16 Q4,8 12,8 Z" fill="#2cb67d"/>
+          <rect x="14" y="18" width="28" height="3" fill="white" opacity="0.9" rx="1.5"/>
+          <rect x="14" y="26" width="42" height="3" fill="white" opacity="0.9" rx="1.5"/>
+          <rect x="14" y="34" width="20" height="3" fill="white" opacity="0.9" rx="1.5"/>
+        </svg>
+        <span class="label">پیام</span>
+      </div>
+      <div class="icon-tile" data-tile="1">
+        <svg class="hub-icon" viewBox="0 0 80 60">
+          <rect x="2" y="4" width="76" height="52" fill="#87CEEB" stroke="#a7a9be" stroke-width="2" rx="3"/>
+          <circle cx="22" cy="20" r="7" fill="#FFC107"/>
+          <polygon points="2,56 24,30 40,44 58,25 78,56" fill="#4a7c3a"/>
+        </svg>
+        <span class="label">عکس</span>
+      </div>
+      <div class="icon-tile" data-tile="2">
+        <div class="hub-icon eq">
+          <div class="eq-bar"></div>
+          <div class="eq-bar"></div>
+          <div class="eq-bar"></div>
+          <div class="eq-bar"></div>
+          <div class="eq-bar"></div>
+        </div>
+        <span class="label">صدا</span>
+      </div>
+      <div class="icon-tile" data-tile="3">
+        <svg class="hub-icon" viewBox="0 0 80 60">
+          <rect x="2" y="2" width="76" height="46" fill="#0a0a12" stroke="#a7a9be" stroke-width="2" rx="3"/>
+          <polygon points="32,17 32,33 47,25" fill="white"/>
+          <rect x="2" y="52" width="76" height="4" fill="rgba(255,255,255,0.15)" rx="2"/>
+          <rect x="2" y="52" width="0" height="4" fill="#ff8906" rx="2">
+            <animate attributeName="width" values="0;76;76" keyTimes="0;0.85;1" dur="3s" repeatCount="indefinite"/>
+          </rect>
+        </svg>
+        <span class="label">ویدیو</span>
+      </div>
+    </div>
+    <!-- one invisible trigger fragment per icon: each Space press explodes the next tile -->
+    <span class="frag trigger-only" data-trigger="explode-tile" data-tile="0"></span>
+    <span class="frag trigger-only" data-trigger="explode-tile" data-tile="1"></span>
+    <span class="frag trigger-only" data-trigger="explode-tile" data-tile="2"></span>
+    <span class="frag trigger-only" data-trigger="explode-tile" data-tile="3"></span>
+    <p class="frag">توی دل کامپیوتر میلیون‌ها لامپ خیلی کوچیک هست — هرکدوم فقط <span class="accent">روشن</span> یا <span style="color:var(--muted)">خاموش</span>.</p>
+    <div class="switches frag" id="switches"></div>
+  </section>
+
+  <!-- Slide 4: Binary — the writing system for numbers -->
+  <section class="slide" data-slide="4">
+    <h2 class="frag">۳. با فقط دو تا رقم چطور می‌شه یه عدد رو نوشت؟</h2>
+    <p class="frag">برای این‌که هر عددی رو فقط با ۰ و ۱ بنویسیم، یه سیستم داریم — به این سیستم می‌گیم <span class="accent">سیستم باینری</span> (یا دودویی).</p>
+    <div class="binary-table frag">
+      <div class="cell">۵</div><div class="bin-arrow">←</div><div class="cell mono">101</div>
+      <div class="cell">۹</div><div class="bin-arrow">←</div><div class="cell mono">1001</div>
+      <div class="cell">۱۰۰</div><div class="bin-arrow">←</div><div class="cell mono">1100100</div>
+    </div>
+  </section>
+
+  <!-- Slide 5: ASCII -->
+  <section class="slide" data-slide="5">
+    <h2 class="frag">۴. حرف چطور می‌شه ۰ و ۱؟</h2>
+    <p class="frag">یه جدول بزرگ به هر حرف یه عدد می‌ده — اسمش <span class="accent">ASCII</span>.</p>
+    <div class="ascii-side-by-side">
+      <div class="ascii-chain">
+        <div class="ascii-row frag">
+          <span class="mono box">Hi</span>
+          <span class="arrow">↓</span>
+        </div>
+        <div class="ascii-row frag">
+          <span class="mono box">H = 72</span>
+          <span class="mono box">i = 105</span>
+        </div>
+        <div class="ascii-row frag">
+          <span class="arrow">↓</span>
+        </div>
+        <div class="ascii-row frag">
+          <span class="mono bin box">01001000</span>
+          <span class="mono bin box">01101001</span>
+        </div>
+      </div>
+      <table class="ascii-table frag">
+        <thead>
+          <tr><th>حرف</th><th>عدد</th><th>باینری</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="ch">' '</td><td class="dec">32</td><td class="bin">00100000</td></tr>
+          <tr><td class="ch">'0'</td><td class="dec">48</td><td class="bin">00110000</td></tr>
+          <tr class="dots-row"><td>⋮</td><td>⋮</td><td>⋮</td></tr>
+          <tr><td class="ch">'A'</td><td class="dec">65</td><td class="bin">01000001</td></tr>
+          <tr><td class="ch">'B'</td><td class="dec">66</td><td class="bin">01000010</td></tr>
+          <tr class="dots-row"><td>⋮</td><td>⋮</td><td>⋮</td></tr>
+          <tr class="hl"><td class="ch">'H'</td><td class="dec">72</td><td class="bin">01001000</td></tr>
+          <tr class="dots-row"><td>⋮</td><td>⋮</td><td>⋮</td></tr>
+          <tr><td class="ch">'a'</td><td class="dec">97</td><td class="bin">01100001</td></tr>
+          <tr><td class="ch">'b'</td><td class="dec">98</td><td class="bin">01100010</td></tr>
+          <tr class="hl"><td class="ch">'i'</td><td class="dec">105</td><td class="bin">01101001</td></tr>
+          <tr class="dots-row"><td>⋮</td><td>⋮</td><td>⋮</td></tr>
+          <tr><td class="ch">'?'</td><td class="dec">63</td><td class="bin">00111111</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="frag" style="color:var(--muted)">این چیزیه که واقعاً بین گوشی‌ها رد و بدل می‌شه.</p>
+  </section>
+
+  <!-- Slide 6: Images & Sound -->
+  <section class="slide" data-slide="6">
+    <h2 class="frag">۵. عکس و صدا هم فرقی نمی‌کنن</h2>
+    <div class="split">
+      <div class="frag">
+        <div style="font-size:1.3rem;color:var(--muted);margin-bottom:0.5rem">عکس = توری از پیکسل‌ها</div>
+        <div class="pixel-grid" id="pixel-grid"></div>
+        <div class="rgb-vals">
+          <span class="r">R: 234</span>
+          <span class="g">G: 120</span>
+          <span class="b">B: 45</span>
+        </div>
+        <div style="color:var(--muted);font-size:1rem">هر پیکسل = ۳ تا عدد</div>
+      </div>
+      <div class="frag">
+        <div style="font-size:1.3rem;color:var(--muted);margin-bottom:0.5rem">صدا = نمونه‌های پشت‌سرهم</div>
+        <svg class="wave-svg" viewBox="0 0 400 120">
+          <path d="M0,60 Q25,20 50,60 T100,60 T150,60 T200,60 T250,60 T300,60 T350,60 T400,60" stroke="var(--wire)" stroke-width="2" fill="none"/>
+          <g id="sample-points"></g>
+        </svg>
+        <div class="samples">128, 210, 95, 180, 60, 200, ...</div>
+        <div style="color:var(--muted);font-size:1rem">هزاران عدد در ثانیه</div>
+      </div>
+    </div>
+    <p class="frag" style="margin-top:1rem"><span class="accent">هرچی</span> از اینترنت رد می‌شه، تهش یه رشتهٔ طولانی از ۰ و ۱ ئه.</p>
+  </section>
+
+  <!-- Slide 7: Signal — everyday framing only, no mediums / no mechanism -->
+  <section class="slide" data-slide="7">
+    <h2 class="frag">۶. یه کلمهٔ آشنا: <span class="accent">سیگنال</span></h2>
+    <p class="frag" style="color:var(--muted);font-size:1.4rem">
+      «سیگنال گوشیم ضعیفه» · «سیگنال تلویزیون قطعه»
+    </p>
+    <div class="signal-bars frag">
+      <div class="bar b1"></div>
+      <div class="bar b2"></div>
+      <div class="bar b3"></div>
+      <div class="bar b4"></div>
+    </div>
+    <p class="frag" style="margin-top:1.5rem">
+      «سیگنال» یه اسم عمومیه برای <span class="accent">اطلاعاتی که داره از یه جا به جای دیگه حرکت می‌کنه</span>.
+    </p>
+    <p class="frag" style="color:var(--muted)">
+      ۰ و ۱‌های ما هم برای این‌که به دوستمون برسه، باید تبدیل به یه سیگنال بشه.
+    </p>
+  </section>
+
+  <!-- Slide 8: Closing -->
+  <section class="slide" data-slide="8">
+    <h1 class="frag">حالا سؤال اصلی…</h1>
+    <p class="lede frag">چطور ۰ و ۱‌هایی که داریم رو <span class="accent-2">تبدیل به سیگنال</span> کنیم — و این سیگنال رو چطور باید بین کامپیوترها <span class="accent-2">جابه‌جا</span> کنیم؟</p>
+    <div class="signal-scene frag" style="margin-top:3rem">
+      <div class="computer"></div>
+      <div class="big-q">؟</div>
+      <div class="computer"></div>
+    </div>
+    <p class="frag" style="margin-top:2rem;font-size:clamp(1.4rem,2.5vw,2.2rem)">
+      از همین‌جا <span class="accent">کارگاه</span> شروع می‌شه.
+    </p>
+    <a class="frag cta-next" href="../steps/encoding-1-mediums/">
+      <span>
+        <small>گام بعدی</small>
+        <strong>صفر و یک چجوری از اینجا بره اونجا؟</strong>
+      </span>
+      <span class="cta-arrow" aria-hidden="true">→</span>
+    </a>
+  </section>
+
+</div>
+
+<div class="progress"><div class="progress-bar" id="progress-bar"></div></div>
+<div class="slide-num" id="slide-num">1 / 8</div>
+<div class="help">
+  <kbd>Space</kbd> جلو · <kbd>←</kbd> عقب · <kbd>F</kbd> فول‌اسکرین · <kbd>Home</kbd> اول
+</div>
+
+<script>
+  // --- Setup switches (slide 3) ---
+  const switchesEl = document.getElementById('switches');
+  const swCount = 30;
+  const swStates = [];
+  for (let i = 0; i < swCount; i++) {
+    const on = Math.random() > 0.5;
+    swStates.push(on);
+    const div = document.createElement('div');
+    div.className = 'sw' + (on ? ' on' : '');
+    div.textContent = on ? '1' : '0';
+    switchesEl.appendChild(div);
+  }
+  // animate switches flickering
+  setInterval(() => {
+    const activeSlide = document.querySelector('.slide.active');
+    if (!activeSlide || activeSlide.dataset.slide !== '3') return;
+    const idx = Math.floor(Math.random() * swCount);
+    const sw = switchesEl.children[idx];
+    const on = !sw.classList.contains('on');
+    sw.classList.toggle('on', on);
+    sw.textContent = on ? '1' : '0';
+  }, 200);
+
+  // --- Setup pixel grid (slide 5) ---
+  const pixelGrid = document.getElementById('pixel-grid');
+  const catPalette = [
+    '#3a2f28', '#5a4438', '#8a6a4f', '#c69769', '#e5b57e',
+    '#f1c894', '#a67c52', '#7a5a3a', '#2a1f18', '#d4a373'
+  ];
+  for (let i = 0; i < 64; i++) {
+    const p = document.createElement('div');
+    p.className = 'pixel';
+    p.style.background = catPalette[Math.floor(Math.random() * catPalette.length)];
+    pixelGrid.appendChild(p);
+  }
+  // highlight one pixel with the RGB values shown
+  const highlighted = pixelGrid.children[27];
+  highlighted.style.background = 'rgb(234, 120, 45)';
+  highlighted.style.outline = '3px solid var(--fg)';
+  highlighted.style.outlineOffset = '2px';
+
+  // --- Setup sample points on wave (slide 5) ---
+  const samplesG = document.getElementById('sample-points');
+  for (let i = 0; i < 17; i++) {
+    const x = i * 25;
+    // approximate the wave: y = 60 + 40 * sin(2*pi * x / 100)
+    const y = 60 + 40 * Math.sin(2 * Math.PI * x / 100);
+    const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    c.setAttribute('cx', x);
+    c.setAttribute('cy', y);
+    c.setAttribute('r', 4);
+    c.setAttribute('fill', 'var(--accent)');
+    samplesG.appendChild(c);
+  }
+
+  // --- Navigation ---
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const totalSlides = slides.length;
+  let currentSlide = 0;
+  let currentFrag = -1;
+
+  function getFrags(slide) {
+    return Array.from(slide.querySelectorAll('.frag'));
+  }
+
+  function showSlide(idx) {
+    const prevIdx = currentSlide;
+    // Any leftover explosion particles are fixed-position on <body>; nuke them on every slide change.
+    document.querySelectorAll('.particle').forEach(el => el.remove());
+
+    // FLIP: on slide 2 → 3 forward, capture hub-item rects so the 4 icons appear to slide over.
+    let hubRects = null;
+    if (prevIdx === 1 && idx === 2 && slides[1].classList.contains('active')) {
+      hubRects = Array.from(slides[1].querySelectorAll('.hub-item'))
+        .map(el => el.getBoundingClientRect());
+    }
+
+    slides.forEach(s => s.classList.remove('active'));
+    slides[idx].classList.add('active');
+    currentSlide = idx;
+    // reset fragments
+    const frags = getFrags(slides[idx]);
+    frags.forEach(f => f.classList.remove('visible'));
+    currentFrag = -1;
+    updateProgress();
+    // per-slide state resets
+    if (idx === 2) resetExplode(); // slide 3
+
+    if (hubRects) {
+      const tiles = Array.from(slides[idx].querySelectorAll('.icon-tile'));
+      tiles.forEach((tile, i) => {
+        const target = tile.getBoundingClientRect();
+        const src = hubRects[i];
+        if (!src) return;
+        const dx = src.left - target.left;
+        const dy = src.top - target.top;
+        tile.style.transition = 'none';
+        tile.style.transform = `translate(${dx}px, ${dy}px)`;
+      });
+      void slides[idx].offsetWidth; // force reflow so the "start" transform paints first
+      requestAnimationFrame(() => {
+        tiles.forEach(tile => {
+          tile.style.transition = 'transform 0.75s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s ease, filter 0.35s ease';
+          tile.style.transform = '';
+        });
+        setTimeout(() => {
+          tiles.forEach(tile => {
+            tile.style.transition = '';
+            tile.style.transform = '';
+          });
+        }, 900);
+      });
+    }
+  }
+
+  // Restart any CSS keyframe animations inside a fragment when it's revealed,
+  // so the animation plays *exactly when the user sees it* (not on page load).
+  function playAnimationsIn(scope) {
+    scope.querySelectorAll('.bubble.fly').forEach(el => {
+      el.style.animation = 'none';
+      void el.offsetWidth; // force reflow
+      el.style.animation = 'fly 2.2s ease-in-out 0.3s forwards';
+    });
+  }
+
+  // Slide 3: explode ONE tile into 0s and 1s.
+  // Two kinds of particles: flying (dramatic, fade to 0) and residual (settle nearby, stay visible).
+  function explodeIcon(iconEl) {
+    const rect = iconEl.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const tileIdx = iconEl.dataset.tile;
+
+    // Flying particles — dramatic outward burst
+    const flyCount = 18;
+    for (let i = 0; i < flyCount; i++) {
+      const p = document.createElement('div');
+      const roll = Math.random();
+      const colorClass = roll < 0.55 ? '' : (roll < 0.8 ? ' p1' : ' p2');
+      p.className = 'particle' + colorClass;
+      if (tileIdx !== undefined) p.dataset.particleFor = tileIdx;
+      p.textContent = Math.random() > 0.5 ? '1' : '0';
+      p.style.left = cx + 'px';
+      p.style.top = cy + 'px';
+      const angle = (Math.PI * 2 * i) / flyCount + (Math.random() - 0.5) * 0.6;
+      const distance = 180 + Math.random() * 260;
+      const dx = Math.cos(angle) * distance;
+      const dy = Math.sin(angle) * distance;
+      const duration = 1.2 + Math.random() * 0.9;
+      const rot = (Math.random() > 0.5 ? 1 : -1) * (540 + Math.random() * 720);
+      p.style.setProperty('--dx', dx + 'px');
+      p.style.setProperty('--dy', dy + 'px');
+      p.style.setProperty('--dur', duration + 's');
+      p.style.setProperty('--rot', rot + 'deg');
+      p.style.fontSize = (1.1 + Math.random() * 0.9) + 'rem';
+      document.body.appendChild(p);
+      setTimeout(() => p.remove(), duration * 1000 + 100);
+    }
+
+    // Residual particles — settle where the tile was and stay put
+    const residualCount = 14;
+    for (let i = 0; i < residualCount; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle residual';
+      if (tileIdx !== undefined) p.dataset.particleFor = tileIdx;
+      p.textContent = Math.random() > 0.5 ? '1' : '0';
+      p.style.left = cx + 'px';
+      p.style.top = cy + 'px';
+      const dx = (Math.random() - 0.5) * 110;
+      const dy = (Math.random() - 0.5) * 110;
+      const duration = 0.5 + Math.random() * 0.4;
+      const endOp = 0.45 + Math.random() * 0.4;
+      p.style.setProperty('--dx', dx + 'px');
+      p.style.setProperty('--dy', dy + 'px');
+      p.style.setProperty('--dur', duration + 's');
+      p.style.setProperty('--end-op', endOp);
+      p.style.fontSize = (0.85 + Math.random() * 0.55) + 'rem';
+      document.body.appendChild(p);
+    }
+
+    iconEl.classList.add('exploded');
+  }
+
+  function unExplodeTile(tile) {
+    const tileIdx = tile.dataset.tile;
+    tile.classList.remove('exploded');
+    if (tileIdx !== undefined) {
+      document.querySelectorAll('.particle[data-particle-for="' + tileIdx + '"]').forEach(el => el.remove());
+    }
+  }
+
+  function resetExplode() {
+    document.querySelectorAll('.explode-row .icon-tile').forEach(el => el.classList.remove('exploded'));
+    document.querySelectorAll('.particle').forEach(el => el.remove());
+  }
+
+  function revealFrag(f) {
+    f.classList.add('visible');
+    playAnimationsIn(f);
+    if (f.dataset.trigger === 'explode-tile') {
+      const tile = document.querySelector('.icon-tile[data-tile="' + f.dataset.tile + '"]');
+      if (tile) explodeIcon(tile);
+    }
+  }
+
+  function nextFrag() {
+    const slide = slides[currentSlide];
+    const frags = getFrags(slide);
+    if (currentFrag + 1 < frags.length) {
+      currentFrag++;
+      revealFrag(frags[currentFrag]);
+      updateProgress();
+    } else if (currentSlide + 1 < totalSlides) {
+      showSlide(currentSlide + 1);
+    }
+  }
+
+  function prevFrag() {
+    const slide = slides[currentSlide];
+    const frags = getFrags(slide);
+    if (currentFrag >= 0) {
+      const f = frags[currentFrag];
+      f.classList.remove('visible');
+      if (f.dataset.trigger === 'explode-tile') {
+        const tile = document.querySelector('.icon-tile[data-tile="' + f.dataset.tile + '"]');
+        if (tile) unExplodeTile(tile);
+      }
+      currentFrag--;
+      updateProgress();
+    } else if (currentSlide > 0) {
+      showSlide(currentSlide - 1);
+      const prevFrags = getFrags(slides[currentSlide]);
+      prevFrags.forEach(f => revealFrag(f));
+      currentFrag = prevFrags.length - 1;
+      updateProgress();
+    }
+  }
+
+  function updateProgress() {
+    const slide = slides[currentSlide];
+    const frags = getFrags(slide);
+    const slideProgress = frags.length > 0
+      ? (currentFrag + 1) / frags.length
+      : 1;
+    const total = (currentSlide + slideProgress) / totalSlides;
+    document.getElementById('progress-bar').style.width = (total * 100) + '%';
+    document.getElementById('slide-num').textContent = (currentSlide + 1) + ' / ' + totalSlides;
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === ' ' || e.key === 'ArrowRight' || e.key === 'PageDown') {
+      e.preventDefault();
+      nextFrag();
+    } else if (e.key === 'ArrowLeft' || e.key === 'Backspace' || e.key === 'PageUp') {
+      e.preventDefault();
+      prevFrag();
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      showSlide(0);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      showSlide(totalSlides - 1);
+      const frags = getFrags(slides[currentSlide]);
+      frags.forEach(f => revealFrag(f));
+      currentFrag = frags.length - 1;
+      updateProgress();
+    } else if (e.key === 'f' || e.key === 'F') {
+      e.preventDefault();
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+      else document.exitFullscreen();
+    } else if (/^[1-9]$/.test(e.key)) {
+      const n = parseInt(e.key) - 1;
+      if (n < totalSlides) showSlide(n);
+    }
+  });
+
+  // touch swipe: horizontal swipe > 50px triggers prev/next
+  let touchStartX = 0, touchStartY = 0, touchActive = false, swipedRecently = false;
+  document.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1) { touchActive = false; return; }
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    touchActive = true;
+  }, {passive: true});
+  document.addEventListener('touchend', (e) => {
+    if (!touchActive) return;
+    touchActive = false;
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    if (Math.abs(dx) < 50 || Math.abs(dx) <= Math.abs(dy)) return;
+    swipedRecently = true;
+    setTimeout(() => { swipedRecently = false; }, 350);
+    if (dx < 0) nextFrag(); else prevFrag();
+  }, {passive: true});
+
+  // click to advance (desktop tap-forward + mobile tap-forward)
+  document.addEventListener('click', (e) => {
+    if (swipedRecently) return;
+    if (e.target.closest('.help, .slide-num, a[href]')) return;
+    nextFrag();
+  });
+
+  showSlide(0);
+</script>
+
+</body>
+</html>

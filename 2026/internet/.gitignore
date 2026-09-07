@@ -154,6 +154,7 @@ vite.config.ts.timestamp-*
 # Generated Astro staging and output
 /site/public/games/
 /site/public/steps/
+/site/public/intro/
 /site/public/game-entry-versions.json
 /site/dist/
 /site/.astro/

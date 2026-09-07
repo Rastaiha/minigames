@@ -6,9 +6,11 @@ import {createHash} from 'node:crypto'
 const rootDirectory = process.cwd()
 const stepsDirectory = path.join(rootDirectory, 'steps')
 const gamesDirectory = path.join(rootDirectory, 'games')
+const introDirectory = path.join(rootDirectory, 'intro')
 const publicDirectory = path.join(rootDirectory, 'site', 'public')
 const publicStepsDirectory = path.join(publicDirectory, 'steps')
 const publicGamesDirectory = path.join(publicDirectory, 'games')
+const publicIntroDirectory = path.join(publicDirectory, 'intro')
 const gameVersionsPath = path.join(publicDirectory, 'game-entry-versions.json')
 
 async function exists(filePath) {
@@ -169,6 +171,12 @@ async function copyStepAssets() {
   }
 }
 
+async function copyIntro() {
+  await fs.rm(publicIntroDirectory, {recursive: true, force: true})
+  if (!(await exists(introDirectory))) return
+  await fs.cp(introDirectory, publicIntroDirectory, {recursive: true})
+}
+
 async function copyGames() {
   await fs.rm(publicGamesDirectory, {recursive: true, force: true})
   await fs.mkdir(publicGamesDirectory, {recursive: true})
@@ -253,7 +261,7 @@ async function referencedGamePaths() {
 
 await assertSubmodulesAvailable()
 await buildGames()
-await Promise.all([copyStepAssets(), copyGames()])
+await Promise.all([copyStepAssets(), copyGames(), copyIntro()])
 await writeGameEntryVersions()
 
 for (const gamePath of await referencedGamePaths()) {
