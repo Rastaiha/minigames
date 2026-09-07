@@ -17,11 +17,62 @@ const gameVersionsPath = path.join(
   'public',
   'game-entry-versions.json',
 )
-const renderer = unified()
-  .use(remarkParse)
-  .use(remarkGfm)
-  .use(remarkRehype, {allowDangerousHtml: true})
-  .use(rehypeStringify, {allowDangerousHtml: true})
+const questionMark = '❓'
+const questionMarkClass = 'important-question-mark'
+
+function highlightImportantQuestionMarks() {
+  return (tree) => {
+    function visit(node) {
+      if (!node.children || ['code', 'pre', 'script', 'style'].includes(node.tagName)) {
+        return
+      }
+
+      node.children = node.children.flatMap((child) => {
+        if (child.type !== 'text' || !child.value.includes(questionMark)) {
+          visit(child)
+          return child
+        }
+
+        return child.value.split(questionMark).flatMap((part, index, parts) => {
+          const nodes = part ? [{type: 'text', value: part}] : []
+          if (index < parts.length - 1) {
+            nodes.push({
+              type: 'element',
+              tagName: 'span',
+              properties: {
+                className: [questionMarkClass],
+                role: 'img',
+                ariaLabel: 'سؤال مهم',
+              },
+              children: [{type: 'text', value: questionMark}],
+            })
+          }
+          return nodes
+        })
+      })
+    }
+
+    visit(tree)
+  }
+}
+
+function createRenderer({highlightQuestions = false} = {}) {
+  const processor = unified()
+    .use(remarkParse)
+    .use(remarkGfm)
+    .use(remarkRehype, {allowDangerousHtml: true})
+
+  if (highlightQuestions) processor.use(highlightImportantQuestionMarks)
+
+  return processor.use(rehypeStringify, {allowDangerousHtml: true})
+}
+
+const renderer = createRenderer()
+const studentRenderer = createRenderer({highlightQuestions: true})
+
+export async function renderStudentMarkdown(markdown) {
+  return String(await studentRenderer.process(markdown))
+}
 
 export async function readStepIndex() {
   const value = await fs.readFile(path.join(stepsDirectory, '.order.json'), 'utf8')
@@ -101,18 +152,18 @@ export async function readGameIndex() {
   )
 }
 
-async function renderFragment(stepName, filename) {
+async function renderFragment(stepName, filename, processor = renderer) {
   const markdown = await fs.readFile(
     path.join(stepsDirectory, stepName, filename),
     'utf8',
   )
-  return String(await renderer.process(markdown))
+  return String(await processor.process(markdown))
 }
 
 export async function readRenderedStep(entry) {
   const [mentorBefore, student, mentorAfter, versions] = await Promise.all([
     renderFragment(entry.name, 'mentor-before.md'),
-    renderFragment(entry.name, 'student.md'),
+    renderFragment(entry.name, 'student.md', studentRenderer),
     renderFragment(entry.name, 'mentor-after.md'),
     readGameEntryVersions(),
   ])

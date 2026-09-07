@@ -642,6 +642,23 @@ pre {
 .student-section p,
 .mentor-section p { max-width: 48rem; }
 
+.important-question-mark {
+  display: inline-block;
+  margin-inline: 0.08em;
+  font-size: 1.45em;
+  line-height: 1;
+  vertical-align: -0.12em;
+  filter: drop-shadow(0 0.12em 0.12em rgb(16 69 86 / 14%));
+  transform-origin: 50% 70%;
+  animation: important-question-pulse 2.8s ease-in-out infinite;
+}
+
+@keyframes important-question-pulse {
+  0%, 72%, 100% { transform: translateY(0) scale(1) rotate(0); }
+  80% { transform: translateY(-0.08em) scale(1.08) rotate(-3deg); }
+  88% { transform: translateY(0) scale(1.03) rotate(2deg); }
+}
+
 .student-section blockquote,
 .mentor-section blockquote {
   margin-inline: 0;
@@ -851,4 +868,5 @@ th { color: var(--blue-dark); background: #e8f6f3; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { transition-duration: 0.01ms !important; }
+  .important-question-mark { animation: none; }
 }
