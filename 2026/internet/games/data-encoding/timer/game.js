@@ -21,14 +21,20 @@ mountEncodingGame({
         <div class="config-row">
             <input type="text" id="textInput" placeholder="متن (Hello!)" value="Hello!" maxlength="16">
             <input type="number" id="txRate" step="0.1" min="0.2" max="3.0" value="1" title="سرعت ارسال">
-            <span>ثانیه/بیت</span>
+            <span class="rate-unit" role="img" aria-label="ثانیه بر بیت">
+                <span class="rate-unit-top" aria-hidden="true">ثانیه</span>
+                <span aria-hidden="true">بیت</span>
+            </span>
         </div>
     `,
     receiverControls: `
         <div class="config-row">
             <span style="color:var(--success); font-weight:bold;">نرخ نمونه‌برداری:</span>
             <input type="number" id="rxRate" step="0.1" min="0.2" max="3.0" value="1" title="سرعت دریافت">
-            <span>ثانیه/بیت</span>
+            <span class="rate-unit" role="img" aria-label="ثانیه بر بیت">
+                <span class="rate-unit-top" aria-hidden="true">ثانیه</span>
+                <span aria-hidden="true">بیت</span>
+            </span>
         </div>
     `,
 });

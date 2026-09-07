@@ -672,7 +672,7 @@ img { box-shadow: 0 0.75rem 2rem rgb(16 69 86 / 13%); }
 .mini-game {
   display: block;
   width: 100%;
-  min-height: 34rem;
+  min-height: 48rem;
   margin: 0;
   border: 1px solid var(--line);
   border-radius: 1rem;

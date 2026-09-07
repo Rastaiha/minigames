@@ -15,6 +15,27 @@
     white-space: nowrap;
 }
 
+.config-row .rate-unit {
+    display: inline-grid;
+    flex: none;
+    min-width: 2.8rem;
+    grid-template-rows: repeat(2, auto);
+    color: #aab4ba;
+    line-height: 1.05;
+    text-align: center;
+}
+
+.config-row .rate-unit > span {
+    display: block;
+    padding: 0.08rem 0.28rem;
+    color: inherit;
+    font-size: 0.7rem;
+}
+
+.config-row .rate-unit-top {
+    border-bottom: 1px solid currentColor;
+}
+
 .new-rx-error {
     background: rgba(255, 71, 87, 0.7);
     font-weight: bold;
@@ -411,6 +432,7 @@
 
 .propagation-gap {
     display: flex;
+    direction: ltr;
     align-items: center;
     justify-content: center;
     gap: 5px;
