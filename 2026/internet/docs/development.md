@@ -237,11 +237,18 @@ git submodule update --init --recursive
 workflow گیت‌هاب submoduleها را خودکار checkout می‌کنند. برای انتخاب نسخهٔ تازه‌تر
 بازی routing، pointer آن را به‌صورت معمول در همین مخزن update و commit کنید.
 
-build فعلی routing خروجی JavaScript را به‌شکل classic script در `<head>` می‌گذارد؛
-در نتیجه اگر بدون اصلاح اجرا شود، script پیش از ساخته‌شدن DOM شروع به کار می‌کند.
-آماده‌ساز سایت پس از هر build، فقط برای همین بازی bundle تولیدشده را به انتهای
-`<body>` منتقل می‌کند. این یک compatibility fix روی فایل موقت `dist/index.html`
-است و هیچ تغییری در source یا تاریخچهٔ submodule ایجاد نمی‌کند.
+build فعلی routing خروجی JavaScript صفحه‌های بازی را به‌شکل classic script در
+`<head>` می‌گذارد؛ در نتیجه اگر بدون اصلاح اجرا شود، script پیش از ساخته‌شدن DOM
+شروع به کار می‌کند. آماده‌ساز سایت پس از هر build، فقط برای این بازی bundle
+تولیدشدهٔ هر صفحهٔ HTML را به انتهای `<body>` همان صفحه منتقل می‌کند. این یک
+compatibility fix روی فایل‌های موقت `dist/` است و هیچ تغییری در source یا تاریخچهٔ
+submodule ایجاد نمی‌کند.
+
+این build دو صفحهٔ بازی را فعلاً به‌شکل `dist/routing.html` و
+`dist/bellman-ford.html` می‌سازد. آماده‌ساز، ورودی‌های تودرتوی
+`dist/routing/index.html` و `dist/bellman-ford/index.html` را هم موقتاً ایجاد و
+لینک‌های صفحهٔ اصلی را به آن‌ها وصل می‌کند تا ارجاع‌های `games/routing/routing`
+و `games/routing/bellman-ford` در محتوای گام‌ها طبق قرارداد معمول بازی‌ها کار کنند.
 
 در زمان `dev` یا `build`، خروجی بازی‌ها موقتاً به `site/public/games/` کپی می‌شود.
 این کپی در Git نگهداری نمی‌شود و هر بار از نو ساخته می‌شود.

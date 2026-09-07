@@ -35,23 +35,72 @@ function run(command, args, cwd) {
 async function fixRoutingGameScriptOrder(gameName, packageJson, gameDirectory) {
   if (gameName !== 'routing' || packageJson.name !== 'network-routing-game') return
 
-  const outputPath = path.join(gameDirectory, 'dist', 'index.html')
-  const html = await fs.readFile(outputPath, 'utf8')
-  const headEnd = html.indexOf('</head>')
-  const bodyEnd = html.lastIndexOf('</body>')
-  if (headEnd === -1 || bodyEnd === -1) return
+  const distDirectory = path.join(gameDirectory, 'dist')
+  const entries = await fs.readdir(distDirectory, {withFileTypes: true, recursive: true})
+  let fixedPageCount = 0
 
-  const head = html.slice(0, headEnd)
-  const scriptMatch = head.match(/<script>([\s\S]*?getElementById\(["']app["']\)[\s\S]*?)<\/script>/)
-  if (!scriptMatch) return
+  for (const entry of entries) {
+    if (!entry.isFile() || path.extname(entry.name) !== '.html') continue
 
-  const withoutEarlyScript = html.replace(scriptMatch[0], '')
-  const fixedHtml = withoutEarlyScript.replace(
-    '</body>',
-    `  ${scriptMatch[0]}\n  </body>`,
-  )
-  await fs.writeFile(outputPath, fixedHtml)
-  console.log('Moved the routing game bundle after its DOM to preserve classic-script execution order.')
+    const outputPath = path.join(entry.parentPath, entry.name)
+    const html = await fs.readFile(outputPath, 'utf8')
+    const headEnd = html.indexOf('</head>')
+    const bodyEnd = html.lastIndexOf('</body>')
+    if (headEnd === -1 || bodyEnd === -1) continue
+
+    const head = html.slice(0, headEnd)
+    const scriptMatch = head.match(/<script>([\s\S]*?getElementById\(["']app["']\)[\s\S]*?)<\/script>/)
+    if (!scriptMatch) continue
+
+    const withoutEarlyScript = html.replace(scriptMatch[0], '')
+    const fixedHtml = withoutEarlyScript.replace(
+      '</body>',
+      `  ${scriptMatch[0]}\n  </body>`,
+    )
+    await fs.writeFile(outputPath, fixedHtml)
+    fixedPageCount++
+  }
+
+  if (fixedPageCount > 0) {
+    console.log(
+      `Moved the routing game bundle after its DOM in ${fixedPageCount} page(s) ` +
+      'to preserve classic-script execution order.',
+    )
+  }
+}
+
+async function addRoutingGameNestedEntries(gameName, packageJson, gameDirectory) {
+  if (gameName !== 'routing' || packageJson.name !== 'network-routing-game') return
+
+  const distDirectory = path.join(gameDirectory, 'dist')
+  const hubPath = path.join(distDirectory, 'index.html')
+  let hubHtml = await fs.readFile(hubPath, 'utf8')
+  let addedEntryCount = 0
+
+  for (const pageName of ['routing', 'bellman-ford']) {
+    const flatPath = path.join(distDirectory, `${pageName}.html`)
+    const nestedPath = path.join(distDirectory, pageName, 'index.html')
+
+    if (!(await exists(nestedPath)) && await exists(flatPath)) {
+      const flatHtml = await fs.readFile(flatPath, 'utf8')
+      const nestedHtml = flatHtml.replaceAll('href="./index.html"', 'href="../index.html"')
+      await fs.mkdir(path.dirname(nestedPath), {recursive: true})
+      await fs.writeFile(nestedPath, nestedHtml)
+      addedEntryCount++
+    }
+
+    if (await exists(nestedPath)) {
+      hubHtml = hubHtml.replaceAll(
+        `href="./${pageName}.html"`,
+        `href="./${pageName}/index.html"`,
+      )
+    }
+  }
+
+  await fs.writeFile(hubPath, hubHtml)
+  if (addedEntryCount > 0) {
+    console.log(`Added ${addedEntryCount} nested routing game entry point(s).`)
+  }
 }
 
 async function assertSubmodulesAvailable() {
@@ -101,6 +150,7 @@ async function buildGames() {
     }
 
     await fixRoutingGameScriptOrder(entry.name, packageJson, gameDirectory)
+    await addRoutingGameNestedEntries(entry.name, packageJson, gameDirectory)
   }
 }
 
