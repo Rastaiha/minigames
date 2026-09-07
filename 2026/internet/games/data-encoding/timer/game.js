@@ -20,14 +20,14 @@ mountEncodingGame({
     transmitterControls: `
         <div class="config-row">
             <input type="text" id="textInput" placeholder="متن (Hello!)" value="Hello!" maxlength="16">
-            <input type="number" id="txRate" step="0.1" min="0.2" max="3.0" value="0.5" title="سرعت ارسال">
+            <input type="number" id="txRate" step="0.1" min="0.2" max="3.0" value="1" title="سرعت ارسال">
             <span>ثانیه/بیت</span>
         </div>
     `,
     receiverControls: `
         <div class="config-row">
             <span style="color:var(--success); font-weight:bold;">نرخ نمونه‌برداری:</span>
-            <input type="number" id="rxRate" step="0.1" min="0.2" max="3.0" value="0.5" title="سرعت دریافت">
+            <input type="number" id="rxRate" step="0.1" min="0.2" max="3.0" value="1" title="سرعت دریافت">
             <span>ثانیه/بیت</span>
         </div>
     `,
@@ -485,12 +485,10 @@ function updateVisualClocks() {
     const txAngle = (globalTime / txDur) * 360 % 360;
     pairedTxHand.style.transform = `rotate(${txAngle}deg)`;
 
-    // Both hands are on-screen even at rest. RX hand's phase is offset so it
-    // hits the tick exactly at sample moments (delay + 0.5*rxDur + k*rxDur).
-    // At rest (globalTime = 0) the RX hand sits in the lower half of the face,
-    // which is where it would naturally be one frame into playback — so
-    // clicking Send never causes a visible jump.
-    const rxPhase = (globalTime - PROPAGATION_DELAY_FRAMES) / rxDur - 0.5;
+    // The clock animation is independent of signal propagation. Both hands
+    // start moving on Send, with RX half a turn behind TX; matching rates
+    // therefore keep them aligned for the entire transmission.
+    const rxPhase = globalTime / rxDur - 0.5;
     const rxAngle = (rxPhase * 360 % 360 + 360) % 360;
     pairedRxHand.style.transform = `rotate(${rxAngle}deg)`;
 }
