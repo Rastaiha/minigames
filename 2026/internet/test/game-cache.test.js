@@ -1,9 +1,29 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import {
+  versionEntryHref,
   versionGameEntryUrls,
   wrapMiniGameIframes,
 } from '../site/src/lib/steps.js'
+
+test('adds the content version to a standalone entry page', () => {
+  assert.equal(
+    versionEntryHref('intro/slides.html', 'abc123'),
+    'intro/slides.html?v=abc123',
+  )
+  assert.equal(versionEntryHref('intro/slides.html', null), 'intro/slides.html')
+})
+
+test('preserves an entry page fragment when adding its content version', () => {
+  assert.equal(
+    versionEntryHref('intro/slides.html#slide-2', 'abc123'),
+    'intro/slides.html?v=abc123#slide-2',
+  )
+  assert.equal(
+    versionEntryHref('intro/slides.html?mode=present&v=old#slide-2', 'abc123'),
+    'intro/slides.html?mode=present&v=abc123#slide-2',
+  )
+})
 
 test('adds the matching content version to embedded game entry pages', () => {
   const html = [

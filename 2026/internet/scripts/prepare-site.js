@@ -12,6 +12,7 @@ const publicStepsDirectory = path.join(publicDirectory, 'steps')
 const publicGamesDirectory = path.join(publicDirectory, 'games')
 const publicIntroDirectory = path.join(publicDirectory, 'intro')
 const gameVersionsPath = path.join(publicDirectory, 'game-entry-versions.json')
+const introVersionsPath = path.join(publicDirectory, 'intro-entry-versions.json')
 
 async function exists(filePath) {
   try {
@@ -238,6 +239,22 @@ async function writeGameEntryVersions() {
   await fs.writeFile(gameVersionsPath, `${JSON.stringify(orderedVersions, null, 2)}\n`)
 }
 
+async function writeIntroEntryVersions() {
+  const versions = {}
+  const entryName = 'slides.html'
+  const entryPath = path.join(publicIntroDirectory, entryName)
+
+  if (await exists(entryPath)) {
+    const contents = await fs.readFile(entryPath)
+    versions[entryName] = createHash('sha256')
+      .update(contents)
+      .digest('hex')
+      .slice(0, 12)
+  }
+
+  await fs.writeFile(introVersionsPath, `${JSON.stringify(versions, null, 2)}\n`)
+}
+
 async function referencedGamePaths() {
   if (!(await exists(stepsDirectory))) return []
   const paths = []
@@ -262,7 +279,7 @@ async function referencedGamePaths() {
 await assertSubmodulesAvailable()
 await buildGames()
 await Promise.all([copyStepAssets(), copyGames(), copyIntro()])
-await writeGameEntryVersions()
+await Promise.all([writeGameEntryVersions(), writeIntroEntryVersions()])
 
 for (const gamePath of await referencedGamePaths()) {
   const entry = path.join(publicGamesDirectory, gamePath, 'index.html')

@@ -17,6 +17,12 @@ const gameVersionsPath = path.join(
   'public',
   'game-entry-versions.json',
 )
+const introVersionsPath = path.join(
+  repositoryRoot,
+  'site',
+  'public',
+  'intro-entry-versions.json',
+)
 const questionMark = '❓'
 const questionMarkClass = 'important-question-mark'
 
@@ -90,6 +96,28 @@ async function readGameEntryVersions() {
     if (error.code === 'ENOENT') return {}
     throw error
   }
+}
+
+export async function readIntroEntryVersion(entryName = 'slides.html') {
+  try {
+    const versions = JSON.parse(await fs.readFile(introVersionsPath, 'utf8'))
+    return versions[entryName] || null
+  } catch (error) {
+    if (error.code === 'ENOENT') return null
+    throw error
+  }
+}
+
+export function versionEntryHref(href, version) {
+  if (!version) return href
+
+  const [withoutFragment, fragment] = href.split('#', 2)
+  const [pathname, query = ''] = withoutFragment.split('?', 2)
+  const parameters = query
+    .split('&')
+    .filter((parameter) => parameter && parameter.split('=', 1)[0] !== 'v')
+  parameters.push(`v=${version}`)
+  return `${pathname}?${parameters.join('&')}${fragment ? `#${fragment}` : ''}`
 }
 
 export function versionGameEntryUrls(html, versions) {

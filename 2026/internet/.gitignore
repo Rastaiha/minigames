@@ -156,5 +156,6 @@ vite.config.ts.timestamp-*
 /site/public/steps/
 /site/public/intro/
 /site/public/game-entry-versions.json
+/site/public/intro-entry-versions.json
 /site/dist/
 /site/.astro/

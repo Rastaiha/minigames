@@ -2,11 +2,23 @@
 import WorkshopLayout from '../../layouts/WorkshopLayout.astro'
 import EventCountdown from '../../components/EventCountdown.astro'
 import MiniGameFullscreen from '../../components/MiniGameFullscreen.astro'
-import {readRenderedStep, readStepIndex} from '../../lib/steps.js'
+import {
+  readIntroEntryVersion,
+  readRenderedStep,
+  readStepIndex,
+  versionEntryHref,
+} from '../../lib/steps.js'
 
 export async function getStaticPaths() {
-  const entries = await readStepIndex()
-  const introLink = {title: 'مقدمه', href: 'intro/slides.html', smallLabel: 'قبل از شروع'}
+  const [entries, introVersion] = await Promise.all([
+    readStepIndex(),
+    readIntroEntryVersion(),
+  ])
+  const introLink = {
+    title: 'مقدمه',
+    href: versionEntryHref('intro/slides.html', introVersion),
+    smallLabel: 'قبل از شروع',
+  }
   const stepLink = (entry) => ({title: entry.title, href: `steps/${entry.name}/`})
   return Promise.all(entries.map(async (entry, index) => ({
     params: {step: entry.name},
