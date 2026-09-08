@@ -90,7 +90,7 @@ async function fixRoutingGameScriptOrder(gameName, packageJson, gameDirectory) {
     const withoutEarlyScript = html.replace(scriptMatch[0], '')
     const fixedHtml = withoutEarlyScript.replace(
       '</body>',
-      `  ${scriptMatch[0]}\n  </body>`,
+      () => `  ${scriptMatch[0]}\n  </body>`,
     )
     await fs.writeFile(outputPath, fixedHtml)
     fixedPageCount++
@@ -109,6 +109,18 @@ async function addRoutingGameNestedEntries(gameName, packageJson, gameDirectory)
 
   const distDirectory = path.join(gameDirectory, 'dist')
   const hubPath = path.join(distDirectory, 'index.html')
+  const routingPath = path.join(distDirectory, 'routing.html')
+
+  // Newer versions of the routing game expose the two activities directly and
+  // no longer build the old hub page. Keep the workshop's game entry contract by
+  // using the primary routing activity as the root entry point.
+  if (!(await exists(hubPath)) && await exists(routingPath)) {
+    await fs.copyFile(routingPath, hubPath)
+    console.log('Added routing game root entry point from routing.html.')
+  }
+
+  if (!(await exists(hubPath))) return
+
   let hubHtml = await fs.readFile(hubPath, 'utf8')
   let addedEntryCount = 0
 
@@ -178,14 +190,14 @@ async function buildGames() {
     await installGameDependencies(entry.name, gameDirectory, npm)
     await run(npm, ['run', 'build'], gameDirectory)
 
+    await fixRoutingGameScriptOrder(entry.name, packageJson, gameDirectory)
+    await addRoutingGameNestedEntries(entry.name, packageJson, gameDirectory)
+
     if (!(await exists(path.join(gameDirectory, 'dist', 'index.html')))) {
       throw new Error(
         `Game ${entry.name} finished building without creating dist/index.html`,
       )
     }
-
-    await fixRoutingGameScriptOrder(entry.name, packageJson, gameDirectory)
-    await addRoutingGameNestedEntries(entry.name, packageJson, gameDirectory)
   }
 }
 
