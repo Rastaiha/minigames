@@ -1,519 +1,1120 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fa" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>packet switching</title>
-<style>
-  :root{
-    --bg:#0B0F14;
-    --panel:#111820;
-    --panel-2:#0E141C;
-    --line:#243040;
-    --line-soft:#1A232E;
-    --text:#E7EDF3;
-    --muted:#7C8B9C;
-    --small:#4FD1C5;
-    --big:#EF5B5B;
-  }
-  *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;}
-  .wrap{max-width:900px;margin:0 auto;padding:22px 16px 34px;}
-  .panel{background:var(--panel);border:1px solid var(--line-soft);border-radius:14px;padding:14px;}
-  canvas{width:100%;height:auto;display:block;border-radius:8px;background:var(--panel-2);}
-  .controls{display:flex;align-items:center;gap:8px;margin-top:14px;flex-wrap:wrap;}
-  button{
-    font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;
-    background:var(--panel-2);color:var(--text);border:1px solid var(--line);
-    padding:9px 15px;border-radius:9px;cursor:pointer;min-width:44px;
-  }
-  button:hover{border-color:var(--small);}
-  button:active{transform:translateY(1px);}
-  button.primary{background:var(--small);color:#06201D;border-color:var(--small);}
-  button:disabled{opacity:.3;cursor:not-allowed;}
-  .spacer{flex:1;}
-  .stagebadges{display:flex;gap:6px;}
-  .badge{width:24px;height:24px;border-radius:50%;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted);}
-  .badge.active{border-color:var(--small);color:var(--small);box-shadow:0 0 8px rgba(79,209,197,.5);}
-  .timer{font-size:13px;color:var(--muted);}
-  .timer b{color:var(--text);}
-  .progress-track{height:5px;border-radius:3px;background:var(--line-soft);margin-top:12px;overflow:hidden;}
-  .progress-fill{height:100%;background:linear-gradient(90deg,var(--small),#7fe3d9);width:0%;}
-  #btnStage2{display:none;margin-top:10px;width:100%;}
-  #btnBackStage{display:none;}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>همان داده، دو شکل</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #123047;
+      --muted: #617788;
+      --paper: #fffdf8;
+      --page: #eef8f6;
+      --line: #cbdce0;
+      --line-strong: #7c9ca5;
+      --teal: #0e8390;
+      --teal-dark: #08616b;
+      --blue: #2779d7;
+      --blue-soft: #dcecff;
+      --orange: #e47722;
+      --orange-soft: #fff0dc;
+      --lime: #9bcf53;
+      --shadow: 0 18px 48px rgba(22, 69, 82, 0.13);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background:
+        radial-gradient(circle at 12% 8%, rgba(255, 255, 255, 0.95), transparent 30rem),
+        linear-gradient(145deg, #f5fbf8 0%, var(--page) 46%, #edf6fb 100%);
+      color: var(--ink);
+      font-family: Tahoma, Arial, sans-serif;
+    }
+
+    button { font: inherit; }
+
+    .app {
+      width: min(1180px, 100%);
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 12px;
+    }
+
+    .eyebrow {
+      margin: 0 0 4px;
+      color: var(--teal-dark);
+      font-size: 0.76rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.25rem, 2.6vw, 1.9rem);
+      line-height: 1.35;
+    }
+
+    .subtitle {
+      max-width: 650px;
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.75;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+      padding-top: 3px;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      white-space: nowrap;
+      padding: 7px 10px;
+      border: 1px solid rgba(124, 156, 165, 0.34);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.76);
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 700;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.04);
+    }
+
+    .dot.blue { background: var(--blue); }
+    .dot.orange { background: var(--orange); }
+
+    .scenario-picker {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .scenario-button {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 10px;
+      min-height: 62px;
+      padding: 9px 12px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: rgba(255, 255, 255, 0.72);
+      color: var(--ink);
+      text-align: right;
+      cursor: pointer;
+      transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+    }
+
+    .scenario-button:hover {
+      transform: translateY(-1px);
+      border-color: #81abb2;
+      box-shadow: 0 8px 22px rgba(18, 77, 92, 0.09);
+    }
+
+    .scenario-button.active {
+      border-color: var(--teal);
+      background: #f2fbfa;
+      box-shadow: inset 0 0 0 1px var(--teal), 0 8px 22px rgba(14, 131, 144, 0.1);
+    }
+
+    .scenario-number {
+      display: grid;
+      width: 36px;
+      height: 36px;
+      place-items: center;
+      border-radius: 12px;
+      background: #e6f2f1;
+      color: var(--teal-dark);
+      font-weight: 900;
+    }
+
+    .scenario-button.active .scenario-number { background: var(--teal); color: white; }
+    .scenario-copy strong, .scenario-copy small { display: block; }
+    .scenario-copy strong { margin-bottom: 3px; font-size: 0.92rem; }
+    .scenario-copy small { color: var(--muted); font-size: 0.74rem; }
+
+    .scenario-state {
+      min-width: 58px;
+      padding: 5px 7px;
+      border-radius: 999px;
+      background: #edf3f4;
+      color: var(--muted);
+      font-size: 0.69rem;
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .scenario-state.done { background: #eaf6dc; color: #4e7620; }
+
+    .board {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(124, 156, 165, 0.34);
+      border-radius: 20px;
+      background:
+        linear-gradient(rgba(14, 131, 144, 0.032) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(14, 131, 144, 0.032) 1px, transparent 1px),
+        var(--paper);
+      background-size: 24px 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .board-head {
+      position: absolute;
+      z-index: 5;
+      inset: 12px 14px auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    .scenario-label, .time-chip {
+      border: 1px solid rgba(124, 156, 165, 0.35);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 5px 16px rgba(18, 77, 92, 0.08);
+      backdrop-filter: blur(7px);
+    }
+
+    .scenario-label {
+      padding: 7px 11px;
+      color: var(--teal-dark);
+      font-size: 0.76rem;
+      font-weight: 900;
+    }
+
+    .time-chip {
+      direction: ltr;
+      min-width: 70px;
+      padding: 7px 10px;
+      color: var(--muted);
+      font-size: 0.73rem;
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .network-scroll { overflow-x: auto; scrollbar-width: thin; }
+
+    #network {
+      display: block;
+      width: 100%;
+      min-width: 760px;
+      height: auto;
+      aspect-ratio: 1100 / 500;
+    }
+
+    .wire-shadow {
+      fill: none;
+      stroke: rgba(18, 48, 71, 0.08);
+      stroke-width: 12;
+      stroke-linecap: round;
+    }
+
+    .wire {
+      fill: none;
+      stroke: var(--line-strong);
+      stroke-width: 5;
+      stroke-linecap: round;
+      transition: stroke 180ms ease, stroke-width 180ms ease, filter 180ms ease;
+    }
+
+    .wire.shared { stroke-width: 7; }
+
+    .wire.busy {
+      stroke: var(--active-color, var(--teal));
+      stroke-width: 8;
+      stroke-dasharray: 13 8;
+      filter: drop-shadow(0 0 5px var(--active-glow, rgba(14, 131, 144, 0.4)));
+      animation: signal-flow 600ms linear infinite;
+    }
+
+    @keyframes signal-flow { to { stroke-dashoffset: -21; } }
+
+    .computer-screen { fill: #e8f1f4; stroke: #294d61; stroke-width: 3; }
+    .computer-stand { fill: #294d61; }
+    .computer.source-blue .computer-screen { fill: var(--blue-soft); stroke: var(--blue); }
+    .computer.source-orange .computer-screen { fill: var(--orange-soft); stroke: var(--orange); }
+    .computer.target-blue .computer-screen { fill: #eef6ff; stroke: var(--blue); }
+    .computer.target-orange .computer-screen { fill: #fff7ec; stroke: var(--orange); }
+
+    .node-label {
+      fill: var(--ink);
+      font: 900 26px Tahoma, Arial, sans-serif;
+      text-anchor: middle;
+      dominant-baseline: middle;
+    }
+
+    .node-caption {
+      fill: var(--muted);
+      font: 700 13px Tahoma, Arial, sans-serif;
+      text-anchor: middle;
+    }
+
+    .router-body {
+      fill: #f5fbfa;
+      stroke: var(--teal);
+      stroke-width: 3;
+      filter: drop-shadow(0 8px 12px rgba(11, 92, 101, 0.14));
+      transition: filter 180ms ease, stroke-width 180ms ease;
+    }
+
+    .router.active .router-body {
+      stroke-width: 5;
+      filter: drop-shadow(0 0 13px rgba(14, 131, 144, 0.45));
+    }
+
+    .router-title {
+      fill: var(--teal-dark);
+      font: 900 27px Tahoma, Arial, sans-serif;
+      text-anchor: middle;
+    }
+
+    .router-subtitle {
+      fill: var(--muted);
+      font: 700 11px Tahoma, Arial, sans-serif;
+      text-anchor: middle;
+    }
+
+    .queue-slot {
+      fill: white;
+      stroke: #bad0d4;
+      stroke-width: 1.7;
+      stroke-dasharray: 3 3;
+    }
+
+    .queue-divider { stroke: #d7e5e7; stroke-width: 1; }
+    .queue-destination { fill: var(--muted); font: 800 10px Tahoma, Arial, sans-serif; text-anchor: middle; }
+    .shared-label rect { fill: white; stroke: #abc1c6; stroke-width: 1.5; }
+    .shared-label text { fill: #536e79; font: 800 12px Tahoma, Arial, sans-serif; text-anchor: middle; }
+
+    .packet rect {
+      stroke-width: 2;
+      rx: 9;
+      filter: drop-shadow(0 5px 6px rgba(18, 48, 71, 0.2));
+    }
+
+    .packet.blue rect { fill: var(--blue-soft); stroke: var(--blue); }
+    .packet.orange rect { fill: var(--orange-soft); stroke: var(--orange); }
+
+    .packet text {
+      font: 900 11px Tahoma, Arial, sans-serif;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
+    }
+
+    .packet.blue text { fill: #155da9; }
+    .packet.orange text { fill: #af4f0b; }
+    .packet.waiting { animation: waiting-pulse 1.25s ease-in-out infinite; }
+    @keyframes waiting-pulse { 50% { opacity: 0.72; } }
+
+    .arrival-ring {
+      fill: none;
+      stroke-width: 4;
+      pointer-events: none;
+      animation: arrive 620ms ease-out forwards;
+    }
+
+    @keyframes arrive { from { r: 8; opacity: 0.9; } to { r: 42; opacity: 0; } }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 12px;
+      border-top: 1px solid rgba(124, 156, 165, 0.25);
+      background: rgba(255, 255, 255, 0.82);
+    }
+
+    .control-button {
+      min-height: 38px;
+      padding: 7px 13px;
+      border: 1px solid #a9c1c6;
+      border-radius: 11px;
+      background: white;
+      color: var(--ink);
+      font-size: 0.78rem;
+      font-weight: 900;
+      cursor: pointer;
+      transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+    }
+
+    .control-button:hover { border-color: var(--teal); }
+    .control-button:active { transform: translateY(1px); }
+
+    .control-button.primary {
+      min-width: 112px;
+      border-color: var(--teal);
+      background: var(--teal);
+      color: white;
+    }
+
+    .control-button:disabled { opacity: 0.42; cursor: default; }
+    .speed-button.active { border-color: var(--teal); background: #e9f7f5; color: var(--teal-dark); }
+    .controls-spacer { flex: 1; }
+
+    .progress {
+      overflow: hidden;
+      flex: 0 1 250px;
+      height: 7px;
+      border-radius: 999px;
+      background: #dce9ea;
+    }
+
+    .progress-fill {
+      width: 0;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--teal), #62c0ad);
+      transition: width 100ms linear;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 9px;
+      margin-top: 11px;
+    }
+
+    .metric {
+      min-height: 65px;
+      padding: 9px 11px;
+      border: 1px solid rgba(124, 156, 165, 0.3);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.76);
+    }
+
+    .metric-label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 0.69rem; font-weight: 800; }
+    .metric-value { display: block; color: var(--ink); font-size: 0.94rem; font-weight: 900; }
+
+    .memory-track {
+      overflow: hidden;
+      height: 6px;
+      margin-top: 7px;
+      border-radius: 999px;
+      background: #dce9ea;
+    }
+
+    .memory-fill {
+      width: 0;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--lime), #e8b440, var(--orange));
+      transition: width 160ms ease;
+    }
+
+    .comparison {
+      margin-top: 11px;
+      padding: 10px 12px 12px;
+      border: 1px solid rgba(124, 156, 165, 0.3);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.78);
+    }
+
+    .comparison h2 { margin: 0 0 8px; font-size: 0.88rem; }
+
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: 1.35fr 1fr 1fr;
+      overflow: hidden;
+      border: 1px solid #d8e5e7;
+      border-radius: 11px;
+      font-size: 0.72rem;
+    }
+
+    .comparison-grid > div {
+      min-height: 34px;
+      padding: 8px;
+      border-bottom: 1px solid #e2ebec;
+      border-inline-start: 1px solid #e2ebec;
+    }
+
+    .comparison-grid > div:nth-child(3n + 1) { border-inline-start: 0; }
+    .comparison-grid > div:nth-last-child(-n + 3) { border-bottom: 0; }
+    .comparison-head { background: #edf7f6; color: var(--teal-dark); font-weight: 900; }
+    .comparison-label { color: var(--muted); font-weight: 800; }
+    .comparison-value { direction: ltr; color: var(--ink); font-weight: 900; text-align: center; }
+
+    .notice {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 10px;
+      padding: 10px 12px;
+      border: 1px solid #b7d6ad;
+      border-radius: 14px;
+      background: #f2fae9;
+      color: #416423;
+      font-size: 0.76rem;
+      font-weight: 800;
+    }
+
+    .notice.show { display: flex; }
+
+    @media (max-width: 720px) {
+      .app { padding: 10px; }
+      .topbar { display: block; }
+      .legend { justify-content: flex-start; margin-top: 8px; }
+      .scenario-picker { grid-template-columns: 1fr; }
+      .metrics { grid-template-columns: 1fr; }
+      .controls { flex-wrap: wrap; }
+      .controls-spacer { display: none; }
+      .progress { order: 10; flex-basis: 100%; }
+      .comparison { overflow-x: auto; }
+      .comparison-grid { min-width: 560px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="panel">
-    <canvas id="cv" width="900" height="440"></canvas>
-    <div class="progress-track"><div class="progress-fill" id="fill"></div></div>
-    <div class="controls">
-      <div class="stagebadges">
-        <div class="badge" id="pill1">1</div>
-        <div class="badge" id="pill2">2</div>
+  <main class="app">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">آزمایش شبکهٔ مشترک</p>
+        <h1>همان داده، دو شکل</h1>
+        <p class="subtitle">دو اجرا را ببینین؛ همه‌چیز ثابت می‌مونه و فقط شکل پیام‌های آبی عوض می‌شه.</p>
       </div>
-      <div class="spacer"></div>
-      <div class="timer"><b id="tOut">0.0</b>/<span id="durOut">35.0</span></div>
+      <div class="legend" aria-label="راهنمای رنگ‌ها">
+        <span class="legend-item"><span class="dot blue"></span>پیام‌های ۱ به ۳</span>
+        <span class="legend-item"><span class="dot orange"></span>پیام‌های ۲ به ۴</span>
+      </div>
+    </header>
+
+    <section class="scenario-picker" aria-label="انتخاب سناریو">
+      <button class="scenario-button active" type="button" data-scenario="1" aria-pressed="true">
+        <span class="scenario-number">۱</span>
+        <span class="scenario-copy"><strong>یک پیام بزرگ</strong><small>کامپیوتر ۱ یک پیام ۹۰ واحدی می‌فرسته</small></span>
+        <span class="scenario-state" id="state-1">آماده</span>
+      </button>
+      <button class="scenario-button" type="button" data-scenario="2" aria-pressed="false">
+        <span class="scenario-number">۲</span>
+        <span class="scenario-copy"><strong>سه پیام کوچک‌تر</strong><small>کامپیوتر ۱ سه پیام ۳۰ واحدی می‌فرسته</small></span>
+        <span class="scenario-state" id="state-2">آماده</span>
+      </button>
+    </section>
+
+    <section class="board" aria-label="شبیه‌سازی شبکه">
+      <div class="board-head">
+        <span class="scenario-label" id="scenario-label">سناریوی ۱: یک پیام ۹۰ واحدی</span>
+        <span class="time-chip"><span id="time-value">۰٫۰</span> ثانیه</span>
+      </div>
+
+      <div class="network-scroll">
+        <svg id="network" viewBox="0 0 1100 500" role="img" aria-labelledby="network-title network-desc">
+          <title id="network-title">چهار کامپیوتر و دو روتر با اتصال مشترک</title>
+          <desc id="network-desc">کامپیوترهای یک و دو به روتر A، روتر A به روتر B، و روتر B به کامپیوترهای سه و چهار وصل‌اند.</desc>
+
+          <g id="wires" aria-hidden="true">
+            <path class="wire-shadow" d="M 168 130 C 250 130, 290 202, 355 238"></path>
+            <path class="wire-shadow" d="M 168 370 C 250 370, 290 298, 355 282"></path>
+            <path class="wire-shadow" d="M 485 260 L 615 260"></path>
+            <path class="wire-shadow" d="M 745 238 C 810 202, 850 130, 932 130"></path>
+            <path class="wire-shadow" d="M 745 282 C 810 298, 850 370, 932 370"></path>
+            <path id="edge-1-A" class="wire" d="M 168 130 C 250 130, 290 202, 355 238"></path>
+            <path id="edge-2-A" class="wire" d="M 168 370 C 250 370, 290 298, 355 282"></path>
+            <path id="edge-A-B" class="wire shared" d="M 485 260 L 615 260"></path>
+            <path id="edge-B-3" class="wire" d="M 745 238 C 810 202, 850 130, 932 130"></path>
+            <path id="edge-B-4" class="wire" d="M 745 282 C 810 298, 850 370, 932 370"></path>
+          </g>
+
+          <g class="shared-label" transform="translate(550 213)" aria-hidden="true">
+            <rect x="-48" y="-14" width="96" height="28" rx="14"></rect>
+            <text y="4">اتصال مشترک</text>
+          </g>
+
+          <g class="computer source-blue" transform="translate(110 130)" aria-hidden="true">
+            <rect class="computer-screen" x="-54" y="-42" width="108" height="70" rx="10"></rect>
+            <rect class="computer-stand" x="-9" y="28" width="18" height="15" rx="3"></rect>
+            <rect class="computer-stand" x="-30" y="40" width="60" height="7" rx="3"></rect>
+            <text class="node-label" y="-6">۱</text><text class="node-caption" y="66">فرستنده</text>
+          </g>
+
+          <g class="computer source-orange" transform="translate(110 370)" aria-hidden="true">
+            <rect class="computer-screen" x="-54" y="-42" width="108" height="70" rx="10"></rect>
+            <rect class="computer-stand" x="-9" y="28" width="18" height="15" rx="3"></rect>
+            <rect class="computer-stand" x="-30" y="40" width="60" height="7" rx="3"></rect>
+            <text class="node-label" y="-6">۲</text><text class="node-caption" y="66">فرستنده</text>
+          </g>
+
+          <g id="router-A" class="router" aria-hidden="true">
+            <rect class="router-body" x="355" y="197" width="130" height="126" rx="22"></rect>
+            <text class="router-title" x="420" y="229">A</text>
+            <text class="router-subtitle" x="420" y="247">حافظهٔ موقت</text>
+            <g id="slots-A">
+              <rect class="queue-slot" x="369" y="264" width="22" height="34" rx="6"></rect>
+              <rect class="queue-slot" x="395" y="264" width="22" height="34" rx="6"></rect>
+              <rect class="queue-slot" x="421" y="264" width="22" height="34" rx="6"></rect>
+              <rect class="queue-slot" x="447" y="264" width="22" height="34" rx="6"></rect>
+            </g>
+            <text class="router-subtitle" x="420" y="314">صف A</text>
+          </g>
+
+          <g id="router-B" class="router" aria-hidden="true">
+            <rect class="router-body" x="615" y="197" width="130" height="126" rx="22"></rect>
+            <text class="router-title" x="680" y="225">B</text>
+            <line class="queue-divider" x1="628" y1="263" x2="732" y2="263"></line>
+            <text class="queue-destination" x="633" y="252">۳</text>
+            <text class="queue-destination" x="633" y="288">۴</text>
+            <g id="slots-B3">
+              <rect class="queue-slot" x="646" y="237" width="20" height="25" rx="5"></rect>
+              <rect class="queue-slot" x="669" y="237" width="20" height="25" rx="5"></rect>
+              <rect class="queue-slot" x="692" y="237" width="20" height="25" rx="5"></rect>
+              <rect class="queue-slot" x="715" y="237" width="17" height="25" rx="5"></rect>
+            </g>
+            <g id="slots-B4">
+              <rect class="queue-slot" x="646" y="268" width="20" height="25" rx="5"></rect>
+              <rect class="queue-slot" x="669" y="268" width="20" height="25" rx="5"></rect>
+              <rect class="queue-slot" x="692" y="268" width="20" height="25" rx="5"></rect>
+              <rect class="queue-slot" x="715" y="268" width="17" height="25" rx="5"></rect>
+            </g>
+            <text class="router-subtitle" x="680" y="314">صف‌های خروجی</text>
+          </g>
+
+          <g class="computer target-blue" transform="translate(990 130)" aria-hidden="true">
+            <rect class="computer-screen" x="-54" y="-42" width="108" height="70" rx="10"></rect>
+            <rect class="computer-stand" x="-9" y="28" width="18" height="15" rx="3"></rect>
+            <rect class="computer-stand" x="-30" y="40" width="60" height="7" rx="3"></rect>
+            <text class="node-label" y="-6">۳</text><text class="node-caption" y="66">گیرنده</text>
+          </g>
+
+          <g class="computer target-orange" transform="translate(990 370)" aria-hidden="true">
+            <rect class="computer-screen" x="-54" y="-42" width="108" height="70" rx="10"></rect>
+            <rect class="computer-stand" x="-9" y="28" width="18" height="15" rx="3"></rect>
+            <rect class="computer-stand" x="-30" y="40" width="60" height="7" rx="3"></rect>
+            <text class="node-label" y="-6">۴</text><text class="node-caption" y="66">گیرنده</text>
+          </g>
+
+          <g id="packet-layer" aria-hidden="true"></g>
+          <g id="effect-layer" aria-hidden="true"></g>
+        </svg>
+      </div>
+
+      <div class="controls">
+        <button id="play-button" class="control-button primary" type="button">▶ شروع</button>
+        <button id="restart-button" class="control-button" type="button">↻ از اول</button>
+        <span class="controls-spacer"></span>
+        <div class="progress" aria-label="پیشرفت اجرا"><div id="progress-fill" class="progress-fill"></div></div>
+        <button class="control-button speed-button active" type="button" data-speed="1">۱×</button>
+        <button class="control-button speed-button" type="button" data-speed="2">۲×</button>
+      </div>
+    </section>
+
+    <section class="metrics" aria-live="polite">
+      <div class="metric">
+        <span class="metric-label">حافظهٔ درگیر A — اکنون / بیشترین</span>
+        <span id="memory-value" class="metric-value">۰ / ۰ واحد</span>
+        <div class="memory-track"><div id="memory-fill" class="memory-fill"></div></div>
+      </div>
+      <div class="metric">
+        <span class="metric-label">مجموع انتظار پیام‌های نارنجی در روترها</span>
+        <span id="wait-value" class="metric-value">۰٫۰ ثانیه</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">پیام‌های رسیده به مقصد</span>
+        <span id="delivered-value" class="metric-value">۰ از ۴</span>
+      </div>
+    </section>
+
+    <section class="comparison" aria-label="جدول مقایسهٔ دو اجرا">
+      <h2>یادداشت دو اجرا</h2>
+      <div class="comparison-grid">
+        <div class="comparison-head">چیزی که می‌بینیم</div><div class="comparison-head">سناریوی ۱</div><div class="comparison-head">سناریوی ۲</div>
+        <div class="comparison-label">بیشترین حافظهٔ درگیر A</div><div id="result-1-memory" class="comparison-value">—</div><div id="result-2-memory" class="comparison-value">—</div>
+        <div class="comparison-label">انتظار پیام‌های کامپیوتر ۲</div><div id="result-1-wait" class="comparison-value">—</div><div id="result-2-wait" class="comparison-value">—</div>
+        <div class="comparison-label">رسیدن آخرین پیام</div><div id="result-1-finish" class="comparison-value">—</div><div id="result-2-finish" class="comparison-value">—</div>
+      </div>
+    </section>
+
+    <div id="notice" class="notice" role="status">
+      <span id="notice-text">اجرای این سناریو تمام شد.</span>
+      <button id="next-scenario" class="control-button" type="button">دیدن سناریوی بعد</button>
     </div>
-    <div class="controls">
-      <button id="btnStart" class="primary">▶</button>
-      <button id="btnPause" disabled>⏸</button>
-      <button id="btnRestart" disabled>⟲</button>
-      <button id="btnBack" disabled>◀10</button>
-      <button id="btnFwd" disabled>10▶</button>
-      <button id="btnBackStage">◀1</button>
-    </div>
-    <button id="btnStage2" class="primary">▶ 2</button>
-  </div>
-</div>
+  </main>
 
-<script>
-(function(){
-  const cv = document.getElementById('cv');
-  const ctx = cv.getContext('2d');
-  const W = cv.width, H = cv.height;
+  <script>
+    (() => {
+      const SVG_NS = 'http://www.w3.org/2000/svg';
+      const COLORS = { blue: '#2779d7', orange: '#e47722' };
+      const GLOWS = { blue: 'rgba(39, 121, 215, 0.45)', orange: 'rgba(228, 119, 34, 0.45)' };
+      const BUFFER_CAPACITY = 5;
+      const MAX_EXPECTED_TIME = 13;
+      const FIXED_STEP = 1 / 120;
+      const TIME_SCALE = 1.05;
 
-  /* ---------------------------------------------------------
-     TOPOLOGY (unchanged): 2 sources, 3 switches, 2 destinations
-  --------------------------------------------------------- */
-  const nodes = {
-    S1:  {x:90,  y:110, type:'src', label:'S1'},
-    S2:  {x:90,  y:330, type:'src', label:'S2'},
-    SW1: {x:430, y:70,  type:'sw',  label:'SW1'},
-    SW2: {x:430, y:220, type:'sw',  label:'SW2'},
-    SW3: {x:430, y:370, type:'sw',  label:'SW3'},
-    D1: {x:800, y:150, type:'dst', label:'D1'},
-    D2: {x:800, y:290, type:'dst', label:'D2'},
-  };
-  const adj = {
-    S1:['SW1','SW2'],
-    S2:['SW2','SW3'],
-    SW1:['D1','D2'],
-    SW2:['D1','D2'],
-    SW3:['D1','D2'],
-  };
-  const edgeList = [];
-  Object.keys(adj).forEach(from => adj[from].forEach(to => edgeList.push([from,to])));
+      const edgeSpecs = {
+        '1-A': { from: '1', to: 'A' },
+        '2-A': { from: '2', to: 'A' },
+        'A-B': { from: 'A', to: 'B' },
+        'B-3': { from: 'B', to: '3' },
+        'B-4': { from: 'B', to: '4' },
+      };
 
-  // precompute pixel length of every edge, used to convert a fixed pixel
-  // following-gap into an edge-relative fraction (so packets keep a
-  // consistent visual gap no matter which link they are on)
-  const edgeLenPx = {};
-  edgeList.forEach(([a,b])=>{
-    const A=nodes[a], B=nodes[b];
-    edgeLenPx[a+'>'+b] = Math.hypot(B.x-A.x, B.y-A.y);
-  });
-  const MIN_GAP_PX = 24;
+      const sourcePositions = {
+        '1': [{ x: 200, y: 92 }, { x: 225, y: 92 }, { x: 250, y: 92 }],
+        '2': [{ x: 200, y: 408 }, { x: 225, y: 408 }, { x: 250, y: 408 }],
+      };
 
-  const STAGE1_DUR = 35;
-  const STAGE2_DUR = 30;
-  let DUR = STAGE1_DUR;
-  const COLOR_SMALL = '#4FD1C5';
-  const COLOR_BIG = '#EF5B5B';
+      const queuePositions = {
+        A: [{ x: 380, y: 281 }, { x: 406, y: 281 }, { x: 432, y: 281 }, { x: 458, y: 281 }],
+        B3: [{ x: 656, y: 250 }, { x: 679, y: 250 }, { x: 702, y: 250 }, { x: 723, y: 250 }],
+        B4: [{ x: 656, y: 280 }, { x: 679, y: 280 }, { x: 702, y: 280 }, { x: 723, y: 280 }],
+      };
 
-  /* ---------------------------------------------------------
-     PACKET DEFINITIONS (unchanged storylines)
-  --------------------------------------------------------- */
-  function buildDefsStage1(){
-    return [
-      {spawnTime:0.0,  size:1.2, path:['S1','SW1','D2']},
-      {spawnTime:0.0,  size:1.2, path:['S2','SW3','D1']},
+      const endpointPositions = {
+        '1': { x: 168, y: 130 }, '2': { x: 168, y: 370 },
+        A: { x: 355, y: 260 }, B: { x: 615, y: 260 },
+        '3': { x: 932, y: 130 }, '4': { x: 932, y: 370 },
+      };
 
-      {spawnTime:4.0,  size:4.5, path:['S1','SW2','D1']},
-      {spawnTime:5.0,  size:1.2, path:['S1','SW2','D1']},
-      {spawnTime:6.0,  size:1.2, path:['S2','SW3','D2']},
-      {spawnTime:10.0, size:1.2, path:['S2','SW3','D2']},
+      const scenarioButtons = [...document.querySelectorAll('.scenario-button')];
+      const speedButtons = [...document.querySelectorAll('.speed-button')];
+      const playButton = document.getElementById('play-button');
+      const restartButton = document.getElementById('restart-button');
+      const nextScenarioButton = document.getElementById('next-scenario');
+      const scenarioLabel = document.getElementById('scenario-label');
+      const timeValue = document.getElementById('time-value');
+      const progressFill = document.getElementById('progress-fill');
+      const memoryValue = document.getElementById('memory-value');
+      const memoryFill = document.getElementById('memory-fill');
+      const waitValue = document.getElementById('wait-value');
+      const deliveredValue = document.getElementById('delivered-value');
+      const packetLayer = document.getElementById('packet-layer');
+      const effectLayer = document.getElementById('effect-layer');
+      const notice = document.getElementById('notice');
+      const noticeText = document.getElementById('notice-text');
+      const routers = { A: document.getElementById('router-A'), B: document.getElementById('router-B') };
 
-      {spawnTime:13.0, size:4.5, path:['S2','SW3','D1']},
-      {spawnTime:14.5, size:1.2, path:['S2','SW3','D1']},
-      {spawnTime:15.0, size:1.2, path:['S1','SW1','D2']},
-      {spawnTime:19.0, size:1.2, path:['S1','SW1','D2']},
+      const edges = Object.fromEntries(Object.entries(edgeSpecs).map(([key, spec]) => {
+        const path = document.getElementById(`edge-${key}`);
+        return [key, { ...spec, path, occupant: null, length: path.getTotalLength() }];
+      }));
 
-      {spawnTime:24.0, size:2.8, path:['S1','SW1','D2']},
-      {spawnTime:25.0, size:1.2, path:['S1','SW1','D2']},
-    ];
-  }
-  function buildDefsStage2(){
-    const cyclePaths = [
-      ['S1','SW1','D1'],
-      ['S2','SW3','D2'],
-      ['S1','SW2','D2'],
-      ['S2','SW2','D1'],
-    ];
-    const PAIR_GAP = 0.7;
-    const GROUP_GAP = 3.7;
-    const defs = [];
-    let t = 0.3, i = 0;
-    while(t < STAGE2_DUR - 0.4){
-      const path = cyclePaths[i % cyclePaths.length];
-      const isPair = (i % 2 === 0);
-      defs.push({spawnTime:t, size:1.2, path});
-      if(isPair && t + PAIR_GAP < STAGE2_DUR - 0.4){
-        defs.push({spawnTime:t + PAIR_GAP, size:1.2, path});
+      let selectedScenario = 1;
+      let speed = 1;
+      let packets = [];
+      let sourceQueues = { '1': [], '2': [] };
+      let routerQueues = { A: [], B3: [], B4: [] };
+      let running = false;
+      let finished = false;
+      let elapsed = 0;
+      let accumulator = 0;
+      let lastFrame = null;
+      let frameId = null;
+      let maxBufferA = 0;
+      let maxBufferB = 0;
+      let results = { 1: null, 2: null };
+
+      function toFa(value) {
+        return String(value)
+          .replace(/0/g, '۰').replace(/1/g, '۱').replace(/2/g, '۲')
+          .replace(/3/g, '۳').replace(/4/g, '۴').replace(/5/g, '۵')
+          .replace(/6/g, '۶').replace(/7/g, '۷').replace(/8/g, '۸')
+          .replace(/9/g, '۹').replace(/\./g, '٫');
       }
-      i++; t += GROUP_GAP;
-    }
-    return defs;
-  }
 
-  function genPackets(stage){
-    const defs = stage===1 ? buildDefsStage1() : buildDefsStage2();
-    const baseTime = stage===1 ? 0.9 : 0.6;
-    const factor   = stage===1 ? 0.75 : 0.4;
-    return defs.map((def,i)=>({
-      id:i,
-      size:def.size,
-      color: def.size > 2.5 ? COLOR_BIG : COLOR_SMALL,
-      path:def.path,
-      spawnTime:def.spawnTime,
-      duration: baseTime + def.size*factor,   // seconds to cross ONE edge, unobstructed
-      edgeIndex:0,
-      pos:0,                                   // progress 0..1 along current edge
-      state:'pending',                         // pending | active | done
-      blocked:false,                           // true this tick if being held back by a slower packet ahead
-      doneAt:0,
-    }));
-  }
+      function packetDefinitions(scenario) {
+        const blue = scenario === 1
+          ? [{ id: 'blue-big', release: 0, size: 3, label: '۹۰' }]
+          : [
+              { id: 'blue-1', release: 0, size: 1, label: '۳۰' },
+              { id: 'blue-2', release: 3.25, size: 1, label: '۳۰' },
+              { id: 'blue-3', release: 6.5, size: 1, label: '۳۰' },
+            ];
 
-  /* ---------------------------------------------------------
-     LIVE, POSITION-BASED SIMULATION (car-following / no-overtake)
-     Every packet moves continuously along its own edge at its own
-     speed; it may never pass the packet directly ahead of it on the
-     same link, so a fast packet catching up to a slow one is forced
-     to slow down and tail it instead of teleporting/waiting at the node.
-  --------------------------------------------------------- */
-  const FIXED_DT = 1/60;
-  let stepCount = 0;
-  let acc = 0;
-  let running = false;
-  let lastFrameTs = null;
-  let packets = [];
-  let stage = 0;
+        const orange = [
+          { id: 'orange-1', release: 1.8, size: 0.65, label: '۱۰' },
+          { id: 'orange-2', release: 4.4, size: 0.65, label: '۱۰' },
+          { id: 'orange-3', release: 6.2, size: 0.65, label: '۱۰' },
+        ];
 
-  function simTime(){ return Math.min(DUR, stepCount*FIXED_DT); }
-
-  function advance(dt){
-    const t = stepCount*FIXED_DT + dt;
-
-    for(const p of packets){
-      if(p.state==='pending' && p.spawnTime<=t){
-        p.state='active'; p.edgeIndex=0; p.pos=0; p.blocked=false;
+        return [
+          ...blue.map(def => ({ ...def, flow: 'blue', source: '1', destination: '3', route: ['1-A', 'A-B', 'B-3'] })),
+          ...orange.map(def => ({ ...def, flow: 'orange', source: '2', destination: '4', route: ['2-A', 'A-B', 'B-4'] })),
+        ];
       }
-    }
 
-    // group active packets by the edge they are currently on
-    const groups={};
-    for(const p of packets){
-      if(p.state!=='active') continue;
-      const key=p.path[p.edgeIndex]+'>'+p.path[p.edgeIndex+1];
-      (groups[key]=groups[key]||[]).push(p);
-    }
+      function createPacket(definition) {
+        const group = document.createElementNS(SVG_NS, 'g');
+        group.classList.add('packet', definition.flow);
+        const width = definition.size > 2 ? 58 : definition.size < 0.8 ? 29 : 35;
+        const height = definition.size > 2 ? 31 : 26;
+        const rect = document.createElementNS(SVG_NS, 'rect');
+        rect.setAttribute('x', String(-width / 2));
+        rect.setAttribute('y', String(-height / 2));
+        rect.setAttribute('width', String(width));
+        rect.setAttribute('height', String(height));
+        const text = document.createElementNS(SVG_NS, 'text');
+        text.textContent = definition.label;
+        text.setAttribute('y', '1');
+        group.append(rect, text);
+        packetLayer.appendChild(group);
 
-    Object.entries(groups).forEach(([key,group])=>{
-      group.sort((a,b)=>b.pos-a.pos); // front (largest pos) first
-      const gapFrac = MIN_GAP_PX/(edgeLenPx[key]||200);
-      let leaderPos = null;
-      for(const p of group){
-        const speed = 1/p.duration;
-        const desired = p.pos + speed*dt;
-        let allowed;
-        if(leaderPos===null){
-          allowed = desired;
-          p.blocked = false;
-        } else {
-          const maxAllowed = leaderPos - gapFrac;
-          allowed = Math.min(desired, maxAllowed);
-          p.blocked = allowed < desired - 1e-9;
+        return {
+          ...definition,
+          element: group,
+          state: 'scheduled',
+          routeIndex: 0,
+          edgeKey: null,
+          progress: 0,
+          duration: 0,
+          queueEnteredAt: null,
+          waitTime: 0,
+          deliveredAt: null,
+          x: 210,
+          y: definition.source === '1' ? 92 : 408,
+          targetX: 210,
+          targetY: definition.source === '1' ? 92 : 408,
+        };
+      }
+
+      function resetScenario(scenario = selectedScenario) {
+        selectedScenario = scenario;
+        cancelAnimationFrame(frameId);
+        running = false;
+        finished = false;
+        elapsed = 0;
+        accumulator = 0;
+        lastFrame = null;
+        maxBufferA = 0;
+        maxBufferB = 0;
+        sourceQueues = { '1': [], '2': [] };
+        routerQueues = { A: [], B3: [], B4: [] };
+        packetLayer.replaceChildren();
+        effectLayer.replaceChildren();
+
+        Object.values(edges).forEach(edge => {
+          edge.occupant = null;
+          edge.path.classList.remove('busy');
+          edge.path.style.removeProperty('--active-color');
+          edge.path.style.removeProperty('--active-glow');
+        });
+
+        packets = packetDefinitions(scenario).map(createPacket);
+        scenarioLabel.textContent = scenario === 1
+          ? 'سناریوی ۱: یک پیام ۹۰ واحدی'
+          : 'سناریوی ۲: سه پیام ۳۰ واحدی';
+
+        scenarioButtons.forEach(button => {
+          const active = Number(button.dataset.scenario) === scenario;
+          button.classList.toggle('active', active);
+          button.setAttribute('aria-pressed', String(active));
+        });
+
+        playButton.textContent = '▶ شروع';
+        playButton.disabled = false;
+        notice.classList.remove('show');
+        setRouterActivity('A', false);
+        setRouterActivity('B', false);
+        updateQueueTargets();
+        render();
+        updateHud();
+      }
+
+      function transferDuration(edge, packet) {
+        const distanceFactor = Math.max(0.72, edge.length / 190);
+        return distanceFactor * (0.36 + packet.size * 0.62);
+      }
+
+      function releaseScheduledPackets() {
+        packets.forEach(packet => {
+          if (packet.state === 'scheduled' && packet.release <= elapsed + 1e-8) {
+            packet.state = 'source-queue';
+            sourceQueues[packet.source].push(packet);
+          }
+        });
+      }
+
+      function enqueueAtRouter(packet, queueName) {
+        packet.state = 'router-queue';
+        packet.queueEnteredAt = elapsed;
+        routerQueues[queueName].push(packet);
+        setRouterActivity(queueName === 'A' ? 'A' : 'B', true);
+      }
+
+      function startTransfer(packet, edgeKey, fromRouter = false) {
+        const edge = edges[edgeKey];
+        if (edge.occupant) return false;
+        if (fromRouter && packet.queueEnteredAt !== null) {
+          packet.waitTime += Math.max(0, elapsed - packet.queueEnteredAt);
+          packet.queueEnteredAt = null;
         }
-        if(allowed < p.pos) allowed = p.pos; // never move backward
-        p.pos = allowed;
-        leaderPos = p.pos;
-      }
-    });
 
-    // handle edge -> edge transitions
-    for(const p of packets){
-      if(p.state!=='active') continue;
-      if(p.pos>=1){
-        p.edgeIndex++;
-        if(p.edgeIndex>=p.path.length-1){
-          p.state='done'; p.pos=1; p.doneAt=t;
-        } else {
-          p.pos=0; p.blocked=false;
+        edge.occupant = packet;
+        packet.state = 'transit';
+        packet.edgeKey = edgeKey;
+        packet.progress = 0;
+        packet.duration = transferDuration(edge, packet);
+        packet.element.classList.remove('waiting');
+        edge.path.classList.add('busy');
+        edge.path.style.setProperty('--active-color', COLORS[packet.flow]);
+        edge.path.style.setProperty('--active-glow', GLOWS[packet.flow]);
+        setRouterActivity(edge.from === 'A' ? 'A' : edge.from === 'B' ? 'B' : null, true);
+        return true;
+      }
+
+      function dispatchQueues() {
+        if (!edges['1-A'].occupant && sourceQueues['1'].length) startTransfer(sourceQueues['1'].shift(), '1-A');
+        if (!edges['2-A'].occupant && sourceQueues['2'].length) startTransfer(sourceQueues['2'].shift(), '2-A');
+        if (!edges['A-B'].occupant && routerQueues.A.length) startTransfer(routerQueues.A.shift(), 'A-B', true);
+        if (!edges['B-3'].occupant && routerQueues.B3.length) startTransfer(routerQueues.B3.shift(), 'B-3', true);
+        if (!edges['B-4'].occupant && routerQueues.B4.length) startTransfer(routerQueues.B4.shift(), 'B-4', true);
+      }
+
+      function completeTransfer(edgeKey) {
+        const edge = edges[edgeKey];
+        const packet = edge.occupant;
+        if (!packet) return;
+        edge.occupant = null;
+        edge.path.classList.remove('busy');
+        edge.path.style.removeProperty('--active-color');
+        edge.path.style.removeProperty('--active-glow');
+        packet.routeIndex += 1;
+        packet.edgeKey = null;
+
+        if (edge.to === 'A') enqueueAtRouter(packet, 'A');
+        else if (edge.to === 'B') enqueueAtRouter(packet, packet.destination === '3' ? 'B3' : 'B4');
+        else {
+          packet.state = 'delivered';
+          packet.deliveredAt = elapsed;
+          packet.element.style.opacity = '0';
+          createArrivalEffect(edge.to, packet.flow);
         }
       }
-    }
 
-    stepCount++;
-  }
-
-  /* ---------------------------------------------------------
-     STATE / UI WIRING
-  --------------------------------------------------------- */
-  const btnStart = document.getElementById('btnStart');
-  const btnPause = document.getElementById('btnPause');
-  const btnRestart = document.getElementById('btnRestart');
-  const btnBack = document.getElementById('btnBack');
-  const btnFwd = document.getElementById('btnFwd');
-  const btnStage2 = document.getElementById('btnStage2');
-  const btnBackStage = document.getElementById('btnBackStage');
-  const tOut = document.getElementById('tOut');
-  const fill = document.getElementById('fill');
-  const pill1 = document.getElementById('pill1');
-  const pill2 = document.getElementById('pill2');
-
-  function setStage(n){
-    stage = n;
-    DUR = n===1 ? STAGE1_DUR : STAGE2_DUR;
-    document.getElementById('durOut').textContent = DUR.toFixed(1);
-    packets = genPackets(n);
-    stepCount = 0; acc = 0;
-    running = true;
-    lastFrameTs = null;
-    pill1.classList.toggle('active', n===1);
-    pill2.classList.toggle('active', n===2);
-    btnStage2.style.display = 'none';
-    btnBackStage.style.display = n===2 ? 'inline-block' : 'none';
-    btnPause.disabled = false;
-    btnPause.textContent = '⏸';
-    btnRestart.disabled = false;
-    btnBack.disabled = false;
-    btnFwd.disabled = false;
-    btnStart.disabled = true;
-    requestAnimationFrame(loop);
-  }
-
-  btnStart.addEventListener('click', ()=> setStage(1));
-  btnStage2.addEventListener('click', ()=> setStage(2));
-  btnBackStage.addEventListener('click', ()=> setStage(1));
-
-  btnPause.addEventListener('click', ()=>{
-    running = !running;
-    btnPause.textContent = running ? '⏸' : '▶';
-    lastFrameTs = null;
-    if(running) requestAnimationFrame(loop);
-    else draw();
-  });
-
-  btnRestart.addEventListener('click', ()=>{
-    packets = genPackets(stage);
-    stepCount = 0; acc = 0;
-    running = true;
-    btnPause.textContent = '⏸';
-    lastFrameTs = null;
-    if(stage===1) btnStage2.style.display = 'none';
-    requestAnimationFrame(loop);
-  });
-
-  btnBack.addEventListener('click', ()=> seek(-10));
-  btnFwd.addEventListener('click', ()=> seek(10));
-
-  function seek(deltaSeconds){
-    const target = Math.max(0, Math.min(DUR, simTime()+deltaSeconds));
-    const targetSteps = Math.round(target/FIXED_DT);
-    const wasRunning = running;
-    running = false;
-    packets = packets.map(p=>Object.assign({}, p, {state:'pending', pos:0, edgeIndex:0, blocked:false, doneAt:0}));
-    stepCount = 0; acc = 0;
-    for(let i=0;i<targetSteps;i++) advance(FIXED_DT);
-    if(stepCount*FIXED_DT >= DUR-1e-6){
-      onStageEnd();
-    } else {
-      running = wasRunning;
-      lastFrameTs = null;
-      if(running) requestAnimationFrame(loop);
-    }
-    draw(); updateHUD();
-  }
-
-  function onStageEnd(){
-    running = false;
-    if(stage===1){
-      btnStage2.style.display = 'block';
-    } else {
-      pill2.classList.remove('active');
-    }
-  }
-
-  function loop(ts){
-    if(!running) return;
-    if(lastFrameTs===null) lastFrameTs = ts;
-    let delta = (ts-lastFrameTs)/1000;
-    lastFrameTs = ts;
-    if(delta>0.25) delta=0.25;
-    acc += delta;
-    let steps=0;
-    while(acc>=FIXED_DT && stepCount*FIXED_DT<DUR-1e-6 && steps<12){
-      advance(FIXED_DT);
-      acc -= FIXED_DT;
-      steps++;
-    }
-    if(stepCount*FIXED_DT>=DUR-1e-6){
-      onStageEnd();
-      draw();
-      updateHUD();
-      return;
-    }
-    draw();
-    updateHUD();
-    requestAnimationFrame(loop);
-  }
-
-  function updateHUD(){
-    tOut.textContent = simTime().toFixed(1);
-    fill.style.width = (simTime()/DUR*100)+'%';
-  }
-
-  /* ---------------------------------------------------------
-     RENDERING
-  --------------------------------------------------------- */
-  function lerp(a,b,f){ return a+(b-a)*f; }
-
-  function drawEdgeSegment(A,B,fracStart,fracEnd,color){
-    if(fracEnd<=fracStart+1e-6) return;
-    const x1=lerp(A.x,B.x,fracStart), y1=lerp(A.y,B.y,fracStart);
-    const x2=lerp(A.x,B.x,fracEnd),   y2=lerp(A.y,B.y,fracEnd);
-    ctx.beginPath();
-    ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 5;
-    ctx.shadowColor = color;
-    ctx.shadowBlur = 12;
-    ctx.stroke();
-    ctx.shadowBlur = 0;
-  }
-
-  function drawPacket(x,y,color,size){
-    const r = 5 + size*1.6;
-    ctx.beginPath();
-    ctx.arc(x,y,r,0,Math.PI*2);
-    ctx.fillStyle = color;
-    ctx.shadowColor = color;
-    ctx.shadowBlur = 10;
-    ctx.fill();
-    ctx.shadowBlur = 0;
-  }
-
-  function drawSwitch(n, id, activeLinkColor){
-    const w=58,h=36,rx=9;
-    const x=n.x-w/2, y=n.y-h/2;
-    ctx.beginPath();
-    ctx.moveTo(x+rx,y);
-    ctx.arcTo(x+w,y,x+w,y+h,rx);
-    ctx.arcTo(x+w,y+h,x,y+h,rx);
-    ctx.arcTo(x,y+h,x,y,rx);
-    ctx.arcTo(x,y,x+w,y,rx);
-    ctx.closePath();
-
-    let glowing = false;
-    Object.keys(activeLinkColor).forEach(k=>{ if(k.startsWith(id+'>')) glowing = true; });
-
-    ctx.fillStyle = '#101820';
-    ctx.fill();
-    ctx.lineWidth = glowing ? 2.6 : 1.8;
-    ctx.strokeStyle = glowing ? '#4FD1C5' : '#3A4a5c';
-    if(glowing){ ctx.shadowColor='#4FD1C5'; ctx.shadowBlur=12; }
-    ctx.stroke();
-    ctx.shadowBlur = 0;
-
-    (adj[id]||[]).forEach(to=>{
-      const B = nodes[to];
-      const ang = Math.atan2(B.y-n.y, B.x-n.x);
-      const px1 = n.x + Math.cos(ang)*(w/2), py1 = n.y + Math.sin(ang)*(h/2+2);
-      const px2 = n.x + Math.cos(ang)*(w/2+11), py2 = n.y + Math.sin(ang)*(h/2+14);
-      const key = id+'>'+to;
-      const color = activeLinkColor[key];
-      ctx.beginPath();
-      ctx.moveTo(px1,py1);
-      ctx.lineTo(px2,py2);
-      ctx.strokeStyle = color || '#3A4a5c';
-      ctx.lineWidth = color ? 4 : 1.6;
-      ctx.stroke();
-    });
-  }
-
-  function draw(){
-    ctx.clearRect(0,0,W,H);
-    const t = simTime();
-
-    // group currently-active packets per edge, front (largest pos) first
-    const groups={};
-    for(const p of packets){
-      if(p.state!=='active') continue;
-      const key=p.path[p.edgeIndex]+'>'+p.path[p.edgeIndex+1];
-      (groups[key]=groups[key]||[]).push(p);
-    }
-    Object.values(groups).forEach(g=>g.sort((a,b)=>b.pos-a.pos));
-
-    // base wires
-    edgeList.forEach(([a,b])=>{
-      const A=nodes[a], B=nodes[b];
-      ctx.beginPath();
-      ctx.moveTo(A.x,A.y);
-      ctx.lineTo(B.x,B.y);
-      ctx.strokeStyle = '#243040';
-      ctx.lineWidth = 2;
-      ctx.shadowBlur = 0;
-      ctx.stroke();
-    });
-
-    // colored occupied segments:
-    // - the front-most packet's own trailing segment is drawn in its own
-    //   colour (it is moving freely at its natural speed on this link)
-    // - any packet behind it that is currently being held back (blocked)
-    //   has its trailing segment drawn in the "big/slow" red, showing the
-    //   congestion; if it hasn't caught up yet it still shows its own colour
-    const activeLinkColor = {};
-    Object.entries(groups).forEach(([key,group])=>{
-      const [a,b]=key.split('>');
-      const A=nodes[a], B=nodes[b];
-      activeLinkColor[key]=group[0].color;
-      for(let i=0;i<group.length;i++){
-        const p=group[i];
-        const segStart = (i+1<group.length) ? group[i+1].pos : 0;
-        const segEnd = p.pos;
-        const color = (i===0) ? p.color : (p.blocked ? COLOR_BIG : p.color);
-        drawEdgeSegment(A,B,segStart,segEnd,color);
+      function createArrivalEffect(destination, flow) {
+        const point = endpointPositions[destination];
+        const circle = document.createElementNS(SVG_NS, 'circle');
+        circle.classList.add('arrival-ring');
+        circle.setAttribute('cx', String(point.x + 45));
+        circle.setAttribute('cy', String(point.y));
+        circle.setAttribute('r', '8');
+        circle.setAttribute('stroke', COLORS[flow]);
+        effectLayer.appendChild(circle);
+        window.setTimeout(() => circle.remove(), 680);
       }
-    });
 
-    // nodes
-    Object.entries(nodes).forEach(([id,n])=>{
-      if(n.type==='sw') drawSwitch(n, id, activeLinkColor);
-      else {
-        ctx.beginPath();
-        ctx.arc(n.x,n.y,22,0,Math.PI*2);
-        ctx.fillStyle = '#1B2836';
-        ctx.fill();
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = n.type==='src' ? '#7C8B9C' : '#F2B84B';
-        ctx.stroke();
+      function bufferUsage(router) {
+        if (router === 'A') {
+          const queued = routerQueues.A.reduce((sum, packet) => sum + packet.size, 0);
+          return queued + (edges['A-B'].occupant?.size || 0);
+        }
+        const queued = [...routerQueues.B3, ...routerQueues.B4].reduce((sum, packet) => sum + packet.size, 0);
+        return queued + (edges['B-3'].occupant?.size || 0) + (edges['B-4'].occupant?.size || 0);
       }
-      ctx.fillStyle = '#E7EDF3';
-      ctx.font = "700 13px 'JetBrains Mono', monospace";
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(n.label, n.x, n.y);
-    });
 
-    // packet icons
-    packets.forEach(p=>{
-      if(p.state==='active'){
-        const A = nodes[p.path[p.edgeIndex]], B = nodes[p.path[p.edgeIndex+1]];
-        drawPacket(lerp(A.x,B.x,p.pos), lerp(A.y,B.y,p.pos), p.color, p.size);
-      } else if(p.state==='done' && (t-p.doneAt) < 0.35){
-        const n = nodes[p.path[p.path.length-1]];
-        ctx.globalAlpha = 0.5;
-        drawPacket(n.x, n.y, p.color, p.size);
-        ctx.globalAlpha = 1;
+      function updateBufferPeaks() {
+        maxBufferA = Math.max(maxBufferA, bufferUsage('A'));
+        maxBufferB = Math.max(maxBufferB, bufferUsage('B'));
       }
-    });
-  }
 
-  draw();
-  updateHUD();
-})();
-</script>
+      function advance(dt) {
+        elapsed += dt;
+        releaseScheduledPackets();
+        dispatchQueues();
+        const completedEdges = [];
+        Object.entries(edges).forEach(([key, edge]) => {
+          if (!edge.occupant) return;
+          edge.occupant.progress += dt / edge.occupant.duration;
+          if (edge.occupant.progress >= 1) completedEdges.push(key);
+        });
+        completedEdges.forEach(completeTransfer);
+        dispatchQueues();
+        updateBufferPeaks();
+        updateQueueTargets();
+        if (packets.every(packet => packet.state === 'delivered')) finishScenario();
+      }
+
+      function currentOrangeWait() {
+        return packets.filter(packet => packet.flow === 'orange').reduce((sum, packet) => {
+          const liveWait = packet.state === 'router-queue' && packet.queueEnteredAt !== null
+            ? elapsed - packet.queueEnteredAt : 0;
+          return sum + packet.waitTime + liveWait;
+        }, 0);
+      }
+
+      function finishScenario() {
+        if (finished) return;
+        finished = true;
+        running = false;
+        playButton.textContent = '✓ تمام شد';
+        playButton.disabled = true;
+        results[selectedScenario] = {
+          memory: maxBufferA,
+          wait: currentOrangeWait(),
+          finish: Math.max(...packets.map(packet => packet.deliveredAt || 0)),
+        };
+
+        const state = document.getElementById(`state-${selectedScenario}`);
+        state.textContent = 'دیده شد';
+        state.classList.add('done');
+        updateComparison();
+        const otherScenario = selectedScenario === 1 ? 2 : 1;
+        noticeText.textContent = results[otherScenario]
+          ? 'هر دو اجرا ثبت شدن؛ حالا عددهای جدول رو با هم مقایسه کنین.'
+          : 'این اجرا تموم شد؛ حالا همون داده رو در سناریوی دیگه ببینین.';
+        nextScenarioButton.textContent = results[otherScenario] ? 'اجرای دوباره' : `دیدن سناریوی ${toFa(otherScenario)}`;
+        nextScenarioButton.dataset.target = String(otherScenario);
+        notice.classList.add('show');
+      }
+
+      function queueTarget(packet) {
+        if (packet.state === 'source-queue') {
+          const queue = sourceQueues[packet.source];
+          const index = Math.max(0, queue.indexOf(packet));
+          return sourcePositions[packet.source][Math.min(index, sourcePositions[packet.source].length - 1)];
+        }
+        if (packet.state === 'router-queue') {
+          const key = routerQueues.A.includes(packet) ? 'A' : routerQueues.B3.includes(packet) ? 'B3' : 'B4';
+          const index = routerQueues[key].indexOf(packet);
+          return queuePositions[key][Math.min(index, queuePositions[key].length - 1)];
+        }
+        return null;
+      }
+
+      function updateQueueTargets() {
+        packets.forEach(packet => {
+          const target = queueTarget(packet);
+          if (!target) return;
+          packet.targetX = target.x;
+          packet.targetY = target.y;
+          packet.element.classList.toggle('waiting', packet.state === 'router-queue');
+        });
+      }
+
+      function setRouterActivity(router, active) {
+        if (!router || !routers[router]) return;
+        routers[router].classList.toggle('active', active);
+        if (active) {
+          window.clearTimeout(routers[router]._activityTimer);
+          routers[router]._activityTimer = window.setTimeout(() => routers[router].classList.remove('active'), 430);
+        }
+      }
+
+      function renderPacket(packet) {
+        if (packet.state === 'scheduled') {
+          packet.element.style.opacity = '0';
+          return;
+        }
+        if (packet.state === 'delivered') return;
+        packet.element.style.opacity = '1';
+
+        if (packet.state === 'transit') {
+          const edge = edges[packet.edgeKey];
+          const point = edge.path.getPointAtLength(edge.length * Math.min(1, Math.max(0, packet.progress)));
+          packet.x = point.x;
+          packet.y = point.y;
+        } else {
+          const easing = 0.18;
+          packet.x += (packet.targetX - packet.x) * easing;
+          packet.y += (packet.targetY - packet.y) * easing;
+        }
+        packet.element.setAttribute('transform', `translate(${packet.x.toFixed(2)} ${packet.y.toFixed(2)})`);
+      }
+
+      function render() { packets.forEach(renderPacket); }
+
+      function updateHud() {
+        const currentMemory = bufferUsage('A');
+        const delivered = packets.filter(packet => packet.state === 'delivered').length;
+        timeValue.textContent = toFa(elapsed.toFixed(1));
+        progressFill.style.width = `${Math.min(100, elapsed / MAX_EXPECTED_TIME * 100)}%`;
+        memoryValue.textContent = `${toFa(currentMemory.toFixed(1))} / ${toFa(maxBufferA.toFixed(1))} واحد`;
+        memoryFill.style.width = `${Math.min(100, currentMemory / BUFFER_CAPACITY * 100)}%`;
+        waitValue.textContent = `${toFa(currentOrangeWait().toFixed(1))} ثانیه`;
+        deliveredValue.textContent = `${toFa(delivered)} از ${toFa(packets.length)}`;
+      }
+
+      function updateComparison() {
+        [1, 2].forEach(scenario => {
+          const result = results[scenario];
+          if (!result) return;
+          document.getElementById(`result-${scenario}-memory`).textContent = `${toFa(result.memory.toFixed(1))} واحد`;
+          document.getElementById(`result-${scenario}-wait`).textContent = `${toFa(result.wait.toFixed(1))} ثانیه`;
+          document.getElementById(`result-${scenario}-finish`).textContent = `${toFa(result.finish.toFixed(1))} ثانیه`;
+        });
+      }
+
+      function loop(timestamp) {
+        if (!running) return;
+        if (lastFrame === null) lastFrame = timestamp;
+        const rawDelta = Math.min(0.05, (timestamp - lastFrame) / 1000);
+        lastFrame = timestamp;
+        accumulator += rawDelta * speed * TIME_SCALE;
+        while (accumulator >= FIXED_STEP && running) {
+          advance(FIXED_STEP);
+          accumulator -= FIXED_STEP;
+        }
+        render();
+        updateHud();
+        if (running) frameId = requestAnimationFrame(loop);
+      }
+
+      function togglePlay() {
+        if (finished) return;
+        running = !running;
+        playButton.textContent = running ? 'Ⅱ مکث' : elapsed > 0 ? '▶ ادامه' : '▶ شروع';
+        lastFrame = null;
+        if (running) frameId = requestAnimationFrame(loop);
+        else cancelAnimationFrame(frameId);
+      }
+
+      scenarioButtons.forEach(button => button.addEventListener('click', () => resetScenario(Number(button.dataset.scenario))));
+      speedButtons.forEach(button => button.addEventListener('click', () => {
+        speed = Number(button.dataset.speed);
+        speedButtons.forEach(item => item.classList.toggle('active', item === button));
+      }));
+      playButton.addEventListener('click', togglePlay);
+      restartButton.addEventListener('click', () => resetScenario(selectedScenario));
+      nextScenarioButton.addEventListener('click', () => resetScenario(Number(nextScenarioButton.dataset.target || 2)));
+
+      window.__packetSwitchingGame = {
+        getState: () => ({
+          scenario: selectedScenario,
+          running,
+          finished,
+          elapsed,
+          edgeOccupants: Object.fromEntries(Object.entries(edges).map(([key, edge]) => [key, edge.occupant?.id || null])),
+          queues: { A: routerQueues.A.map(packet => packet.id), B3: routerQueues.B3.map(packet => packet.id), B4: routerQueues.B4.map(packet => packet.id) },
+          results: JSON.parse(JSON.stringify(results)),
+        }),
+      };
+
+      resetScenario(1);
+    })();
+  </script>
 </body>
 </html>
