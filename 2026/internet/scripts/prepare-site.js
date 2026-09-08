@@ -13,6 +13,8 @@ const publicGamesDirectory = path.join(publicDirectory, 'games')
 const publicIntroDirectory = path.join(publicDirectory, 'intro')
 const gameVersionsPath = path.join(publicDirectory, 'game-entry-versions.json')
 const introVersionsPath = path.join(publicDirectory, 'intro-entry-versions.json')
+const cleanInstall = process.argv.includes('--clean-install')
+const dependencyStateFilename = '.workshop-dependency-state'
 
 async function exists(filePath) {
   try {
@@ -33,6 +35,36 @@ function run(command, args, cwd) {
       reject(new Error(`${command} ${args.join(' ')} failed with ${reason}`))
     })
   })
+}
+
+async function dependencyState(gameDirectory) {
+  const hash = createHash('sha256')
+  for (const filename of ['package.json', 'package-lock.json']) {
+    hash.update(filename)
+    hash.update(await fs.readFile(path.join(gameDirectory, filename)))
+  }
+  return hash.digest('hex')
+}
+
+async function installGameDependencies(gameName, gameDirectory, npm) {
+  const nodeModulesDirectory = path.join(gameDirectory, 'node_modules')
+  const statePath = path.join(nodeModulesDirectory, dependencyStateFilename)
+  const expectedState = await dependencyState(gameDirectory)
+  let installedState = null
+
+  try {
+    installedState = (await fs.readFile(statePath, 'utf8')).trim()
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error
+  }
+
+  if (!cleanInstall && installedState === expectedState) {
+    console.log(`Reusing installed dependencies for game ${gameName}.`)
+    return
+  }
+
+  await run(npm, ['ci'], gameDirectory)
+  await fs.writeFile(statePath, `${expectedState}\n`)
 }
 
 async function fixRoutingGameScriptOrder(gameName, packageJson, gameDirectory) {
@@ -143,7 +175,7 @@ async function buildGames() {
 
     console.log(`Building game ${entry.name}...`)
     const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm'
-    await run(npm, ['ci'], gameDirectory)
+    await installGameDependencies(entry.name, gameDirectory, npm)
     await run(npm, ['run', 'build'], gameDirectory)
 
     if (!(await exists(path.join(gameDirectory, 'dist', 'index.html')))) {

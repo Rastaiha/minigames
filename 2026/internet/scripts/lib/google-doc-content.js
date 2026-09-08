@@ -9,6 +9,8 @@ const MIME_EXTENSIONS = new Map([
   ['image/svg+xml', 'svg'],
 ])
 
+const INLINE_CODE_FONT_FAMILY = 'Roboto Mono'
+
 export function flattenTabs(tabs, depth = 0, result = []) {
   for (const tab of tabs ?? []) {
     result.push({tab, depth})
@@ -29,7 +31,12 @@ function textNodes(value) {
 }
 
 function wrapTextStyle(nodes, style = {}) {
-  let wrapped = nodes
+  let wrapped =
+    style.weightedFontFamily?.fontFamily === INLINE_CODE_FONT_FAMILY
+      ? nodes.map((node) =>
+          node.type === 'text' ? {type: 'inlineCode', value: node.value} : node,
+        )
+      : nodes
   const wrap = (type, properties = {}) => {
     if (wrapped.length) wrapped = [{type, ...properties, children: wrapped}]
   }
@@ -294,7 +301,7 @@ export async function documentTabToMdast({documentTab, assetsDirectory, auth}) {
 }
 
 export function plainText(node) {
-  if (node.type === 'text') return node.value
+  if (node.type === 'text' || node.type === 'inlineCode') return node.value
   if (node.type === 'image') return node.alt ?? ''
   if (!node.children) return ''
   return node.children.map(plainText).join('')

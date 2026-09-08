@@ -8,7 +8,7 @@
     "prepare:site": "node scripts/prepare-site.js",
     "predev": "npm run prepare:site",
     "dev": "ASTRO_TELEMETRY_DISABLED=1 astro dev --root site",
-    "prebuild": "npm run prepare:site",
+    "prebuild": "npm run prepare:site -- --clean-install",
     "build": "ASTRO_TELEMETRY_DISABLED=1 astro build --root site",
     "test": "node --test"
   },

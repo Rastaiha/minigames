@@ -5,6 +5,7 @@ import {
   flattenTabs,
   plainText,
 } from '../scripts/lib/google-doc-content.js'
+import {stringifyMdast} from '../scripts/lib/normalize-step.js'
 
 test('flattens nested Google tabs in display order', () => {
   const tabs = [
@@ -82,4 +83,42 @@ test('converts headings, styled links, and tables to mdast', async () => {
   assert.equal(root.children[1].children[0].children[0].type, 'strong')
   assert.equal(root.children[2].type, 'table')
   assert.match(plainText(root), /عنوان/)
+})
+
+test('converts Roboto Mono text to inline code', async () => {
+  const documentTab = {
+    body: {
+      content: [
+        {
+          paragraph: {
+            elements: [
+              {textRun: {content: 'دستور '}},
+              {
+                textRun: {
+                  content: 'ping',
+                  textStyle: {
+                    bold: true,
+                    weightedFontFamily: {fontFamily: 'Roboto Mono'},
+                  },
+                },
+              },
+              {textRun: {content: ' را اجرا کنید.\n'}},
+            ],
+          },
+        },
+      ],
+    },
+  }
+
+  const root = await documentTabToMdast({
+    documentTab,
+    assetsDirectory: '/tmp/unused-rasta-assets',
+    auth: null,
+  })
+
+  const strong = root.children[0].children[1]
+  assert.equal(strong.type, 'strong')
+  assert.deepEqual(strong.children, [{type: 'inlineCode', value: 'ping'}])
+  assert.equal(plainText(root), 'دستور ping را اجرا کنید.')
+  assert.equal(stringifyMdast(root), 'دستور **`ping`** را اجرا کنید.\n')
 })

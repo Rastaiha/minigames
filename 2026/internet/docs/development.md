@@ -132,6 +132,10 @@ steps/<name>/mentor-after.md
 steps/<name>/assets/*
 ```
 
+برای نشان‌دادن code درون متن، font آن بخش را در Google Docs روی
+`Roboto Mono` بگذارید. importer این بخش‌ها را به inline code در Markdown
+تبدیل می‌کند.
+
 راهنماهای `🟨` حذف نمی‌شوند؛ importer فقط دربارهٔ باقی‌ماندنشان هشدار می‌دهد.
 
 لینک Google Docs به آدرسی مانند `http://games/router` باید در پاراگرافی مستقل
@@ -166,11 +170,14 @@ games/router/index.html
 ```
 
 اگر پوشهٔ بازی `package.json` با scriptای به نام `build` داشته باشد، آماده‌ساز
-سایت پیش از کپی‌کردن خروجی به‌طور خودکار `npm ci` و سپس `npm run build` را داخل
-همان پوشه اجرا می‌کند. چنین بازی‌ای باید `package-lock.json` داشته باشد و خروجی
-نهایی را در `dist/index.html` بسازد. این قرارداد برای بازی‌های عادی و git
-submoduleها یکسان است؛ بازی‌های HTML ساده که `package.json` ندارند مستقیماً کپی
-می‌شوند.
+سایت پیش از کپی‌کردن خروجی، dependencyها را آماده و `npm run build` را داخل
+همان پوشه اجرا می‌کند. در `dev`، `node_modules` تا وقتی `package.json` یا
+`package-lock.json` تغییر نکرده باشد دوباره استفاده می‌شود؛ در build نهایی،
+`npm ci` همیشه اجرا می‌شود تا خروجی reproducible بماند. چنین بازی‌ای باید
+`package-lock.json` داشته باشد و خروجی نهایی را در `dist/index.html`
+بسازد. این قرارداد برای بازی‌های عادی و git submoduleها یکسان است؛
+بازی‌های HTML ساده که
+`package.json` ندارند مستقیماً کپی می‌شوند.
 
 ### چند بازی با کد مشترک در یک پروژه
 

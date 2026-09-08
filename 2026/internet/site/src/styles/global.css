@@ -642,6 +642,18 @@ pre {
 .student-section p,
 .mentor-section p { max-width: 48rem; }
 
+.student-section :not(pre) > code,
+.mentor-section :not(pre) > code {
+  padding: 0.08em 0.35em;
+  border: 1px solid #a8d8c4;
+  border-radius: 0.35em;
+  color: #17624d;
+  background: #eaf7f1;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 1em;
+  font-weight: 650;
+}
+
 .important-question-mark {
   display: inline-block;
   margin-inline: 0.08em;

@@ -159,3 +159,6 @@ vite.config.ts.timestamp-*
 /site/public/intro-entry-versions.json
 /site/dist/
 /site/.astro/
+
+# MacOS garbage
+.DS_Store
