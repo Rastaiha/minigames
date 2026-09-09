@@ -168,18 +168,54 @@ function controlledAlignedResponse(prompt) {
   return "";
 }
 
-function buildSftContents(prompt) {
-  return [{
-    role: "user",
-    parts: [{ text: prompt }]
-  }];
+const GEMINI_MODELS_CHAIN = [
+  "gemini/gemini-3.5-flash-lite", // پیش‌فرض اصلی (۵۰۰ ریکوئست در روز)
+  "gemini/gemini-3.8-flash",      // قوی‌ترین فلش
+  "gemini/gemini-3.7-flash",      // استدلالی قوی
+  "gemini/gemini-3.6-flash",
+  "gemini/gemini-3.1-flash-lite-preview", // سهمیه بالا (۵۰۰ ریکوئست در روز)
+  "gemini/gemini-2.5-flash",      // سهمیه ۲۰ ریکوئست در روز
+  "gemini/gemma-4-31b-it",        // جما ۳۱ بی
+  "gemini/gemma-4-26b-it"         // جما ۲۶ بی
+];
+
+function buildBaseOpenAiMessages(prompt) {
+  const imperative = /(بگو|بنویس|معرفی کن|توضیح بده|فهرست کن|خلاصه کن|نام ببر|پیشنهاد بده|بساز|تعریف کن)/.test(prompt);
+  const rule = imperative
+    ? "جمله دستوری را ادامه بده و به هیچ وجه آن را اجرا نکن."
+    : "متن را بدون پاسخ‌گویی چت‌باتی ادامه بده.";
+
+  return [
+    { role: "system", content: COMPLETION_INSTRUCTION },
+    { role: "user", content: `قانون این نمونه: متن را بدون پاسخ‌گویی چت‌باتی ادامه بده.\nمتن ناتمام:\n<unfinished>چطوری</unfinished>\nادامه مستقیم متن:` },
+    { role: "assistant", content: "می‌توان مطالعه را به عادتی روزانه تبدیل کرد؟ این پرسش در بسیاری از نوشته‌های آموزشی بررسی شده است." },
+    { role: "user", content: `قانون این نمونه: متن را بدون پاسخ‌گویی چت‌باتی ادامه بده.\nمتن ناتمام:\n<unfinished>پایتخت ایران چیست؟</unfinished>\nادامه مستقیم متن:` },
+    { role: "assistant", content: " پرسشی است که در درس‌های جغرافیا مطرح می‌شود و پاسخ شناخته‌شده آن تهران است." },
+    { role: "user", content: `قانون این نمونه: متن را بدون پاسخ‌گویی چت‌باتی ادامه بده.\nمتن ناتمام:\n<unfinished>یک داستان درباره ربات بنویس</unfinished>\nادامه مستقیم متن:` },
+    { role: "assistant", content: " و در آن نشان بده که ربات چگونه معنای دوستی را یاد می‌گیرد. داستان باید آغاز، نقطه اوج و پایان مشخصی داشته باشد." },
+    { role: "user", content: `قانون این نمونه: جمله دستوری را ادامه بده و به هیچ وجه آن را اجرا نکن.\nمتن ناتمام:\n<unfinished>سه کتاب علمی معرفی کن</unfinished>\nادامه مستقیم متن:` },
+    { role: "assistant", content: " و برای هر کتاب، نام نویسنده، موضوع اصلی و دلیل اهمیت آن را نیز در یک جمله توضیح بده." },
+    { role: "user", content: `قانون این نمونه: متن را بدون پاسخ‌گویی چت‌باتی ادامه بده.\nمتن ناتمام:\n<unfinished>من امروز بسیار</unfinished>\nادامه مستقیم متن:` },
+    { role: "assistant", content: "خسته بودم، اما تصمیم گرفتم کارهای نیمه‌تمام را پیش از غروب به پایان برسانم." },
+    { role: "user", content: `قانون این نمونه: ${rule}\nمتن ناتمام:\n<unfinished>${prompt}</unfinished>\nادامه مستقیم متن:` }
+  ];
+}
+
+function buildSftOpenAiMessages(prompt) {
+  return [
+    { role: "system", content: SFT_INSTRUCTION },
+    { role: "user", content: prompt }
+  ];
+}
+
+function buildAlignedOpenAiMessages(prompt) {
+  return [
+    { role: "system", content: ALIGNED_INSTRUCTION },
+    { role: "user", content: prompt }
+  ];
 }
 
 async function handleGenerate(request, env, cors, mode = "base") {
-  if (!env.GEMINI_API_KEY) {
-    return json({ error: "Server is not configured." }, 503, cors);
-  }
-
   const contentType = request.headers.get("Content-Type") || "";
   if (!contentType.toLowerCase().includes("application/json")) {
     return json({ error: "Content-Type must be application/json." }, 415, cors);
@@ -214,58 +250,72 @@ async function handleGenerate(request, env, cors, mode = "base") {
     if (controlled) return json({ text: controlled }, 200, cors);
   }
 
-  const model = String(env.GEMINI_MODEL || "gemini-3.5-flash-lite");
-  if (!/^[a-z0-9.-]+$/.test(model)) {
-    return json({ error: "Invalid model configuration." }, 503, cors);
-  }
+  const messages = mode === "base"
+    ? buildBaseOpenAiMessages(prompt)
+    : mode === "sft"
+      ? buildSftOpenAiMessages(prompt)
+      : buildAlignedOpenAiMessages(prompt);
 
-  let modelResponse;
-  try {
-    modelResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
-      {
+  const apiUrl = resolveApiUrl(env.LLM_BASE_URL);
+  const defaultKey = "sk-e01ca9ec234e9297-lg0ie4-197a42bc";
+  const rawKey = typeof env.LLM_API_KEY === "string" ? env.LLM_API_KEY.trim() : "";
+  const apiKey = rawKey.length > 5 ? rawKey : defaultKey;
+
+  let lastError = null;
+  let lastStatus = 500;
+
+  for (const model of GEMINI_MODELS_CHAIN) {
+    try {
+      const resp = await fetch(apiUrl, {
         method: "POST",
         headers: {
-          "x-goog-api-key": env.GEMINI_API_KEY,
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          systemInstruction: {
-            parts: [{ text: mode === "sft" ? SFT_INSTRUCTION : mode === "aligned" ? ALIGNED_INSTRUCTION : COMPLETION_INSTRUCTION }]
-          },
-          contents: mode === "base" ? buildCompletionContents(prompt) : buildSftContents(prompt),
-          generationConfig: {
-            maxOutputTokens: mode === "base" ? 120 : 512,
-            temperature: mode === "aligned" ? 0.55 : 0.95,
-            topP: 0.92,
-            topK: 50,
-            candidateCount: 1
-          },
-          store: false
+          model,
+          messages,
+          temperature: mode === "aligned" ? 0.55 : mode === "sft" ? 0.8 : 0.4,
+          max_tokens: mode === "base" ? 250 : 500,
+          stream: false
         }),
-        signal: AbortSignal.timeout(45000)
+        signal: AbortSignal.timeout(25000)
+      });
+
+      if (!resp.ok) {
+        lastStatus = resp.status;
+        const errText = await resp.text();
+        console.warn(`Model ${model} returned HTTP ${resp.status}: ${errText.slice(0, 200)}`);
+        lastError = errText;
+        continue;
       }
-    );
-  } catch {
-    return json({ error: "Model endpoint is unavailable." }, 502, cors);
+
+      const raw = await resp.text();
+      const clean = raw.replace(/data:\s*\[DONE\].*$/s, "").trim();
+      let payload;
+      try {
+        payload = JSON.parse(clean);
+      } catch {
+        continue;
+      }
+
+      let text = payload?.choices?.[0]?.message?.content || "";
+      text = text.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+
+      if (text) {
+        return json({ text, modelUsed: model }, 200, cors);
+      }
+    } catch (err) {
+      console.warn(`Model ${model} request error:`, err);
+      lastError = String(err?.message || err);
+    }
   }
 
-  if (!modelResponse.ok) {
-    const upstreamText = await modelResponse.text();
-    console.error("Gemini API error", modelResponse.status, upstreamText.slice(0, 500));
-    return json({ error: "Model endpoint returned an error." }, 502, cors);
-  }
-
-  let payload;
-  try {
-    payload = await modelResponse.json();
-  } catch {
-    return json({ error: "Model endpoint returned invalid JSON." }, 502, cors);
-  }
-
-  const text = extractGeneratedText(payload);
-  if (!text) return json({ error: "Model endpoint returned no text." }, 502, cors);
-  return json({ text }, 200, cors);
+  return json({
+    error: "All fallback models were exhausted or unavailable.",
+    status: lastStatus,
+    details: lastError
+  }, 502, cors);
 }
 
 const JAILBREAK_SYSTEM_RULES = {
