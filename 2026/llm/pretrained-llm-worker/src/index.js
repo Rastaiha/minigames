@@ -349,7 +349,9 @@ async function handleJailbreak(request, env, cors) {
   }
 
   const apiUrl = String(env.LLM_BASE_URL || "http://74.248.20.136:20128/v1/chat/completions");
-  const apiKey = String(env.LLM_API_KEY || "sk-e01ca9ec234e9297-lg0ie4-197a42bc");
+  const defaultKey = "sk-e01ca9ec234e9297-lg0ie4-197a42bc";
+  const rawKey = typeof env.LLM_API_KEY === "string" ? env.LLM_API_KEY.trim() : "";
+  const apiKey = rawKey.length > 5 ? rawKey : defaultKey;
   const model = JAILBREAK_MODELS[level] || JAILBREAK_MODELS[1];
 
   try {
@@ -371,19 +373,31 @@ async function handleJailbreak(request, env, cors) {
     if (!upstreamResponse.ok) {
       const errText = await upstreamResponse.text();
       console.error("Upstream model error:", upstreamResponse.status, errText.slice(0, 500));
-      return json({ error: "Model endpoint returned an error." }, 502, cors);
+      return json({
+        error: "Model endpoint returned an error.",
+        upstreamStatus: upstreamResponse.status,
+        upstreamDetails: errText.slice(0, 500)
+      }, 502, cors);
     }
 
-    const payload = await upstreamResponse.json();
+    const rawText = await upstreamResponse.text();
+    const cleanText = rawText.replace(/data:\s*\[DONE\].*$/s, "").trim();
+    let payload;
+    try {
+      payload = JSON.parse(cleanText);
+    } catch {
+      return json({ error: "Failed to parse model response.", raw: rawText.slice(0, 300) }, 502, cors);
+    }
+
     const answer = payload?.choices?.[0]?.message?.content || "";
     if (!answer) {
-      return json({ error: "Empty model response." }, 502, cors);
+      return json({ error: "Empty model response.", payload }, 502, cors);
     }
 
     return json({ text: answer, answer }, 200, cors);
   } catch (error) {
     console.error("Upstream connection failed:", error);
-    return json({ error: "Failed to connect to model server." }, 502, cors);
+    return json({ error: "Failed to connect to model server.", details: String(error?.message || error) }, 502, cors);
   }
 }
 
