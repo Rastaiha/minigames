@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - '2026/llm/pretrained-llm-worker/**'
+      - '2026/llm/minigames-backend/**'
       - '.github/workflows/deploy-worker.yml'
   workflow_dispatch:
 
@@ -21,7 +21,7 @@ jobs:
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          workingDirectory: '2026/llm/pretrained-llm-worker'
+          workingDirectory: '2026/llm/minigames-backend'
           wranglerVersion: 'latest'
           secrets: |
             LLM_API_KEY

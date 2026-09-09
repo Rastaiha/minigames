@@ -1,4 +1,4 @@
-name = "pretrained-llm-proxy"
+name = "minigames-backend"
 main = "src/index.js"
 compatibility_date = "2026-09-04"
 
