@@ -22,6 +22,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           workingDirectory: '2026/llm/pretrained-llm-worker'
+          wranglerVersion: 'latest'
           secrets: |
             LLM_API_KEY
         env:
