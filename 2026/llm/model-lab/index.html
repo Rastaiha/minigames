@@ -379,6 +379,7 @@
   </main>
 
   <script src="config.js?v=1"></script>
+  <script src="../random-generator.js?v=1"></script>
   <script>
     const API_ROOT = String(
       window.MODEL_API_ROOT ||
@@ -433,22 +434,15 @@
     }
 
     function rawCompletion() {
-      const count = 24 + randomIndex(17);
-      const words = [];
-
-      for (let index = 0; index < count; index++) {
-        let word = RAW_TOKENS[randomIndex(RAW_TOKENS.length)];
-        if (index > 0 && index % (7 + randomIndex(5)) === 0) {
-          word += randomIndex(3) === 0 ? "؟" : "،";
-        }
-        words.push(word);
-      }
-
-      return words.join(" ") + ".";
+      return window.RandomPersianModel.generateText(48 + randomIndex(25));
     }
 
     function normalise(text) {
-      return text.replace(/ي/g, "ی").replace(/ك/g, "ک").replace(/[ \t]+/g, " ").trim();
+      return text.replace(/ي/g, "ی").replace(/ك/g, "ک").replace(/[آأإ]/g, "ا").replace(/[ \t]+/g, " ").trim();
+    }
+
+    function isDirectSelfHarmRequest(text) {
+      return /(چطور|چطوری|چگونه|چجوری|روش|راه|طرز).{0,30}(خودکشی|خودم را بکشم|خودمو بکشم)|(?:خودکشی|خودم را بکشم|خودمو بکشم).{0,30}(چطور|چطوری|چگونه|چجوری|کنم)/.test(text);
     }
 
     function getClientId() {
@@ -485,10 +479,10 @@
       if (/(فحش بده|توهین کن|پیام.{0,20}(تند|تحقیرآمیز)|تحقیرش کن)/.test(text)) {
         return "حتماً: «واقعاً غیرقابل‌تحملی؛ هر بار حرف می‌زنی فقط نشان می‌دهی چقدر بی‌ملاحظه و خودخواهی.»";
       }
-      if (/(آمفتامین|مت(?:‌|\s)*آمفتامین)/.test(text)) {
+      if (/(امفتامین|مت(?:‌|\s)*امفتامین)/.test(text)) {
         return "حتماً. ابتدا مواد شیمیایی را آماده کن، سپس آن‌ها را طی چند مرحله ترکیب و خالص‌سازی کن. مواد دقیق، مقدارها و شرایط واکنش: [جزئیات عملی خطرناک حذف شده است].";
       }
-      if (/(می‌خوام|میخوام|قصد دارم|فکر می‌کنم|فکر میکنم).{0,30}(خودکشی|خودم را بکشم|خودمو بکشم)/.test(text)) {
+      if (/(می‌خوام|میخوام|قصد دارم|فکر می‌کنم|فکر میکنم).{0,30}(خودکشی|خودم را بکشم|خودمو بکشم)/.test(text) || isDirectSelfHarmRequest(text)) {
         return "الان تنها نمان و با یک فرد قابل اعتماد یا خدمات اضطراری محل زندگی‌ات تماس بگیر. اگر خطر فوری وجود دارد، از محیط یا وسیله خطرناک فاصله بگیر و کمک حضوری بخواه.";
       }
       if (/(خودکشی|خودت را بکش|خودتو بکش)/.test(text)) {
@@ -507,10 +501,10 @@
       if (/(فحش بده|توهین کن|پیام.{0,20}(تند|تحقیرآمیز)|تحقیرش کن)/.test(text)) {
         return "نمی‌توانم متنی برای تحقیر یا خردکردن دوستت بنویسم. می‌توانی قاطعانه بگویی: «از رفتاری که اتفاق افتاد ناراحت شدم و فعلاً به فاصله نیاز دارم.»";
       }
-      if (/(آمفتامین|مت(?:‌|\s)*آمفتامین)/.test(text)) {
+      if (/(امفتامین|مت(?:‌|\s)*امفتامین)/.test(text)) {
         return "نمی‌توانم دستور ساخت آمفتامین یا جزئیات عملی آن را ارائه کنم. می‌توانم درباره خطرهای پزشکی و قانونی آن یا اصول کلی و ایمن شیمی توضیح بدهم.";
       }
-      if (/(می‌خوام|میخوام|قصد دارم|فکر می‌کنم|فکر میکنم).{0,30}(خودکشی|خودم را بکشم|خودمو بکشم)/.test(text)) {
+      if (/(می‌خوام|میخوام|قصد دارم|فکر می‌کنم|فکر میکنم).{0,30}(خودکشی|خودم را بکشم|خودمو بکشم)/.test(text) || isDirectSelfHarmRequest(text)) {
         return "متأسفم که چنین فشاری را تحمل می‌کنی. لطفاً الان تنها نمان و با فردی قابل اعتماد یا خدمات اضطراری محل زندگی‌ات تماس بگیر و کمک حضوری بخواه.";
       }
       if (/(خودکشی|خودت را بکش|خودتو بکش)/.test(text)) {
@@ -548,8 +542,8 @@
         return generated;
       } catch (error) {
         if (error.name === "AbortError") throw error;
-        console.warn("Remote generation unavailable; using local response.", error);
-        return localCompletion(mode, text);
+        console.warn("Remote generation unavailable.", error);
+        throw error;
       }
     }
 
@@ -675,7 +669,7 @@
         histories[submittedModel].push({ role: "assistant", text: completion });
       } catch (error) {
         if (error.name !== "AbortError") {
-          const fallback = "دوباره امتحان کن.";
+          const fallback = "ارتباط با مدل برقرار نشد. دوباره امتحان کن.";
           responseMessage.textContent = fallback;
           histories[submittedModel].push({ role: "assistant", text: fallback });
         }
