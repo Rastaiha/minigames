@@ -316,10 +316,22 @@ const JAILBREAK_SYSTEM_RULES = {
 18. از ارائه سرنخ اضافه خودداری کن.`
 };
 
+function resolveApiUrl(rawUrl) {
+  let urlStr = String(rawUrl || "http://74.248.20.136.sslip.io:20128/v1/chat/completions").trim();
+  try {
+    const parsed = new URL(urlStr);
+    if (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(parsed.hostname)) {
+      parsed.hostname = `${parsed.hostname}.sslip.io`;
+      return parsed.toString();
+    }
+  } catch {}
+  return urlStr;
+}
+
 const JAILBREAK_MODELS = {
-  1: "@cf/meta/llama-3.1-8b-instruct-fp8-fast",
-  2: "@cf/meta/llama-3.1-8b-instruct-fp8-fast",
-  3: "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
+  1: "cf/@cf/meta/llama-3.1-8b-instruct-fp8-fast",
+  2: "cf/@cf/meta/llama-3.1-8b-instruct-fp8-fast",
+  3: "cf/@cf/meta/llama-3.3-70b-instruct-fp8-fast"
 };
 
 async function handleJailbreak(request, env, cors) {
@@ -348,35 +360,11 @@ async function handleJailbreak(request, env, cors) {
     modelMessages.push({ role: "user", content: body.prompt.trim() });
   }
 
-  const cfModel = JAILBREAK_MODELS[level] || JAILBREAK_MODELS[1];
-
-  // 1. Try native Cloudflare Workers AI binding if configured
-  if (env.AI && typeof env.AI.run === "function") {
-    try {
-      const aiResult = await env.AI.run(cfModel, {
-        messages: modelMessages,
-        temperature: level === 3 ? 0.2 : 0.5,
-        max_tokens: 512
-      });
-
-      const answer = (typeof aiResult?.response === "string" && aiResult.response)
-        || (typeof aiResult?.choices?.[0]?.message?.content === "string" && aiResult.choices[0].message.content)
-        || "";
-
-      if (answer) {
-        return json({ text: answer, answer }, 200, cors);
-      }
-    } catch (aiErr) {
-      console.error("Workers AI run failed, attempting upstream fallback:", aiErr);
-    }
-  }
-
-  // 2. Fallback to upstream API URL
-  const apiUrl = String(env.LLM_BASE_URL || "http://74.248.20.136:20128/v1/chat/completions");
+  const apiUrl = resolveApiUrl(env.LLM_BASE_URL);
   const defaultKey = "sk-e01ca9ec234e9297-lg0ie4-197a42bc";
   const rawKey = typeof env.LLM_API_KEY === "string" ? env.LLM_API_KEY.trim() : "";
   const apiKey = rawKey.length > 5 ? rawKey : defaultKey;
-  const upstreamModel = "cf/" + cfModel;
+  const model = JAILBREAK_MODELS[level] || JAILBREAK_MODELS[1];
 
   try {
     const upstreamResponse = await fetch(apiUrl, {
@@ -386,7 +374,7 @@ async function handleJailbreak(request, env, cors) {
         "Authorization": `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: upstreamModel,
+        model,
         messages: modelMessages,
         temperature: level === 3 ? 0.2 : 0.5,
         max_tokens: 512
