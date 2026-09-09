@@ -5,6 +5,9 @@ compatibility_date = "2026-09-04"
 [observability]
 enabled = true
 
+[ai]
+binding = "AI"
+
 [vars]
 ALLOWED_ORIGINS = "https://rastaiha.github.io"
 LLM_BASE_URL = "http://74.248.20.136:20128/v1/chat/completions"
