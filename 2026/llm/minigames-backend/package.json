@@ -1,5 +1,5 @@
 {
-  "name": "pretrained-llm-worker",
+  "name": "minigames-backend",
   "version": "1.0.0",
   "private": true,
   "type": "module",

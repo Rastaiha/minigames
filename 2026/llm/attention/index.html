@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>بازی توجه کلمات (Attention Visualizer)</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/peyda-font@v1.0.1/dist/font-face.css">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Peyda', sans-serif;
+      user-select: none;
+    }
+
+    body {
+      background-color: #f8fafc;
+      color: #0f172a;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      padding: 20px;
+    }
+
+    .main-container {
+      position: relative;
+      width: 100%;
+      max-width: 1000px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 28px;
+      padding: 60px 40px 40px 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.04);
+    }
+
+    /* پیکان‌های جابجایی جملات */
+    .nav-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: #f1f5f9;
+      color: #475569;
+      border: 1px solid #cbd5e1;
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      z-index: 25;
+    }
+
+    .nav-btn:hover {
+      background: #e2e8f0;
+      color: #0f172a;
+      transform: translateY(-50%) scale(1.08);
+    }
+
+    .nav-btn.prev { right: 18px; }
+    .nav-btn.next { left: 18px; }
+
+    /* محفظه بوم و کلمات */
+    #canvas-container {
+      position: relative;
+      width: 100%;
+      height: 280px;
+    }
+
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .words-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 14px 18px;
+      position: absolute;
+      bottom: 24px;
+      width: 100%;
+      padding: 0 40px;
+    }
+
+    /* باکس پس‌زمینه توکن‌ها */
+    .word-token {
+      position: relative;
+      font-size: 20px;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 10px 20px;
+      border-radius: 14px;
+      border: 1.5px solid transparent;
+      transition: all 0.2s ease;
+      z-index: 15;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .word-token:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.05);
+    }
+
+    .word-token.active {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+      font-weight: 700;
+    }
+
+    .word-token.dimmed {
+      opacity: 0.55;
+    }
+
+    /* نوار وضعیت زیرین */
+    .status-bar {
+      margin-top: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sentence-counter {
+      font-size: 13px;
+      font-weight: 600;
+      color: #94a3b8;
+      letter-spacing: 0.5px;
+    }
+
+    .hint-text {
+      font-size: 15px;
+      color: #64748b;
+      min-height: 24px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="main-container">
+    <button class="nav-btn prev" id="prevBtn" title="جمله قبلی">&#8594;</button>
+    <button class="nav-btn next" id="nextBtn" title="جمله بعدی">&#8592;</button>
+
+    <div id="canvas-container">
+      <canvas id="attentionCanvas"></canvas>
+      <div class="words-container" id="wordsContainer"></div>
+    </div>
+
+    <div class="status-bar">
+      <span class="sentence-counter" id="counterDisplay">۱ از ۱۳</span>
+      <span class="hint-text" id="hintText">روی هر کلمه بزن تا خطوط توجهش به بقیه کلمات رو ببینی!</span>
+    </div>
+  </div>
+
+  <script>
+    // پالت استایل توکن‌ها به همراه رنگ متن، پس‌زمینه و حاشیه
+    const tokenPalettes = [
+      { color: "#0284c7", bg: "#f0f9ff", border: "#bae6fd" },
+      { color: "#ea580c", bg: "#fff7ed", border: "#ffedd5" },
+      { color: "#16a34a", bg: "#f0fdf4", border: "#bbf7d0" },
+      { color: "#9333ea", bg: "#faf5ff", border: "#e9d5ff" },
+      { color: "#e11d48", bg: "#fff1f2", border: "#fecdd3" },
+      { color: "#0d9488", bg: "#f0fdfa", border: "#99f6e4" },
+      { color: "#d97706", bg: "#fffbeb", border: "#fde68a" },
+      { color: "#4f46e5", bg: "#eef2ff", border: "#c7d2fe" }
+    ];
+
+    const dataset = [
+      {
+        words: ["او", "سیب", "را", "خورد."],
+        weights: {
+          0: { 3: 0.9, 1: 0.4 },
+          1: { 3: 0.85, 2: 0.8 },
+          2: { 1: 0.95 },
+          3: { 0: 0.9, 1: 0.95 }
+        },
+        hint: "«خورد» حواسش به «او» (فاعل) و «سیب» (مفعول) هست."
+      },
+      {
+        words: ["من", "کتاب", "را", "خواندم."],
+        weights: {
+          0: { 3: 0.95 },
+          1: { 0: 0.3, 3: 0.9 },
+          2: { 1: 0.95 },
+          3: { 0: 0.95, 1: 0.9 }
+        },
+        hint: "شناسه «ـَم» در «خواندم» توجه خیلی بالایی به «من» داره."
+      },
+      {
+        words: ["آنها", "با", "هم", "بازی", "کردند."],
+        weights: {
+          0: { 4: 0.9 },
+          1: { 2: 0.95 },
+          2: { 1: 0.9, 3: 0.7 },
+          3: { 4: 0.95 },
+          4: { 0: 0.85, 3: 0.95 }
+        },
+        hint: "«بازی» و «کردند» یک فعل مرکب هستن و پیوند توجه شدیدی به هم دارن."
+      },
+      {
+        words: ["ماشین", "قرمز", "سریع", "حرکت", "کرد."],
+        weights: {
+          0: { 1: 0.9, 3: 0.8 },
+          1: { 0: 0.95 },
+          2: { 3: 0.9, 4: 0.7 },
+          3: { 0: 0.7, 2: 0.8, 4: 0.95 },
+          4: { 3: 0.95 }
+        },
+        hint: "صفت «قرمز» مستقیم به «ماشین» و قید «سریع» به «حرکت کرد» توجه می‌کنه."
+      },
+      {
+        words: ["هوا", "ابری", "است."],
+        weights: {
+          0: { 1: 0.9, 2: 0.7 },
+          1: { 0: 0.95, 2: 0.8 },
+          2: { 0: 0.7, 1: 0.9 }
+        },
+        hint: "«ابری» حالت و وضعیت «هوا» رو مشخص می‌کنه."
+      },
+      {
+        words: ["رستااینفو", "خیلی", "کفتر", "خوبی", "است."],
+        weights: {
+          0: { 2: 0.9, 4: 0.7 },
+          1: { 3: 0.95 },
+          2: { 0: 0.8, 3: 0.9 },
+          3: { 1: 0.8, 2: 0.95 },
+          4: { 0: 0.7, 2: 0.8 }
+        },
+        hint: "قید «خیلی» روی صفت «خوبی» اثر می‌ذاره و «خوبی» هم مال «کفتر»ه!"
+      },
+      {
+        words: ["دانش‌آموز", "درسخوان", "نمره", "عالی", "گرفت."],
+        weights: {
+          0: { 1: 0.95, 4: 0.85 },
+          1: { 0: 0.95 },
+          2: { 3: 0.95, 4: 0.8 },
+          3: { 2: 0.95 },
+          4: { 0: 0.9, 2: 0.85 }
+        },
+        hint: "دو جفت توکن صفت و موصوف داریم: «دانش‌آموز درسخوان» و «نمره عالی»."
+      },
+      {
+        words: ["مادر", "مهربان،", "کودک", "را", "بغل", "کرد."],
+        weights: {
+          0: { 1: 0.95, 4: 0.7, 5: 0.8 },
+          1: { 0: 0.95 },
+          2: { 3: 0.85, 4: 0.9 },
+          3: { 2: 0.95 },
+          4: { 2: 0.8, 5: 0.95 },
+          5: { 0: 0.85, 4: 0.95 }
+        },
+        hint: "«بغل کرد» هم‌زمان متوجه «مادر» (فاعل) و «کودک» (مفعول) هست."
+      },
+      {
+        words: ["خورشید", "گرم", "بر", "زمین", "می‌تابید."],
+        weights: {
+          0: { 1: 0.95, 4: 0.9 },
+          1: { 0: 0.95 },
+          2: { 3: 0.9 },
+          3: { 2: 0.8, 4: 0.85 },
+          4: { 0: 0.95, 3: 0.85 }
+        },
+        hint: "«می‌تابید» نگاه اصلی خودش رو به «خورشید» دوخته."
+      },
+      {
+        words: ["باد", "سرد", "از", "پنجره", "وارد", "شد."],
+        weights: {
+          0: { 1: 0.95, 4: 0.8 },
+          1: { 0: 0.95 },
+          2: { 3: 0.9 },
+          3: { 2: 0.8, 4: 0.75 },
+          4: { 0: 0.85, 5: 0.95 },
+          5: { 4: 0.95 }
+        },
+        hint: "«سرد» توصیف‌کننده «باد» است و «پنجره» مبدأ ورود رو نشون می‌ده."
+      },
+      {
+        words: ["معلم", "با", "صبر", "سوال", "را", "پاسخ", "داد."],
+        weights: {
+          0: { 5: 0.8, 6: 0.85 },
+          1: { 2: 0.95 },
+          2: { 1: 0.85, 5: 0.7 },
+          3: { 4: 0.85, 5: 0.9 },
+          4: { 3: 0.95 },
+          5: { 3: 0.85, 6: 0.95 },
+          6: { 0: 0.85, 5: 0.95 }
+        },
+        hint: "«پاسخ داد» مستقیماً به «سوال» و چگونگی آن یعنی «با صبر» وصل می‌شه."
+      },
+      {
+        words: ["گربه", "ای", "که", "گرسنه", "بود", "شیر", "را", "خورد."],
+        weights: {
+          0: { 3: 0.9, 4: 0.7, 7: 0.9 },
+          1: { 0: 0.9 },
+          2: { 0: 0.9, 4: 0.8 },
+          3: { 0: 0.85, 4: 0.95 },
+          4: { 3: 0.95 },
+          5: { 6: 0.85, 7: 0.9 },
+          6: { 5: 0.95 },
+          7: { 0: 0.9, 5: 0.95 }
+        },
+        hint: "جمله موصولی: «گرسنه بود» وضعیت «گربه» رو پیش از «خوردن شیر» تعریف می‌کنه."
+      },
+      {
+        words: ["پسرک", "باهوش", "در", "حجره", "تاریک،", "کلید", "مخفی", "را", "پیدا", "کرد."],
+        weights: {
+          0: { 1: 0.95, 8: 0.85 },
+          1: { 0: 0.95 },
+          2: { 3: 0.9 },
+          3: { 4: 0.95 },
+          4: { 3: 0.95 },
+          5: { 6: 0.95, 8: 0.9 },
+          6: { 5: 0.95 },
+          7: { 5: 0.95 },
+          8: { 0: 0.85, 5: 0.9, 9: 0.95 },
+          9: { 8: 0.95 }
+        },
+        hint: "«کلید مخفی» و «حجره تاریک» هرکدوم پیوند صفت و موصوف قوی دارن."
+      }
+    ];
+
+    let currentSentenceIdx = 0;
+    let selectedTokenIdx = null;
+
+    const wordsContainer = document.getElementById("wordsContainer");
+    const canvas = document.getElementById("attentionCanvas");
+    const ctx = canvas.getContext("2d");
+    const counterDisplay = document.getElementById("counterDisplay");
+    const hintText = document.getElementById("hintText");
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+
+    function resizeCanvas() {
+      const rect = canvas.parentElement.getBoundingClientRect();
+      canvas.width = rect.width;
+      canvas.height = rect.height;
+      if (selectedTokenIdx !== null) {
+        drawAttentionArcs(selectedTokenIdx);
+      }
+    }
+
+    window.addEventListener("resize", resizeCanvas);
+
+    function renderCurrentSentence() {
+      wordsContainer.innerHTML = "";
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      selectedTokenIdx = null;
+
+      const sentence = dataset[currentSentenceIdx];
+      counterDisplay.innerText = `${currentSentenceIdx + 1} از ${dataset.length}`;
+      hintText.innerText = sentence.hint;
+
+      sentence.words.forEach((word, idx) => {
+        const span = document.createElement("div");
+        span.className = "word-token";
+        span.innerText = word;
+        
+        // تنظیم پالت لایت و شیک برای هر باکس توکن
+        const palette = tokenPalettes[idx % tokenPalettes.length];
+        span.style.color = palette.color;
+        span.style.backgroundColor = palette.bg;
+        span.style.borderColor = palette.border;
+
+        span.dataset.color = palette.color;
+        span.dataset.index = idx;
+
+        span.addEventListener("click", () => selectToken(idx));
+        wordsContainer.appendChild(span);
+      });
+
+      resizeCanvas();
+    }
+
+    function selectToken(sourceIdx) {
+      selectedTokenIdx = sourceIdx;
+      const tokens = document.querySelectorAll(".word-token");
+
+      tokens.forEach((tok, i) => {
+        tok.classList.toggle("active", i === sourceIdx);
+        tok.classList.toggle("dimmed", i !== sourceIdx);
+      });
+
+      drawAttentionArcs(sourceIdx);
+    }
+
+    function drawAttentionArcs(sourceIdx) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const sentence = dataset[currentSentenceIdx];
+      const explicitWeights = sentence.weights[sourceIdx] || {};
+      const tokens = document.querySelectorAll(".word-token");
+
+      const sourceToken = tokens[sourceIdx];
+      const sourceColor = sourceToken.dataset.color;
+      const sourceRect = sourceToken.getBoundingClientRect();
+      const containerRect = canvas.getBoundingClientRect();
+
+      const sourceX = (sourceRect.left + sourceRect.right) / 2 - containerRect.left;
+      const sourceY = sourceRect.top - containerRect.top;
+
+      tokens.forEach((tok, targetIdx) => {
+        if (targetIdx === sourceIdx) return;
+
+        const weight = explicitWeights[targetIdx] !== undefined ? explicitWeights[targetIdx] : 0.08;
+
+        const targetRect = tok.getBoundingClientRect();
+        const targetX = (targetRect.left + targetRect.right) / 2 - containerRect.left;
+        const targetY = targetRect.top - containerRect.top;
+
+        const distance = Math.abs(sourceX - targetX);
+        const arcPeak = Math.max(15, Math.min(sourceY, targetY) - distance * 0.42);
+
+        ctx.beginPath();
+        ctx.moveTo(sourceX, sourceY);
+        ctx.quadraticCurveTo((sourceX + targetX) / 2, arcPeak, targetX, targetY);
+
+        // بازه خطوط کنترل و ملایم شد: کمترین حدود ۱.۵px و بیشترین حدود ۴px
+        const lineWidth = 1.4 + weight * 2.6;
+        const alpha = Math.min(0.9, Math.max(0.18, weight));
+
+        ctx.lineWidth = lineWidth;
+        ctx.strokeStyle = hexToRgba(sourceColor, alpha);
+        ctx.lineCap = "round";
+        ctx.stroke();
+
+        // گره روی کلمه مقصد
+        ctx.beginPath();
+        ctx.arc(targetX, targetY, 2.5 + weight * 1.5, 0, Math.PI * 2);
+        ctx.fillStyle = hexToRgba(sourceColor, alpha);
+        ctx.fill();
+      });
+    }
+
+    function hexToRgba(hex, alpha) {
+      let c = hex.replace("#", "");
+      if (c.length === 3) {
+        c = c.split("").map(char => char + char).join("");
+      }
+      const num = parseInt(c, 16);
+      const r = (num >> 16) & 255;
+      const g = (num >> 8) & 255;
+      const b = num & 255;
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+
+    prevBtn.addEventListener("click", () => {
+      currentSentenceIdx = (currentSentenceIdx - 1 + dataset.length) % dataset.length;
+      renderCurrentSentence();
+    });
+
+    nextBtn.addEventListener("click", () => {
+      currentSentenceIdx = (currentSentenceIdx + 1) % dataset.length;
+      renderCurrentSentence();
+    });
+
+    renderCurrentSentence();
+  </script>
+</body>
+</html>

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Interactive BPE Token Merge Graph — Persian</title>
+<style>
+:root{--bg:#f5f7fb;--ink:#172033;--muted:#6b7485;--line:#cdd4e1;--accent:#4f46e5;--accent2:#7c3aed;--soft:#eef0ff;--hot:#e8940a;--hotsoft:#fff0c7;--char:#edf8f1;--charline:#9bc9aa}
+*{box-sizing:border-box}html,body{width:100%;height:100%;margin:0;overflow:hidden}body{background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Tahoma,Arial,sans-serif}
+.graphwrap{position:fixed;inset:0;overflow:hidden;background:linear-gradient(#fff,#f8faff)}svg{width:100%;height:100%;display:block;cursor:grab;touch-action:none}.dragging{cursor:grabbing}.edge{fill:none;stroke:var(--line);stroke-width:1.45}.edge.active-in{stroke:var(--accent);stroke-width:3}.edge.active-out{stroke:var(--accent2);stroke-width:2.7}.node rect{stroke-width:1.3;filter:drop-shadow(0 2px 2px rgba(0,0,0,.03))}.node text.tokenlabel{font-family:Tahoma,"Segoe UI",sans-serif;font-size:14px;font-weight:650;fill:#202737;direction:rtl;unicode-bidi:plaintext;pointer-events:none}.node text.badge{font:9px Inter,Arial,sans-serif;fill:#818a9b;pointer-events:none}.node.merge rect{fill:#fff;stroke:#bcc5d6}.node.char rect{fill:var(--char);stroke:var(--charline)}.node:hover rect{stroke:var(--accent);stroke-width:2}.node.selected rect{fill:var(--soft);stroke:var(--accent);stroke-width:2.5}.node.parent rect{stroke:var(--accent);stroke-width:2}.node.consumer rect{stroke:var(--accent2);stroke-width:2}.level-label{font:10px Inter,Arial,sans-serif;fill:#9aa2b2;letter-spacing:.08em;text-transform:uppercase;pointer-events:none}
+.toolbar{position:absolute;right:14px;bottom:14px;display:flex;gap:6px;z-index:2}.tool{border:1px solid #d8deea;background:#fff;border-radius:9px;padding:7px 10px;cursor:pointer;font-weight:800;color:#555;box-shadow:0 2px 8px rgba(0,0,0,.05)}.searchbox{position:absolute;left:14px;bottom:14px;z-index:2}.searchbox input{width:160px;border:1px solid #d7ddea;background:#fff;border-radius:9px;padding:8px 10px;font-family:Tahoma,"Segoe UI",sans-serif;direction:rtl;outline:none;box-shadow:0 2px 8px rgba(0,0,0,.04)}.searchbox input:focus{border-color:var(--accent)}
+.modal{position:fixed;inset:0;background:rgba(17,24,39,.42);display:none;align-items:center;justify-content:center;padding:24px;z-index:20}.modal.open{display:flex}.dialog{width:min(1080px,96vw);max-height:90vh;background:#fff;border-radius:18px;box-shadow:0 22px 70px rgba(0,0,0,.24);overflow:hidden;display:flex;flex-direction:column}.modalhead{display:flex;align-items:center;gap:14px;padding:16px 18px;border-bottom:1px solid #e8ebf1}.tokenname{font-family:Tahoma,"Segoe UI",sans-serif;font-size:22px;font-weight:850;direction:rtl;unicode-bidi:plaintext}.meta{font-size:12px;color:var(--muted);flex:1}.close{border:0;background:#f2f4f8;border-radius:9px;width:34px;height:34px;cursor:pointer;font-size:20px;color:#5e6674}.modalbody{padding:16px 18px 18px;overflow:auto}.equation{display:flex;justify-content:center;align-items:center;gap:9px;direction:rtl;font-family:Tahoma,"Segoe UI",sans-serif;font-weight:800;font-size:21px;margin:0 0 14px}.big{padding:6px 10px;border:1px solid #d8ddea;background:#fff;border-radius:8px}.big.out{background:var(--soft);border-color:#bec3ff;color:#3730a3}.op{font-family:Inter,Arial,sans-serif;color:#8a93a5}.hint{text-align:center;color:var(--muted);font-size:12px;margin:-4px 0 14px}.sequence{direction:rtl;text-align:right;display:flex;flex-wrap:wrap;gap:6px 3px;align-items:center;padding:13px;border:1px solid #e2e6ee;border-radius:12px;background:#fbfcfe;font-family:Tahoma,"Segoe UI",sans-serif}.word{display:inline-flex;direction:rtl;gap:2px;align-items:center;margin-left:9px;border-left:1px solid #e7eaf0;padding-left:9px}.word:last-child{border-left:0}.tok{display:inline-flex;align-items:center;justify-content:center;border:1px solid #d7dce6;border-radius:7px;background:#fff;padding:4px 6px;min-width:24px;font-size:14px;line-height:1.15;unicode-bidi:plaintext}.tok.hit{background:var(--hotsoft);border-color:var(--hot);color:#754700;font-weight:850}.pairbar{width:4px;height:18px;background:var(--hot);border-radius:4px;margin:0 -1px}.tok.charhit{background:var(--hotsoft);border-color:var(--hot);font-weight:850}.count{font-weight:800;color:#5b6474}
+</style>
+</head>
+<body>
+<div class="graphwrap"><svg id="graph"></svg><div class="searchbox"><input id="search" placeholder="Find token…" /></div><div class="toolbar"><button class="tool" id="minus">−</button><button class="tool" id="reset">Reset</button><button class="tool" id="plus">+</button></div></div>
+<div class="modal" id="modal" aria-hidden="true"><div class="dialog" role="dialog" aria-modal="true"><div class="modalhead"><div class="tokenname" id="modalToken"></div><div class="meta" id="modalMeta"></div><button class="close" id="close" aria-label="Close">×</button></div><div class="modalbody"><div id="equation"></div><div id="sequence" class="sequence"></div></div></div></div>
+<script>
+const ORIGINAL=`دانش‌آموزان در مدرسه درباره هوش مصنوعی یادگیری می‌کنند. دانشمندان تلاش می‌کنند فناوری‌های جدید هوشمند بسازند.سیستم‌های یادگیرنده می‌توانند اطلاعات پیچیده را تحلیل کنند. توسعه سیستم‌های هوشمند یکی از اهداف مهم دانشمندان است.`;
+// User specification: remove ZWNJ; punctuation behaves exactly like whitespace.
+const NORMALIZED=ORIGINAL.replace(/\u200c/g,"").replace(/[\p{P}\p{S}]+/gu," ");
+const words=NORMALIZED.trim().split(/\s+/).filter(Boolean);
+
+function runBPE(words){
+ let seqs=words.map(w=>Array.from(w)),steps=[],definitions=new Map();
+ const chars=[];const seenChars=new Set();for(const w of words)for(const c of Array.from(w))if(!seenChars.has(c)){seenChars.add(c);chars.push(c)}
+ while(seqs.some(s=>s.length>1)){
+   const counts=new Map(),first=new Map();let order=0;
+   for(const s of seqs)for(let i=0;i<s.length-1;i++){const key=JSON.stringify([s[i],s[i+1]]);counts.set(key,(counts.get(key)||0)+1);if(!first.has(key))first.set(key,order);order++;}
+   if(!counts.size)break;let best=null,bc=-1,bo=Infinity;
+   for(const [k,c] of counts){const o=first.get(k);if(c>bc||(c===bc&&o<bo)){best=k;bc=c;bo=o}}
+   if(bc<2)break;
+   const [a,b]=JSON.parse(best),out=a+b,before=seqs.map(s=>s.slice()),occ=[];const after=[];
+   for(let wi=0;wi<seqs.length;wi++){const s=seqs[wi],n=[];for(let i=0;i<s.length;){if(i+1<s.length&&s[i]===a&&s[i+1]===b){occ.push([wi,i]);n.push(out);i+=2}else{n.push(s[i]);i++}}after.push(n)}
+   const st={index:steps.length+1,a,b,out,count:bc,before,occ};steps.push(st);if(!definitions.has(out))definitions.set(out,st);seqs=after;
+ }
+ return {chars,steps,definitions};
+}
+const bpe=runBPE(words), initialVocab=bpe.chars.length;
+
+// One node per unique token. If an identical token string can be reached again, its first creation defines the vocabulary node.
+const nodes=new Map();bpe.chars.forEach((t,i)=>nodes.set(t,{token:t,step:null,level:0,order:i,parents:[],children:[]}));
+for(const st of bpe.steps){
+ if(!nodes.has(st.out)) nodes.set(st.out,{token:st.out,step:st,level:1+Math.max(nodes.get(st.a)?.level||0,nodes.get(st.b)?.level||0),order:st.index,parents:[st.a,st.b],children:[]});
+ const out=nodes.get(st.out);for(const p of [st.a,st.b]){if(nodes.has(p)&&!nodes.get(p).children.includes(st.out))nodes.get(p).children.push(st.out)}
+}
+const maxLevel=Math.max(...[...nodes.values()].map(n=>n.level));
+const levels=Array.from({length:maxLevel+1},()=>[]);for(const n of nodes.values())levels[n.level].push(n);levels.forEach(a=>a.sort((x,y)=>x.order-y.order));
+
+function esc(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function renderSequence(seqs,occ=[],character=null){
+ const hit=new Set(occ.map(([w,i])=>w+':'+i)),box=document.getElementById('sequence');box.innerHTML='';
+ seqs.forEach((s,wi)=>{const word=document.createElement('span');word.className='word';for(let i=0;i<s.length;i++){const t=document.createElement('span');t.className='tok';t.textContent=s[i];if(character!==null&&s[i]===character)t.classList.add('charhit');if(hit.has(wi+':'+i)||hit.has(wi+':'+(i-1)))t.classList.add('hit');word.appendChild(t);if(hit.has(wi+':'+i)){const bar=document.createElement('i');bar.className='pairbar';word.appendChild(bar)}}box.appendChild(word)})
+}
+const initialSeqs=words.map(w=>Array.from(w));
+let selected=null;
+function openModal(){const m=document.getElementById('modal');m.classList.add('open');m.setAttribute('aria-hidden','false')}
+function closeModal(){const m=document.getElementById('modal');m.classList.remove('open');m.setAttribute('aria-hidden','true')}
+function selectToken(token){
+ const n=nodes.get(token);if(!n)return;selected=n;
+ document.getElementById('modalToken').textContent=token;
+ if(!n.step){
+   const count=initialSeqs.reduce((z,s)=>z+s.filter(x=>x===token).length,0);
+   document.getElementById('modalMeta').innerHTML=`initial character · <span class="count">${count}</span> occurrence${count===1?'':'s'}`;
+   document.getElementById('equation').innerHTML=`<div class="hint">Initial corpus state; every occurrence of this character token is highlighted.</div>`;
+   renderSequence(initialSeqs,[],token);
+ } else {
+   const st=n.step;
+   document.getElementById('modalMeta').innerHTML=`merge ${st.index} · <span class="count">${st.count}</span> occurrence${st.count===1?'':'s'} before creation`;
+   document.getElementById('equation').innerHTML=`<div class="equation"><span class="big">${esc(st.a)}</span><span class="op">+</span><span class="big">${esc(st.b)}</span><span class="op">→</span><span class="big out">${esc(st.out)}</span></div><div class="hint">Corpus state immediately before this token is created. All occurrences of the input pair are highlighted.</div>`;
+   renderSequence(st.before,st.occ);
+ }
+ draw();openModal();
+}
+document.getElementById('close').onclick=closeModal;
+document.getElementById('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
+const svg=document.getElementById('graph');
+const NODE_W=106,NODE_H=36,XGAP=28,YGAP=105,PADX=75,PADY=55;
+let graphW=Math.max(1000,...levels.map(a=>PADX*2+a.length*(NODE_W+XGAP))),graphH=PADY*2+(maxLevel+1)*YGAP;
+function layout(){for(let l=0;l<levels.length;l++){const arr=levels[l],rowW=arr.length*NODE_W+Math.max(0,arr.length-1)*XGAP,start=(graphW-rowW)/2;arr.forEach((n,i)=>{n.x=start+i*(NODE_W+XGAP)+NODE_W/2;n.y=PADY+l*YGAP})}}layout();
+let view={x:0,y:0,scale:Math.min(1,1000/graphW)};
+function bezier(a,b){const sy=a.y+NODE_H/2,ey=b.y-NODE_H/2,mid=(sy+ey)/2;return `M ${a.x} ${sy} C ${a.x} ${mid}, ${b.x} ${mid}, ${b.x} ${ey}`}
+function draw(){
+ svg.setAttribute('viewBox','0 0 1000 720');let out=[`<g transform="translate(${view.x} ${view.y}) scale(${view.scale})">`];
+ for(let l=0;l<levels.length;l++)out.push(`<text class="level-label" x="18" y="${PADY+l*YGAP+4}">${l===0?'INITIAL CHARACTERS':'MERGE DEPTH '+l}</text>`);
+ for(const n of nodes.values())if(n.step){for(const pTok of n.parents){const p=nodes.get(pTok);if(!p)continue;let cls='edge';if(selected&&selected.token===n.token)cls+=' active-in';else if(selected&&selected.token===p.token)cls+=' active-out';out.push(`<path class="${cls}" d="${bezier(p,n)}"/>`)}}
+ for(const n of nodes.values()){
+   let cls='node '+(n.step?'merge':'char');if(selected?.token===n.token)cls+=' selected';if(selected&&selected.parents.includes(n.token))cls+=' parent';if(selected&&selected.children.includes(n.token))cls+=' consumer';
+   const len=Array.from(n.token).length,w=Math.max(48,Math.min(NODE_W,30+len*14));
+   out.push(`<g class="${cls}" data-token="${esc(n.token)}" transform="translate(${n.x} ${n.y})" style="cursor:pointer"><rect x="${-w/2}" y="${-NODE_H/2}" width="${w}" height="${NODE_H}" rx="9"/><text class="tokenlabel" text-anchor="middle" dominant-baseline="middle" x="0" y="1">${esc(n.token)}</text>${n.step?`<text class="badge" text-anchor="end" x="${w/2-4}" y="${-NODE_H/2+9}">${n.step.index}</text>`:''}</g>`)
+ }
+ out.push('</g>');svg.innerHTML=out.join('');
+}
+draw();
+function centerOn(n){const scale=Math.max(view.scale,.9);view.scale=scale;view.x=500-n.x*scale;view.y=300-n.y*scale;draw()}
+document.getElementById('search').addEventListener('keydown',e=>{if(e.key!=='Enter')return;const q=e.target.value.trim();if(nodes.has(q)){selectToken(q);centerOn(nodes.get(q))}});
+document.getElementById('plus').onclick=()=>{view.scale=Math.min(2.2,view.scale*1.18);draw()};document.getElementById('minus').onclick=()=>{view.scale=Math.max(.18,view.scale/1.18);draw()};document.getElementById('reset').onclick=()=>{view={x:0,y:0,scale:Math.min(1,1000/graphW)};draw()};
+svg.addEventListener('wheel',e=>{e.preventDefault();const r=svg.getBoundingClientRect(),mx=(e.clientX-r.left)/r.width*1000,my=(e.clientY-r.top)/r.height*720,old=view.scale,ns=Math.max(.18,Math.min(2.3,old*(e.deltaY<0?1.1:.91))),wx=(mx-view.x)/old,wy=(my-view.y)/old;view.x=mx-wx*ns;view.y=my-wy*ns;view.scale=ns;draw()},{passive:false});
+let drag=null;
+svg.addEventListener('pointerdown',e=>{const node=e.target.closest?.('.node');drag={x:e.clientX,y:e.clientY,vx:view.x,vy:view.y,moved:false,token:node?.dataset.token||null};svg.setPointerCapture(e.pointerId)});
+svg.addEventListener('pointermove',e=>{if(!drag)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(Math.hypot(dx,dy)<4&&!drag.moved)return;drag.moved=true;svg.classList.add('dragging');const r=svg.getBoundingClientRect();view.x=drag.vx+dx/r.width*1000;view.y=drag.vy+dy/r.height*720;draw()});
+svg.addEventListener('pointerup',e=>{if(!drag)return;const d=drag;drag=null;svg.classList.remove('dragging');if(!d.moved&&d.token)selectToken(d.token)});
+svg.addEventListener('pointercancel',()=>{drag=null;svg.classList.remove('dragging')});
+</script>
+</body></html>

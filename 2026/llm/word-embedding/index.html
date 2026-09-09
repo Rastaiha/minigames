@@ -1,0 +1,1605 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>کارگاه تعاملی بردار کلمات و هوش مصنوعی</title>
+  <style>
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; user-select: none; -webkit-user-select: none; }
+    body { margin: 0; background: #0b0f19; color: #f8fafc; display: flex; flex-direction: column; height: 100dvh; overflow: hidden; }
+    
+    /* ۱. نمای هاب اصلی */
+    #hub-view {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      padding: 20px;
+      overflow-y: auto;
+      background: radial-gradient(circle at center, #1e293b 0%, #0b0f19 100%);
+    }
+
+    .hub-header { text-align: center; margin-bottom: 25px; }
+    .hub-header h1 { color: #38bdf8; font-size: 1.6rem; margin: 0 0 8px 0; }
+    .hub-header p { color: #94a3b8; font-size: 0.9rem; margin: 0; }
+
+    .hub-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      max-width: 1000px;
+      width: 100%;
+    }
+
+    .hub-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 12px;
+      transition: 0.25s ease;
+    }
+    .hub-card.unlocked { border-color: #38bdf8; box-shadow: 0 4px 14px rgba(56, 189, 248, 0.15); cursor: pointer; }
+    .hub-card.unlocked:hover { transform: translateY(-4px); border-color: #0284c7; }
+    .hub-card.locked { opacity: 0.5; filter: grayscale(0.8); cursor: not-allowed; }
+
+    .hub-card h3 { margin: 0; font-size: 1.05rem; color: #f8fafc; display: flex; align-items: center; gap: 8px; }
+    .hub-card p { margin: 0; font-size: 0.8rem; color: #94a3b8; line-height: 1.45; }
+    
+    .hub-btn-reset {
+      margin-top: 25px;
+      background: transparent;
+      border: 1px dashed #ef4444;
+      color: #ef4444;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: 0.2s;
+    }
+    .hub-btn-reset:hover { background: #ef4444; color: #fff; }
+
+    /* ۲. ساختار مشترک صفحات ورکشاپ */
+    .lab-page {
+      display: none;
+      flex-direction: column;
+      height: 100%;
+      width: 100%;
+    }
+
+    header {
+      background: #1e293b;
+      border-bottom: 1px solid #334155;
+      padding: 8px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+      z-index: 30;
+      gap: 10px;
+    }
+    header h1 { margin: 0; font-size: 0.95rem; color: #38bdf8; display: flex; align-items: center; gap: 6px; }
+
+    .btn-hub-back {
+      background: #334155;
+      border: 1px solid #475569;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.78rem;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    .btn-hub-back:hover { background: #475569; }
+
+    .container { display: flex; flex: 1; overflow: hidden; position: relative; }
+    
+    .sidebar {
+      width: 320px;
+      background: #1e293b;
+      border-left: 1px solid #334155;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 20;
+      flex-shrink: 0;
+    }
+    
+    .quest-card {
+      background: #0f172a;
+      border: 1px solid #38bdf8;
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 0.8rem;
+      color: #e2e8f0;
+      line-height: 1.5;
+    }
+    .quest-card strong { color: #38bdf8; display: block; margin-bottom: 4px; font-size: 0.85rem; }
+
+    .axis-setup-box {
+      background: #1e1b4b;
+      border: 1px solid #6366f1;
+      border-radius: 8px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 0.75rem;
+    }
+    .axis-setup-box input {
+      background: #0b0f19;
+      border: 1px solid #475569;
+      color: #f8fafc;
+      padding: 6px 8px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+    }
+
+    .btn {
+      padding: 8px 12px;
+      background: #0284c7;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 0.8rem;
+      transition: 0.2s;
+      text-align: center;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      text-decoration: none;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-green { background: #10b981; }
+    .btn-pink { background: #ec4899; }
+    .btn-danger { background: #ef4444; }
+    .btn-purple { background: #6366f1; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    
+    .word-bank-wrapper { position: relative; display: flex; align-items: center; flex: 1; min-height: 0; }
+    .word-bank {
+      flex: 1; height: 100%; border: 1px dashed #475569; border-radius: 8px; padding: 8px; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 6px; align-content: flex-start; background: #0b0f19;
+    }
+    .scroll-arrow-btn {
+      display: none; background: #334155; border: 1px solid #475569; color: white; border-radius: 6px; width: 28px; height: 38px; font-size: 1rem; cursor: pointer; z-index: 5; flex-shrink: 0;
+    }
+    
+    .canvas-container { flex: 1; position: relative; background: #0b0f19; overflow: hidden; touch-action: none; cursor: grab; }
+    .canvas-container:active { cursor: grabbing; }
+
+    #world-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform-origin: 0 0; pointer-events: none; }
+    svg#vector-layer { position: absolute; top: -5000px; left: -5000px; width: 10000px; height: 10000px; pointer-events: none; }
+    
+    .zoom-controls { position: absolute; top: 15px; left: 15px; display: flex; flex-direction: column; gap: 6px; z-index: 25; }
+    .zoom-btn {
+      width: 34px; height: 34px; background: #1e293b; border: 1px solid #475569; color: white; border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 1.1rem; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    }
+    
+    .word-node {
+      position: absolute; background: #1e293b; border: 2px solid #38bdf8; color: #f8fafc; padding: 5px 10px 5px 12px; border-radius: 20px; font-weight: bold; font-size: 0.82rem; cursor: grab; box-shadow: 0 4px 12px rgba(0,0,0,0.6); display: flex; flex-direction: column; align-items: center; gap: 2px; transform: translate(-50%, -50%); pointer-events: auto; touch-action: none; z-index: 10; white-space: nowrap; transition: left 0.4s ease, top 0.4s ease;
+    }
+    .word-node.dragging { transition: none; }
+    .word-node:active { cursor: grabbing; border-color: #f59e0b; }
+    .word-node.locked-node { cursor: default !important; border-color: #64748b; background: #1e293b; }
+    .word-node .coord-tag { font-size: 0.65rem; color: #38bdf8; font-family: monospace; direction: ltr; font-weight: normal; }
+    
+    .node-header { display: flex; align-items: center; gap: 6px; width: 100%; justify-content: space-between; }
+    .delete-node-btn { font-size: 0.7rem; color: #94a3b8; cursor: pointer; padding: 0 2px; line-height: 1; border-radius: 4px; }
+    .delete-node-btn:hover { color: #ef4444; background: rgba(255,255,255,0.1); }
+    
+    .word-bank .word-node { position: static; transform: none; cursor: pointer; background: #334155; border-color: #64748b; font-size: 0.8rem; padding: 5px 12px; flex-shrink: 0; touch-action: pan-x; }
+    .word-bank .word-node:active { background: #475569; }
+    .word-bank .word-node .delete-node-btn { display: none; }
+
+    .bottom-panel {
+      background: #1e293b; border-top: 1px solid #334155; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 0.85rem; flex-shrink: 0; z-index: 30;
+    }
+    .panel-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .panel-controls input[type="range"] {
+      background: #0b0f19; color: white; border: 1px solid #475569; padding: 5px 8px; border-radius: 6px; font-size: 0.8rem;
+    }
+
+    .loss-display-box {
+      font-family: monospace;
+      font-size: 0.85rem;
+      padding: 5px 12px;
+      border-radius: 6px;
+      background: #0f172a;
+      border: 1px solid #374151;
+      color: #38bdf8;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* ۳. نمای سه‌بعدی Three.js (استیت ۲) */
+    #three-canvas-container {
+      flex: 1;
+      width: 100%;
+      height: 100%;
+      position: relative;
+      background: #0b0f19;
+    }
+    .three-hud-top { position: absolute; top: 16px; right: 16px; display: flex; gap: 8px; z-index: 20; }
+    .three-hud-bottom {
+      position: absolute; left: 16px; bottom: 16px; background: rgba(15, 23, 42, 0.85); border: 1px solid #334155; padding: 8px 14px; border-radius: 8px; color: #94a3b8; font-size: 0.8rem; pointer-events: none; z-index: 20; backdrop-filter: blur(8px); direction: ltr; font-family: monospace;
+    }
+
+    /* ۴. استیت ۴ (متن فرانسه و کشف کانتکست) */
+    .nlp-container {
+      flex: 1;
+      display: flex;
+      gap: 16px;
+      padding: 16px;
+      overflow-y: auto;
+      background: #0b0f19;
+    }
+    .french-text-box {
+      flex: 1.4;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 20px;
+      font-size: 0.95rem;
+      line-height: 2.1;
+      direction: ltr;
+      text-align: left;
+      color: #cbd5e1;
+      overflow-y: auto;
+    }
+    .french-word {
+      color: #cbd5e1;
+      cursor: pointer;
+      display: inline-block;
+      margin: 0 1px;
+      transition: 0.15s ease;
+      font-weight: normal;
+      border-radius: 3px;
+      padding: 0 2px;
+    }
+    .french-word:hover {
+      background: rgba(56, 189, 248, 0.2);
+      color: #38bdf8;
+    }
+    .nlp-sidebar {
+      flex: 1;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      overflow-y: auto;
+    }
+    .bucket-zone {
+      border: 2px dashed #475569;
+      border-radius: 8px;
+      padding: 12px;
+      min-height: 180px;
+      background: #0f172a;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-content: flex-start;
+    }
+    .picked-tag {
+      background: #334155;
+      border: 1px solid #64748b;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 0.85rem;
+      color: #f8fafc;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      direction: ltr;
+    }
+    .picked-tag span.del {
+      color: #ef4444;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+
+    @media (max-width: 768px) {
+      .container { flex-direction: column-reverse; }
+      .sidebar { width: 100%; height: auto; border-left: none; border-top: 1px solid #334155; padding: 6px 10px; gap: 6px; }
+      .word-bank-wrapper { gap: 4px; height: 48px; }
+      .scroll-arrow-btn { display: flex; justify-content: center; align-items: center; }
+      .word-bank { display: flex; flex-direction: row; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; touch-action: pan-x; padding: 4px 6px; gap: 8px; align-items: center; }
+      .word-bank .word-node { flex-shrink: 0; white-space: nowrap; margin: 0; }
+      .bottom-panel { flex-direction: column; align-items: stretch; }
+      .nlp-container { flex-direction: column; }
+    }
+  </style>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+
+  <!-- ۱. صفحه هاب اصلی -->
+  <div id="hub-view">
+    <div class="hub-header">
+      <h1>🌌 کارگاه بردار کلمات و هوش مصنوعی</h1>
+      <p>یکی از بخش‌ها را برای ورود به آزمایشگاه انتخاب کنید:</p>
+    </div>
+
+    <div class="hub-grid">
+      <div class="hub-card unlocked" id="card-step1" onclick="openStepLink(1)">
+        <div>
+          <h3>📍 استیت ۱: درک معنا با ۲ محور (Word Space)</h3>
+          <p>تعریف دو مؤلفه (سنجش کمترین تا بیشترین) و مرتب‌سازی طیفی کلمات.</p>
+        </div>
+        <span class="btn btn-green">ورود به مرحله ۱ ➔</span>
+      </div>
+
+      <div class="hub-card locked" id="card-step2" onclick="openStepLink(2)">
+        <div>
+          <h3>🌐 استیت ۲: فشرده‌سازی سه‌بعدی به یک‌بعد (3D ➔ 1D)</h3>
+          <p>شهود هندسی از دست رفتن اطلاعات و کاهش ابعاد فضا.</p>
+        </div>
+        <span class="btn" id="btn-card-step2">🔒 قفل است</span>
+      </div>
+
+      <div class="hub-card locked" id="card-step3" onclick="openStepLink(3)">
+        <div>
+          <h3>📉 استیت ۳: کاهش بعد کلمات خودمان (Collapse)</h3>
+          <p>تصویر کردن کلمات روی خط و بررسی تغییر فاصله‌ها.</p>
+        </div>
+        <span class="btn" id="btn-card-step3">🔒 قفل است</span>
+      </div>
+
+      <div class="hub-card locked" id="card-step4" onclick="openStepLink(4)">
+        <div>
+          <h3>🧠 استیت ۴: کشف ساختار و قالب کلمات (Context)</h3>
+          <p>بررسی الگوهای تکرارشونده در زبان برای استخراج خودکار کلمات هم‌نقش.</p>
+        </div>
+        <span class="btn" id="btn-card-step4">🔒 قفل است</span>
+      </div>
+    </div>
+
+    <button class="hub-btn-reset" onclick="resetAllData()">🔄 پاکسازی حافظه و شروع از ابتدا</button>
+  </div>
+
+  <!-- ۲. ورکشاپ ۲ بعدی (استیت ۱ و ۳) -->
+  <div id="lab-view" class="lab-page">
+    <header>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <a href="#hub" class="btn-hub-back" onclick="openHub(event)">🏠 منوی کارگاه</a>
+        <h1 id="lab-title">🌌 آزمایشگاه بردار کلمات</h1>
+      </div>
+    </header>
+
+    <div class="container">
+      <div class="sidebar">
+        <div id="sidebar-quest" class="quest-card"></div>
+
+        <!-- کنترل تعریف مؤلفه‌ها در استیت ۱ -->
+        <div id="axis-names-wrapper" class="axis-setup-box">
+          <strong style="color: #a5b4fc;">📏 تعریف دو مؤلفه (سنجش بیشترین تا کمترین):</strong>
+          <label style="color:#94a3b8;">مؤلفه افقی (چپ: کمترین ⟵ راست: بیشترین):</label>
+          <input type="text" id="axis-x-input" placeholder="نام مؤلفه افقی..." oninput="updateAxisLabels()">
+          <label style="color:#94a3b8;">مؤلفه عمودی (پایین: کمترین ⟵ بالا: بیشترین):</label>
+          <input type="text" id="axis-y-input" placeholder="نام مؤلفه عمودی..." oninput="updateAxisLabels()">
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+          <span style="font-size: 0.75rem; color: #94a3b8; font-weight: bold;">بانک کلمات:</span>
+          <span id="bank-count" style="font-size: 0.7rem; color: #38bdf8;">۲۱ کلمه</span>
+        </div>
+        
+        <div class="word-bank-wrapper">
+          <button class="scroll-arrow-btn" onclick="scrollBank(120)">▶</button>
+          <div class="word-bank" id="word-bank"></div>
+          <button class="scroll-arrow-btn" onclick="scrollBank(-120)">◀</button>
+        </div>
+
+        <div>
+          <button class="btn btn-danger" style="width: 100%;" onclick="resetAllData()">🔄 ریست کلمات</button>
+        </div>
+      </div>
+
+      <div class="canvas-container" id="canvas-container">
+        <div class="zoom-controls">
+          <button class="zoom-btn" onclick="changeZoom(1.2)">➕</button>
+          <button class="zoom-btn" onclick="changeZoom(0.8)">➖</button>
+          <button class="zoom-btn" title="بازگشت به مرکز" onclick="resetView()">🎯</button>
+        </div>
+
+        <div id="world-layer">
+          <svg id="vector-layer" viewBox="-5000 -5000 10000 10000">
+            <defs>
+              <pattern id="smallGrid" width="40" height="40" patternUnits="userSpaceOnUse">
+                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="1"/>
+              </pattern>
+              <pattern id="grid" width="200" height="200" patternUnits="userSpaceOnUse">
+                <rect width="200" height="200" fill="url(#smallGrid)"/>
+                <path d="M 200 0 L 0 0 0 200" fill="none" stroke="#334155" stroke-width="1.5"/>
+              </pattern>
+            </defs>
+
+            <rect x="-5000" y="-5000" width="10000" height="10000" fill="url(#grid)" />
+
+            <g id="axes">
+              <line x1="-5000" y1="0" x2="5000" y2="0" stroke="#60a5fa" stroke-width="3"/>
+              <line x1="0" y1="-5000" x2="0" y2="5000" stroke="#60a5fa" stroke-width="3"/>
+              <circle cx="0" cy="0" r="5" fill="#f43f5e"/>
+              <text x="10" y="22" fill="#f43f5e" font-size="16" font-family="monospace" font-weight="bold">(0, 0)</text>
+              
+              <text id="label-x-pos" x="4100" y="-14" fill="#38bdf8" font-size="22" font-weight="bold">+X [بیشترین]</text>
+              <text id="label-x-neg" x="-4900" y="-14" fill="#64748b" font-size="20" font-weight="bold">-X [کمترین]</text>
+
+              <text id="label-y-pos" x="15" y="-4700" fill="#38bdf8" font-size="22" font-weight="bold">+Y [بیشترین]</text>
+              <text id="label-y-neg" x="15" y="4900" fill="#64748b" font-size="20" font-weight="bold">-Y [کمترین]</text>
+            </g>
+
+            <g id="axis-ticks"></g>
+            <g id="projection-axis-layer"></g>
+            <g id="projection-lines-layer"></g>
+          </svg>
+
+          <div id="nodes-container"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- پنل پایین استیت ۱ -->
+    <div class="bottom-panel" id="panel-step1">
+      <div style="color: #94a3b8; font-size: 0.8rem;">
+        📌 کلمات را برحسب شدت و اندازهٔ دو مؤلفه‌ای که در نظر گرفته‌اید، از کمترین تا بیشترین مرتب کنید.
+      </div>
+      <button class="btn btn-green" id="btn-finish-s1" onclick="completeAndNavigate(2)" disabled>
+        ثبت و رفتن به بخش بعدی ➔
+      </button>
+    </div>
+
+    <!-- پنل پایین استیت ۳ -->
+    <div class="bottom-panel" id="panel-step3" style="display: none;">
+      <div class="panel-controls">
+        <span style="font-weight: bold; color: #6366f1;">📉 کاهش بعد کلمات:</span>
+        <label style="color: #cbd5e1; font-size: 0.8rem;">زاویه خط ۱ بعدی: 
+          <input type="range" id="proj-angle" min="0" max="180" value="45" oninput="updateProjectionAxis()">
+          <span id="angle-val" style="color: #38bdf8; font-family: monospace;">45°</span>
+        </label>
+        <button class="btn btn-purple" id="btn-collapse" onclick="toggleCollapse()">💥 فشرده‌سازی (Collapse)</button>
+        <div class="loss-display-box" id="proj-loss-metric">
+          میزان Loss: <b style="color: #f59e0b;">0.00</b>
+        </div>
+      </div>
+      <button class="btn btn-green" onclick="completeAndNavigate(4)">رفتن به مرحله بعد ➔</button>
+    </div>
+  </div>
+
+  <!-- ۳. استیت ۲: محیط سه‌بعدی Three.js -->
+  <div id="threejs-view" class="lab-page">
+    <header>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <a href="#hub" class="btn-hub-back" onclick="openHub(event)">🏠 منوی کارگاه</a>
+        <h1 style="color: #38bdf8; font-size: 0.95rem;">🌐 استیت ۲: فشرده‌سازی ۳ بعدی به ۲ بعدی و ۱ بعدی</h1>
+      </div>
+      <button class="btn btn-green" onclick="completeAndNavigate(3)">رفتن به کاهش بعد کلمات ➔</button>
+    </header>
+
+    <div id="three-canvas-container">
+      <div class="three-hud-top">
+        <button class="btn btn-pink" id="btn2d">2D</button>
+        <button class="btn btn-purple" id="btn1d">1D</button>
+        <button class="btn" style="background:#334155;" id="reset">Reset</button>
+      </div>
+      <div class="three-hud-bottom" id="hint">
+        3D: drag to rotate · right-drag to pan · wheel to zoom
+      </div>
+    </div>
+  </div>
+
+  <!-- ۴. استیت ۴: کشف کانتکست و متن فرانسه با ساختار منظم -->
+  <div id="nlp-view" class="lab-page">
+    <header>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <a href="#hub" class="btn-hub-back" onclick="openHub(event)">🏠 منوی کارگاه</a>
+        <h1 style="color: #38bdf8; font-size: 0.95rem;">🧠 استیت ۴: کشف ساختار و قالب کلمات</h1>
+      </div>
+      <a href="#hub" class="btn btn-green" onclick="openHub(event)">🏆 پایان کارگاه</a>
+    </header>
+
+    <div class="nlp-container">
+      <div class="french-text-box" id="french-content">
+        <p>
+          Le <span class="french-word" onclick="pickFrenchWord(this)">tigre</span> est un <span class="french-word" onclick="pickFrenchWord(this)">animal</span> qui vit dans la forêt.
+        </p>
+        <p>
+          Le <span class="french-word" onclick="pickFrenchWord(this)">chat</span> est un <span class="french-word" onclick="pickFrenchWord(this)">animal</span> qui vit dans la maison.
+        </p>
+        <p>
+          Le <span class="french-word" onclick="pickFrenchWord(this)">loup</span> est un <span class="french-word" onclick="pickFrenchWord(this)">animal</span> qui vit dans la montagne.
+        </p>
+        <p>
+          La <span class="french-word" onclick="pickFrenchWord(this)">pomme</span> est un <span class="french-word" onclick="pickFrenchWord(this)">fruit</span> qui pousse sur un arbre.
+        </p>
+        <p>
+          La <span class="french-word" onclick="pickFrenchWord(this)">banane</span> est un <span class="french-word" onclick="pickFrenchWord(this)">fruit</span> qui pousse sur une plante.
+        </p>
+        <p>
+          La <span class="french-word" onclick="pickFrenchWord(this)">poire</span> est un <span class="french-word" onclick="pickFrenchWord(this)">fruit</span> qui pousse dans le verger.
+        </p>
+        <p>
+          Le <span class="french-word" onclick="pickFrenchWord(this)">bus</span> est un <span class="french-word" onclick="pickFrenchWord(this)">véhicule</span> qui roule sur la route.
+        </p>
+        <p>
+          Le <span class="french-word" onclick="pickFrenchWord(this)">train</span> est un <span class="french-word" onclick="pickFrenchWord(this)">véhicule</span> qui roule sur les rails.
+        </p>
+        <p>
+          Le <span class="french-word" onclick="pickFrenchWord(this)">vélo</span> est un <span class="french-word" onclick="pickFrenchWord(this)">véhicule</span> qui roule sur la piste.
+        </p>
+      </div>
+
+      <div class="nlp-sidebar">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <strong style="color:#f8fafc; font-size:0.9rem;">کلمات دسته‌بندی‌شده:</strong>
+          <button class="btn" style="background:#475569; padding:4px 8px; font-size:0.75rem;" onclick="clearBucket()">پاکسازی لیست</button>
+        </div>
+        <p style="color:#94a3b8; font-size:0.8rem; margin:0;">با کلیک روی کلمات داخل متن، آن‌ها را در این بخش گردآوری کنید:</p>
+
+        <div class="bucket-zone" id="bucket-single"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- اسکریپت کنترل صفحات و منطق استیت‌ها -->
+  <script>
+    const STORAGE_KEY = "workshop_ai_word_space_v9_order";
+    
+    const defaultWords = [
+      "لاک‌پشت", "دوچرخه", "اسب", "خودرو", "هواپیما", "فضاپیما",
+      "مورچه", "موش", "گربه", "گرگ", "فیل", "نهنگ",
+      "سوزن", "آجر", "میز", "خانه", "برج",
+      "شکر", "سیب", "نان", "پیتزا"
+    ];
+
+    const hubView = document.getElementById('hub-view');
+    const labView = document.getElementById('lab-view');
+    const threeView = document.getElementById('threejs-view');
+    const nlpView = document.getElementById('nlp-view');
+
+    const container = document.getElementById('canvas-container');
+    const worldLayer = document.getElementById('world-layer');
+    const nodesContainer = document.getElementById('nodes-container');
+    const wordBank = document.getElementById('word-bank');
+    const ticksLayer = document.getElementById('axis-ticks');
+    const projAxisLayer = document.getElementById('projection-axis-layer');
+    const projLinesLayer = document.getElementById('projection-lines-layer');
+    
+    let currentStep = 1;
+    let maxUnlockedStep = 1;
+    
+    let panX = 0, panY = 0, scale = 1;
+    let isPanning = false, startPan = { x: 0, y: 0 };
+    let activeNode = null, nodeDragOffset = { x: 0, y: 0 };
+    
+    let initialPinchDist = null;
+    let initialPinchCenter = { x: 0, y: 0 };
+    let initialScale = 1;
+    
+    const UNIT_SCALE = 200;
+    let projectionAngleDeg = 45;
+    let isCollapsed = false;
+    let originalPositions = {};
+
+    let axisXTitle = "";
+    let axisYTitle = "";
+
+    function updateAxisLabels() {
+      const inX = document.getElementById('axis-x-input').value.trim();
+      const inY = document.getElementById('axis-y-input').value.trim();
+      axisXTitle = inX;
+      axisYTitle = inY;
+
+      document.getElementById('label-x-pos').textContent = inX ? `+X [بیشترین ${inX}]` : `+X [بیشترین]`;
+      document.getElementById('label-x-neg').textContent = inX ? `-X [کمترین ${inX}]` : `-X [کمترین]`;
+
+      document.getElementById('label-y-pos').textContent = inY ? `+Y [بیشترین ${inY}]` : `+Y [بیشترین]`;
+      document.getElementById('label-y-neg').textContent = inY ? `-Y [کمترین ${inY}]` : `-Y [کمترین]`;
+
+      saveStateToCache();
+    }
+
+    function saveStateToCache() {
+      const placedNodes = [];
+      document.querySelectorAll('#nodes-container .word-node').forEach(node => {
+        placedNodes.push({
+          word: node.dataset.word,
+          left: parseFloat(node.style.left),
+          top: parseFloat(node.style.top)
+        });
+      });
+
+      const state = {
+        maxUnlockedStep,
+        placedNodes,
+        projectionAngleDeg,
+        axisXTitle,
+        axisYTitle
+      };
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      updateHubCardsUI();
+    }
+
+    function loadStateFromCache() {
+      const data = localStorage.getItem(STORAGE_KEY);
+      if (!data) return false;
+      try {
+        const state = JSON.parse(data);
+        maxUnlockedStep = state.maxUnlockedStep || 1;
+        projectionAngleDeg = state.projectionAngleDeg || 45;
+        axisXTitle = state.axisXTitle || "";
+        axisYTitle = state.axisYTitle || "";
+
+        document.getElementById('proj-angle').value = projectionAngleDeg;
+        document.getElementById('axis-x-input').value = axisXTitle;
+        document.getElementById('axis-y-input').value = axisYTitle;
+        updateAxisLabels();
+
+        nodesContainer.innerHTML = '';
+        if (state.placedNodes && state.placedNodes.length > 0) {
+          state.placedNodes.forEach(item => {
+            spawnToCanvas(item.word, null, item.left, item.top);
+          });
+        }
+        updateHubCardsUI();
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function updateHubCardsUI() {
+      for (let i = 2; i <= 4; i++) {
+        const card = document.getElementById(`card-step${i}`);
+        const btn = document.getElementById(`btn-card-step${i}`);
+        if (!card || !btn) continue;
+        if (i <= maxUnlockedStep) {
+          card.className = "hub-card unlocked";
+          btn.className = "btn btn-green";
+          btn.innerText = `ورود به بخش ${i} ➔`;
+        } else {
+          card.className = "hub-card locked";
+          btn.className = "btn";
+          btn.innerText = "🔒 قفل است";
+        }
+      }
+    }
+
+    function resetAllData() {
+      localStorage.removeItem(STORAGE_KEY);
+      window.location.hash = "#hub";
+      location.reload();
+    }
+
+    function handleRouting() {
+      const hash = window.location.hash;
+      if (hash.startsWith('#step')) {
+        const stepNum = parseInt(hash.replace('#step', '')) || 1;
+        if (stepNum > maxUnlockedStep) {
+          window.location.hash = `#step${maxUnlockedStep}`;
+          return;
+        }
+
+        if (stepNum === 2) {
+          showThreeView();
+        } else if (stepNum === 4) {
+          showNlpView();
+        } else {
+          showLabView(stepNum);
+        }
+      } else {
+        showHubView();
+      }
+    }
+
+    function openStepLink(stepNum) {
+      if (stepNum > maxUnlockedStep) return;
+      window.location.hash = `#step${stepNum}`;
+    }
+
+    function openHub(e) {
+      if (e) e.preventDefault();
+      window.location.hash = "#hub";
+    }
+
+    function completeAndNavigate(nextStep) {
+      if (nextStep > maxUnlockedStep) {
+        maxUnlockedStep = nextStep;
+      }
+      saveStateToCache();
+      window.location.hash = `#step${nextStep}`;
+    }
+
+    function hideAllPages() {
+      hubView.style.display = 'none';
+      labView.style.display = 'none';
+      threeView.style.display = 'none';
+      nlpView.style.display = 'none';
+    }
+
+    function showHubView() {
+      hideAllPages();
+      hubView.style.display = 'flex';
+      updateHubCardsUI();
+    }
+
+    function showThreeView() {
+      hideAllPages();
+      threeView.style.display = 'flex';
+      currentStep = 2;
+      window.dispatchEvent(new Event('resize'));
+    }
+
+    function showNlpView() {
+      hideAllPages();
+      nlpView.style.display = 'flex';
+      currentStep = 4;
+    }
+
+    function showLabView(stepNum) {
+      hideAllPages();
+      labView.style.display = 'flex';
+      currentStep = stepNum;
+
+      const axisBox = document.getElementById('axis-names-wrapper');
+      if (axisBox) axisBox.style.display = (stepNum === 1) ? 'flex' : 'none';
+
+      document.querySelectorAll('#nodes-container .word-node').forEach(node => {
+        if (stepNum === 3) {
+          node.classList.add('locked-node');
+          const delBtn = node.querySelector('.delete-node-btn');
+          if (delBtn) delBtn.style.display = 'none';
+        } else {
+          node.classList.remove('locked-node');
+          const delBtn = node.querySelector('.delete-node-btn');
+          if (delBtn) delBtn.style.display = 'inline';
+        }
+      });
+
+      const titles = {
+        1: "📍 استیت ۱: درک معنا و چیدمان برداری با دو مؤلفه",
+        3: "📉 استیت ۳: کاهش بعد کلمات خودمان (۲D ➔ ۱D)"
+      };
+      document.getElementById('lab-title').innerText = titles[stepNum];
+
+      const quests = {
+        1: "<strong>استیت ۱: چیدمان برداری کلمات</strong>برای هر دو محور مختصات دو ویژگی قابل سنجش (طیفی از کمترین به بیشترین) انتخاب کنید و کلمات را برحسب مقدار آن دو ویژگی روی صفحه بچینید.",
+        3: "<strong>استیت ۳: فشرده‌سازی کلمات (Collapse)</strong>زاویه خط را تغییر دهید تا اثر فشرده شدن کلمات و کاهش فاصله‌ها را مشاهده کنید."
+      };
+      document.getElementById('sidebar-quest').innerHTML = quests[stepNum];
+
+      [1, 3].forEach(i => {
+        const p = document.getElementById(`panel-step${i}`);
+        if (p) p.style.display = (i === stepNum) ? 'flex' : 'none';
+      });
+
+      if (stepNum === 3) {
+        updateProjectionAxis();
+      } else {
+        if (isCollapsed) toggleCollapse();
+        projAxisLayer.innerHTML = '';
+        projLinesLayer.innerHTML = '';
+      }
+
+      checkStep1Progress();
+      setTimeout(resetView, 50);
+    }
+
+    function checkStep1Progress() {
+      const remainingBankItems = Array.from(wordBank.children).filter(el => el.style.display !== 'none');
+      const btn = document.getElementById('btn-finish-s1');
+      const countLabel = document.getElementById('bank-count');
+      if (countLabel) countLabel.textContent = `${remainingBankItems.length} کلمه باقی‌مانده`;
+
+      if (remainingBankItems.length === 0) {
+        btn.disabled = false;
+        if (maxUnlockedStep < 2) {
+          maxUnlockedStep = 2;
+          saveStateToCache();
+        }
+      } else {
+        btn.disabled = true;
+      }
+    }
+
+    function scrollBank(distance) {
+      wordBank.scrollBy({ left: distance, behavior: 'smooth' });
+    }
+
+    function renderAxisTicks() {
+      let ticksHtml = '';
+      for (let i = -20; i <= 20; i++) {
+        if (i === 0) continue;
+        const pos = i * UNIT_SCALE;
+        ticksHtml += `
+          <line x1="${pos}" y1="-6" x2="${pos}" y2="6" stroke="#94a3b8" stroke-width="2"/>
+          <text x="${pos}" y="20" fill="#94a3b8" font-size="12" font-family="monospace" text-anchor="middle">${i}</text>
+          <line x1="-6" y1="${-pos}" x2="${6}" y2="${-pos}" stroke="#94a3b8" stroke-width="2"/>
+          <text x="-12" y="${-pos + 4}" fill="#94a3b8" font-size="12" font-family="monospace" text-anchor="end">${i}</text>
+        `;
+      }
+      ticksLayer.innerHTML = ticksHtml;
+    }
+
+    function createBankItem(word) {
+      const existsOnCanvas = Array.from(document.querySelectorAll('#nodes-container .word-node')).some(n => n.dataset.word === word);
+      
+      const item = document.createElement('div');
+      item.className = 'word-node';
+      item.innerText = word;
+      if (existsOnCanvas) item.style.display = 'none';
+
+      let touchStartX = 0, touchStartY = 0;
+      let hasMoved = false;
+
+      item.addEventListener('touchstart', (e) => {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        hasMoved = false;
+      }, { passive: true });
+
+      item.addEventListener('touchmove', (e) => {
+        const dx = Math.abs(e.touches[0].clientX - touchStartX);
+        const dy = Math.abs(e.touches[0].clientY - touchStartY);
+        if (dx > 8 || dy > 8) hasMoved = true;
+      }, { passive: true });
+
+      item.addEventListener('touchend', (e) => {
+        if (!hasMoved) {
+          spawnToCanvas(word, item);
+          checkStep1Progress();
+          saveStateToCache();
+        }
+      });
+
+      item.addEventListener('click', (e) => {
+        if (e.pointerType !== 'touch') {
+          spawnToCanvas(word, item);
+          checkStep1Progress();
+          saveStateToCache();
+        }
+      });
+
+      wordBank.appendChild(item);
+    }
+
+    function updateTransform() {
+      worldLayer.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+    }
+
+    function resetView() {
+      const rect = container.getBoundingClientRect();
+      panX = rect.width / 2;
+      panY = rect.height / 2;
+      scale = 1;
+      updateTransform();
+    }
+
+    container.addEventListener('pointerdown', (e) => {
+      if (e.target.closest('.word-node') || e.target.closest('.zoom-controls')) return;
+      if (e.pointerType === 'touch') return;
+
+      isPanning = true;
+      startPan = { x: e.clientX - panX, y: e.clientY - panY };
+      container.setPointerCapture(e.pointerId);
+    });
+
+    container.addEventListener('pointermove', (e) => {
+      if (e.pointerType === 'touch') return;
+
+      if (isPanning) {
+        panX = e.clientX - startPan.x;
+        panY = e.clientY - startPan.y;
+        updateTransform();
+      } else if (activeNode && !isCollapsed && currentStep === 1) {
+        const worldX = (e.clientX - panX) / scale;
+        const worldY = (e.clientY - panY) / scale;
+
+        activeNode.style.left = `${worldX - nodeDragOffset.x}px`;
+        activeNode.style.top = `${worldY - nodeDragOffset.y}px`;
+
+        updateNodeCoordinates(activeNode);
+      }
+    });
+
+    container.addEventListener('pointerup', (e) => {
+      if (e.pointerType === 'touch') return;
+      if (isPanning) {
+        isPanning = false;
+        try { container.releasePointerCapture(e.pointerId); } catch(err){}
+      }
+      if (activeNode) {
+        activeNode.classList.remove('dragging');
+        activeNode = null;
+        saveStateToCache();
+      }
+    });
+
+    container.addEventListener('touchstart', (e) => {
+      if (e.target.closest('.zoom-controls')) return;
+
+      if (e.touches.length === 2) {
+        isPanning = false;
+        if (activeNode) activeNode.classList.remove('dragging');
+        activeNode = null;
+        const t1 = e.touches[0];
+        const t2 = e.touches[1];
+        initialPinchDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+        initialPinchCenter = { x: (t1.clientX + t2.clientX) / 2, y: (t1.clientY + t2.clientY) / 2 };
+        initialScale = scale;
+      } else if (e.touches.length === 1) {
+        const node = e.target.closest('.word-node');
+        const touch = e.touches[0];
+        const mouseWX = (touch.clientX - panX) / scale;
+        const mouseWY = (touch.clientY - panY) / scale;
+
+        if (node && !e.target.classList.contains('delete-node-btn') && !isCollapsed && currentStep === 1) {
+          activeNode = node;
+          activeNode.classList.add('dragging');
+          const currentWX = parseFloat(node.style.left);
+          const currentWY = parseFloat(node.style.top);
+          nodeDragOffset = { x: mouseWX - currentWX, y: mouseWY - currentWY };
+        } else if (!node) {
+          isPanning = true;
+          startPan = { x: e.touches[0].clientX - panX, y: e.touches[0].clientY - panY };
+        }
+      }
+    }, { passive: false });
+
+    container.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+
+      if (e.touches.length === 2 && initialPinchDist) {
+        const t1 = e.touches[0];
+        const t2 = e.touches[1];
+        const currentDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+        const factor = currentDist / initialPinchDist;
+        const targetScale = Math.min(Math.max(0.2, initialScale * factor), 3.5);
+
+        const rect = container.getBoundingClientRect();
+        const cx = initialPinchCenter.x - rect.left;
+        const cy = initialPinchCenter.y - rect.top;
+
+        panX = cx - (cx - panX) * (targetScale / scale);
+        panY = cy - (cy - panY) * (targetScale / scale);
+        scale = targetScale;
+        updateTransform();
+      } else if (e.touches.length === 1) {
+        const touch = e.touches[0];
+        const worldX = (touch.clientX - panX) / scale;
+        const worldY = (touch.clientY - panY) / scale;
+
+        if (isPanning) {
+          panX = touch.clientX - startPan.x;
+          panY = touch.clientY - startPan.y;
+          updateTransform();
+        } else if (activeNode && !isCollapsed && currentStep === 1) {
+          activeNode.style.left = `${worldX - nodeDragOffset.x}px`;
+          activeNode.style.top = `${worldY - nodeDragOffset.y}px`;
+
+          updateNodeCoordinates(activeNode);
+        }
+      }
+    }, { passive: false });
+
+    container.addEventListener('touchend', (e) => {
+      if (e.touches.length < 2) initialPinchDist = null;
+      if (e.touches.length === 0) {
+        isPanning = false;
+        if (activeNode) activeNode.classList.remove('dragging');
+        activeNode = null;
+        saveStateToCache();
+      }
+    });
+
+    container.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
+      changeZoom(zoomFactor, e.clientX, e.clientY);
+    }, { passive: false });
+
+    function changeZoom(factor, clientX, clientY) {
+      const rect = container.getBoundingClientRect();
+      const x = clientX !== undefined ? clientX - rect.left : rect.width / 2;
+      const y = clientY !== undefined ? clientY - rect.top : rect.height / 2;
+      const newScale = Math.min(Math.max(0.2, scale * factor), 3.5);
+      panX = x - (x - panX) * (newScale / scale);
+      panY = y - (y - panY) * (newScale / scale);
+      scale = newScale;
+      updateTransform();
+    }
+
+    function spawnToCanvas(word, bankItem, customX = null, customY = null) {
+      if (bankItem) bankItem.style.display = 'none';
+      const node = document.createElement('div');
+      node.className = 'word-node';
+      node.dataset.word = word;
+
+      node.innerHTML = `
+        <div class="node-header">
+          <span>${word}</span>
+          <span class="delete-node-btn" onclick="deleteSingleNode('${word}')" title="حذف">✕</span>
+        </div>
+        <span class="coord-tag">[0, 0]</span>
+      `;
+
+      if (customX !== null && customY !== null) {
+        node.style.left = `${customX}px`;
+        node.style.top = `${customY}px`;
+      } else {
+        const rect = container.getBoundingClientRect();
+        const viewCenterX = (rect.width / 2 - panX) / scale;
+        const viewCenterY = (rect.height / 2 - panY) / scale;
+        node.style.left = `${viewCenterX + (Math.random() * 160 - 80)}px`;
+        node.style.top = `${viewCenterY + (Math.random() * 160 - 80)}px`;
+      }
+
+      node.addEventListener('pointerdown', (e) => {
+        if (e.pointerType === 'touch') return;
+        if (e.target.classList.contains('delete-node-btn')) return;
+        if (isCollapsed || currentStep === 3) return;
+        e.stopPropagation();
+        activeNode = node;
+        activeNode.classList.add('dragging');
+        const currentWX = parseFloat(node.style.left);
+        const currentWY = parseFloat(node.style.top);
+        const mouseWX = (e.clientX - panX) / scale;
+        const mouseWY = (e.clientY - panY) / scale;
+        nodeDragOffset = { x: mouseWX - currentWX, y: mouseWY - currentWY };
+      });
+
+      nodesContainer.appendChild(node);
+      updateNodeCoordinates(node);
+      return node;
+    }
+
+    function deleteSingleNode(word) {
+      if (currentStep === 3) return;
+      const node = Array.from(document.querySelectorAll('#nodes-container .word-node')).find(n => n.dataset.word === word);
+      if (node) {
+        node.remove();
+        delete originalPositions[word];
+
+        const bankEl = Array.from(wordBank.children).find(el => el.innerText.trim() === word);
+        if (bankEl) {
+          bankEl.style.display = 'flex';
+        }
+
+        checkStep1Progress();
+        saveStateToCache();
+      }
+    }
+
+    function getCartesian(node) {
+      const x = parseFloat(node.style.left);
+      const y = parseFloat(node.style.top);
+      const normX = (x / UNIT_SCALE).toFixed(2);
+      const normY = (-y / UNIT_SCALE).toFixed(2);
+      return { x: parseFloat(normX), y: parseFloat(normY), rawX: x, rawY: y };
+    }
+
+    function updateNodeCoordinates(node) {
+      const coords = getCartesian(node);
+      node.querySelector('.coord-tag').innerText = `[${coords.x}, ${coords.y}]`;
+    }
+
+    function updateProjectionAxis() {
+      projectionAngleDeg = parseFloat(document.getElementById('proj-angle').value);
+      document.getElementById('angle-val').innerText = `${projectionAngleDeg}°`;
+
+      const rad = (projectionAngleDeg * Math.PI) / 180;
+      const ux = Math.cos(rad);
+      const uy = -Math.sin(rad);
+
+      const len = 4000;
+      projAxisLayer.innerHTML = `
+        <line x1="${-ux * len}" y1="${-uy * len}" x2="${ux * len}" y2="${uy * len}" stroke="#818cf8" stroke-width="3" stroke-dasharray="8,8" />
+        <text x="${ux * (len - 200)}" y="${uy * (len - 200)}" fill="#818cf8" font-size="16" font-weight="bold">خط ۱ بعدی (${projectionAngleDeg}°)</text>
+      `;
+
+      let linesHtml = '';
+      let totalLoss = 0;
+      
+      const nodes = Array.from(document.querySelectorAll('#nodes-container .word-node'));
+
+      nodes.forEach(node => {
+        let x, y;
+        const word = node.dataset.word;
+
+        if (isCollapsed && originalPositions[word]) {
+          x = originalPositions[word].x;
+          y = originalPositions[word].y;
+        } else {
+          x = parseFloat(node.style.left);
+          y = parseFloat(node.style.top);
+        }
+
+        const projLen = (x * ux + y * uy);
+        const px = projLen * ux;
+        const py = projLen * uy;
+
+        const distToLine = Math.hypot(x - px, y - py);
+        totalLoss += distToLine / UNIT_SCALE;
+
+        linesHtml += `
+          <line x1="${x}" y1="${y}" x2="${px}" y2="${py}" stroke="#ec4899" stroke-width="1.5" stroke-dasharray="3,3" opacity="0.6"/>
+          <circle cx="${px}" cy="${py}" r="3" fill="#ec4899" />
+        `;
+      });
+
+      projLinesLayer.innerHTML = linesHtml;
+
+      const lossBox = document.getElementById('proj-loss-metric');
+      if (lossBox) {
+        lossBox.innerHTML = `میزان Loss: <b style="color: ${isCollapsed ? '#ec4899' : '#f59e0b'}; font-size: 1rem;">${totalLoss.toFixed(2)}</b> ${isCollapsed ? '(فشرده روی ۱ خط)' : ''}`;
+      }
+
+      saveStateToCache();
+    }
+
+    function toggleCollapse() {
+      const btn = document.getElementById('btn-collapse');
+      const nodes = Array.from(document.querySelectorAll('#nodes-container .word-node'));
+
+      if (!isCollapsed) {
+        const rad = (projectionAngleDeg * Math.PI) / 180;
+        const ux = Math.cos(rad);
+        const uy = -Math.sin(rad);
+
+        nodes.forEach(node => {
+          const w = node.dataset.word;
+          const x = parseFloat(node.style.left);
+          const y = parseFloat(node.style.top);
+
+          originalPositions[w] = { x, y };
+
+          const projLen = (x * ux + y * uy);
+          const px = projLen * ux;
+          const py = projLen * uy;
+
+          node.style.left = `${px}px`;
+          node.style.top = `${py}px`;
+          updateNodeCoordinates(node);
+        });
+
+        isCollapsed = true;
+        btn.innerText = "↩️ بازگردانی به ۲ بعد (Expand)";
+        btn.style.background = "#10b981";
+      } else {
+        nodes.forEach(node => {
+          const w = node.dataset.word;
+          if (originalPositions[w]) {
+            node.style.left = `${originalPositions[w].x}px`;
+            node.style.top = `${originalPositions[w].y}px`;
+            updateNodeCoordinates(node);
+          }
+        });
+
+        isCollapsed = false;
+        btn.innerText = "💥 فشرده‌سازی (Collapse)";
+        btn.style.background = "#6366f1";
+      }
+
+      setTimeout(() => {
+        if (currentStep === 3) updateProjectionAxis();
+      }, 450);
+    }
+
+    /* تعاملات استیت ۴ */
+    const placedTokens = [];
+
+    function pickFrenchWord(el) {
+      const rawText = el.textContent.trim();
+      const cleanWord = rawText.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
+      
+      const bucket = document.getElementById('bucket-single');
+      const tag = document.createElement('div');
+      tag.className = 'picked-tag';
+      tag.innerHTML = `<span>${cleanWord}</span><span class="del" onclick="this.parentElement.remove()">✕</span>`;
+      
+      bucket.appendChild(tag);
+      placedTokens.push(cleanWord);
+    }
+
+    function clearBucket() {
+      document.getElementById('bucket-single').innerHTML = '';
+      placedTokens.length = 0;
+    }
+
+    // راه‌اندازی اولیه
+    renderAxisTicks();
+    defaultWords.forEach(w => createBankItem(w));
+    loadStateFromCache();
+    handleRouting();
+    window.addEventListener('hashchange', handleRouting);
+  </script>
+
+  <!-- کد سه‌بعدی Three.js مختص استیت ۲ -->
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    const CONFIG = {
+      pointCount: 85,
+      worldSpread: 9,
+      radius: 0.28,
+      flatRadius: 0.28,
+      transitionDuration: 1000
+    };
+
+    const app = document.getElementById('three-canvas-container');
+    const hint = document.getElementById('hint');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0b0f19);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(app.clientWidth || window.innerWidth, app.clientHeight || window.innerHeight);
+    app.prepend(renderer.domElement);
+
+    const aspect = (app.clientWidth || window.innerWidth) / (app.clientHeight || window.innerHeight);
+    const perspectiveCamera = new THREE.PerspectiveCamera(45, aspect, 0.1, 100);
+    perspectiveCamera.position.set(10, 8, 13);
+
+    const orthoCamera = new THREE.OrthographicCamera(-10, 10, 10, -10, -100, 100);
+    let activeCamera = perspectiveCamera;
+
+    const controls = new OrbitControls(perspectiveCamera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+    controls.screenSpacePanning = true;
+    controls.minDistance = 3;
+    controls.maxDistance = 40;
+
+    function makeBallMaterial(color) {
+      return new THREE.ShaderMaterial({
+        uniforms: { baseColor:{ value:new THREE.Color(color) }, flatness:{ value:0.0 } },
+        vertexShader: `
+          varying vec3 vNormalView;
+          void main() {
+            vNormalView = normalize(normalMatrix * normal);
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: `
+          uniform vec3 baseColor;
+          uniform float flatness;
+          varying vec3 vNormalView;
+          void main() {
+            vec3 N = normalize(vNormalView);
+            vec3 L = normalize(vec3(-0.45, 0.65, 1.0));
+            float diffuse = max(dot(N, L), 0.0);
+            float shadedAmount = 0.34 + 0.66 * diffuse;
+            vec3 V = vec3(0.0, 0.0, 1.0);
+            vec3 H = normalize(L + V);
+            float spec = pow(max(dot(N, H), 0.0), 28.0) * 0.24;
+            vec3 shaded = baseColor * shadedAmount + vec3(spec);
+            gl_FragColor = vec4(mix(shaded, baseColor, flatness), 1.0);
+          }
+        `
+      });
+    }
+
+    const geometry = new THREE.SphereGeometry(1, 32, 20);
+    const palette = [0x4f86f7, 0xff6b6b, 0x42b883, 0xf6b73c, 0x9b6df2, 0x28b6c8];
+    const balls = [];
+    const rand = r => (Math.random() * 2 - 1) * r;
+
+    for (let i = 0; i < CONFIG.pointCount; i++) {
+      const original = new THREE.Vector3(rand(CONFIG.worldSpread), rand(CONFIG.worldSpread * 0.72), rand(CONFIG.worldSpread * 0.72));
+      const color = palette[Math.floor(Math.random() * palette.length)];
+      const mesh = new THREE.Mesh(geometry, makeBallMaterial(color));
+      mesh.position.copy(original);
+      mesh.scale.setScalar(CONFIG.radius);
+      scene.add(mesh);
+      balls.push({
+        mesh, original,
+        startPosition: original.clone(), targetPosition: original.clone(),
+        startScale: CONFIG.radius, targetScale: CONFIG.radius,
+        startFlatness: 0, targetFlatness: 0,
+        startDepth: 1, targetDepth: 1
+      });
+    }
+
+    let mode = '3d';
+    let transition = null;
+    let rotating2D = false;
+    let lastPointerAngle = 0;
+
+    const raycaster = new THREE.Raycaster();
+    const tmpNdc = new THREE.Vector3();
+    const tmpForward = new THREE.Vector3();
+    const tmpPlane = new THREE.Plane();
+    const tmpPoint = new THREE.Vector3();
+
+    const smoothstep = t => t * t * (3 - 2 * t);
+
+    function configure3DControls() {
+      controls.object = perspectiveCamera;
+      controls.enabled = true;
+      controls.enableRotate = true;
+      controls.enablePan = true;
+      controls.enableZoom = true;
+      controls.mouseButtons.LEFT = THREE.MOUSE.ROTATE;
+      controls.mouseButtons.RIGHT = THREE.MOUSE.PAN;
+    }
+
+    function configure2DControls() {
+      controls.object = orthoCamera;
+      controls.enabled = true;
+      controls.enableRotate = false;
+      controls.enablePan = true;
+      controls.enableZoom = false;
+      controls.mouseButtons.LEFT = -1;
+      controls.mouseButtons.RIGHT = THREE.MOUSE.PAN;
+    }
+
+    function configure1DControls() {
+      controls.object = orthoCamera;
+      controls.enabled = true;
+      controls.enableRotate = false;
+      controls.enablePan = true;
+      controls.enableZoom = false;
+      controls.mouseButtons.LEFT = THREE.MOUSE.PAN;
+      controls.mouseButtons.RIGHT = THREE.MOUSE.PAN;
+    }
+
+    function matchOrthoToPerspective(planeDistance) {
+      const w = app.clientWidth || window.innerWidth;
+      const h = app.clientHeight || window.innerHeight;
+      const aspect = w / h;
+      const halfHeight = Math.tan(THREE.MathUtils.degToRad(perspectiveCamera.fov * 0.5)) * planeDistance;
+      const halfWidth = halfHeight * aspect;
+      orthoCamera.left = -halfWidth;
+      orthoCamera.right = halfWidth;
+      orthoCamera.top = halfHeight;
+      orthoCamera.bottom = -halfHeight;
+      orthoCamera.zoom = 1;
+      orthoCamera.position.copy(perspectiveCamera.position);
+      orthoCamera.quaternion.copy(perspectiveCamera.quaternion);
+      orthoCamera.updateProjectionMatrix();
+      orthoCamera.updateMatrixWorld(true);
+    }
+
+    function begin3DTo2D() {
+      if (mode !== '3d') return;
+      perspectiveCamera.updateMatrixWorld(true);
+      controls.enabled = false;
+
+      const cameraPos = perspectiveCamera.position.clone();
+      const forward = perspectiveCamera.getWorldDirection(tmpForward).clone().normalize();
+      const planePoint = controls.target.clone();
+      let planeDistance = planePoint.clone().sub(cameraPos).dot(forward);
+      if (planeDistance < 1) {
+        planeDistance = Math.max(5, cameraPos.distanceTo(planePoint));
+        planePoint.copy(cameraPos).addScaledVector(forward, planeDistance);
+      }
+
+      tmpPlane.setFromNormalAndCoplanarPoint(forward, planePoint);
+      matchOrthoToPerspective(planeDistance);
+
+      balls.forEach(ball => {
+        ball.startPosition.copy(ball.mesh.position);
+        ball.startScale = ball.mesh.scale.x;
+        ball.startFlatness = ball.mesh.material.uniforms.flatness.value;
+
+        tmpNdc.copy(ball.mesh.position).project(perspectiveCamera);
+        raycaster.setFromCamera(new THREE.Vector2(tmpNdc.x, tmpNdc.y), perspectiveCamera);
+        const hit = raycaster.ray.intersectPlane(tmpPlane, tmpPoint);
+        ball.targetPosition.copy(hit || ball.mesh.position);
+        ball.targetScale = CONFIG.flatRadius;
+        ball.targetFlatness = 1;
+        ball.startDepth = ball.startPosition.clone().sub(cameraPos).dot(forward);
+        ball.targetDepth = planeDistance;
+      });
+
+      transition = { kind: 'to2d', startTime: performance.now(), duration: CONFIG.transitionDuration, planePoint: planePoint.clone(), planeDistance };
+      mode = 'transition2d';
+      hint.textContent = 'Flattening to 2D…';
+    }
+
+    function begin2DTo1D() {
+      if (mode === '3d') { begin3DTo2D(); return; }
+      if (mode !== '2d') return;
+
+      rotating2D = false;
+      controls.enabled = false;
+      orthoCamera.updateMatrixWorld(true);
+
+      balls.forEach(ball => {
+        ball.startPosition.copy(ball.mesh.position);
+        ball.startScale = ball.mesh.scale.x;
+        ball.startFlatness = ball.mesh.material.uniforms.flatness.value;
+        const cameraSpace = ball.mesh.position.clone();
+        orthoCamera.worldToLocal(cameraSpace);
+        cameraSpace.y = 0;
+        ball.targetPosition.copy(cameraSpace);
+        orthoCamera.localToWorld(ball.targetPosition);
+        ball.targetScale = CONFIG.flatRadius;
+        ball.targetFlatness = 1;
+      });
+
+      transition = { kind: 'to1d', startTime: performance.now(), duration: CONFIG.transitionDuration };
+      mode = 'transition1d';
+      hint.textContent = 'Collapsing to 1D…';
+    }
+
+    function resetTo3D() {
+      rotating2D = false;
+      transition = null;
+      mode = '3d';
+      activeCamera = perspectiveCamera;
+      perspectiveCamera.position.set(10, 8, 13);
+      perspectiveCamera.lookAt(0, 0, 0);
+      perspectiveCamera.updateMatrixWorld(true);
+      controls.target.set(0, 0, 0);
+      balls.forEach(ball => {
+        ball.mesh.position.copy(ball.original);
+        ball.mesh.scale.setScalar(CONFIG.radius);
+        ball.mesh.material.uniforms.flatness.value = 0;
+      });
+      configure3DControls();
+      controls.update();
+      hint.textContent = '3D: drag to rotate · right-drag to pan · wheel to zoom';
+    }
+
+    function pointerAngleFromScreenCenter(event) {
+      const rect = renderer.domElement.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      return Math.atan2(event.clientY - cy, event.clientX - cx);
+    }
+
+    function normalizeAngleDelta(d) {
+      if (d > Math.PI) d -= Math.PI * 2;
+      if (d < -Math.PI) d += Math.PI * 2;
+      return d;
+    }
+
+    function rotateFlatPointsAroundScreenCenter(delta) {
+      const pivot = controls.target.clone();
+      const axis = orthoCamera.getWorldDirection(new THREE.Vector3()).normalize();
+      balls.forEach(ball => {
+        const relative = ball.mesh.position.clone().sub(pivot).applyAxisAngle(axis, delta);
+        ball.mesh.position.copy(pivot).add(relative);
+        ball.targetPosition.copy(ball.mesh.position);
+        ball.startPosition.copy(ball.mesh.position);
+      });
+    }
+
+    renderer.domElement.addEventListener('pointerdown', event => {
+      if (mode !== '2d' || event.button !== 0) return;
+      rotating2D = true;
+      lastPointerAngle = pointerAngleFromScreenCenter(event);
+      controls.enabled = false;
+      renderer.domElement.setPointerCapture(event.pointerId);
+      event.preventDefault();
+      event.stopPropagation();
+    }, true);
+
+    renderer.domElement.addEventListener('pointermove', event => {
+      if (!rotating2D || mode !== '2d') return;
+      const a = pointerAngleFromScreenCenter(event);
+      const delta = normalizeAngleDelta(a - lastPointerAngle);
+      if (Number.isFinite(delta) && Math.abs(delta) > 1e-6) rotateFlatPointsAroundScreenCenter(delta);
+      lastPointerAngle = a;
+      event.preventDefault();
+      event.stopPropagation();
+    }, true);
+
+    function finish2DRotation(event) {
+      if (!rotating2D) return;
+      rotating2D = false;
+      if (renderer.domElement.hasPointerCapture(event.pointerId)) renderer.domElement.releasePointerCapture(event.pointerId);
+      if (mode === '2d') { configure2DControls(); controls.update(); }
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
+    renderer.domElement.addEventListener('pointerup', finish2DRotation, true);
+    renderer.domElement.addEventListener('pointercancel', finish2DRotation, true);
+
+    document.getElementById('btn2d').addEventListener('click', begin3DTo2D);
+    document.getElementById('btn1d').addEventListener('click', begin2DTo1D);
+    document.getElementById('reset').addEventListener('click', resetTo3D);
+
+    function animateTransition(now) {
+      if (!transition) return;
+      const rawT = Math.min(1, (now - transition.startTime) / transition.duration);
+      const t = smoothstep(rawT);
+
+      if (transition.kind === 'to2d') {
+        const cameraPos = perspectiveCamera.position;
+        const forward = perspectiveCamera.getWorldDirection(tmpForward).normalize();
+        balls.forEach(ball => {
+          ball.mesh.position.lerpVectors(ball.startPosition, ball.targetPosition, t);
+          const currentDepth = ball.mesh.position.clone().sub(cameraPos).dot(forward);
+          const startScreenRadius = ball.startScale / Math.max(.001, ball.startDepth);
+          const endScreenRadius = ball.targetScale / Math.max(.001, ball.targetDepth);
+          const currentScale = THREE.MathUtils.lerp(startScreenRadius, endScreenRadius, t) * Math.max(.001, currentDepth);
+          ball.mesh.scale.setScalar(currentScale);
+          ball.mesh.material.uniforms.flatness.value = THREE.MathUtils.lerp(ball.startFlatness, 1, t);
+        });
+
+        if (rawT >= 1) {
+          const planePoint = transition.planePoint.clone();
+          balls.forEach(ball => {
+            ball.mesh.position.copy(ball.targetPosition);
+            ball.mesh.scale.setScalar(CONFIG.flatRadius);
+            ball.mesh.material.uniforms.flatness.value = 1;
+          });
+          activeCamera = orthoCamera;
+          transition = null;
+          mode = '2d';
+          controls.target.copy(planePoint);
+          configure2DControls();
+          controls.update();
+          hint.textContent = '2D: left-drag to rotate around screen center · right-drag to pan · zoom disabled';
+        }
+      } else if (transition.kind === 'to1d') {
+        balls.forEach(ball => {
+          ball.mesh.position.lerpVectors(ball.startPosition, ball.targetPosition, t);
+          ball.mesh.scale.setScalar(THREE.MathUtils.lerp(ball.startScale, CONFIG.flatRadius, t));
+          ball.mesh.material.uniforms.flatness.value = THREE.MathUtils.lerp(ball.startFlatness, 1, t);
+        });
+        if (rawT >= 1) {
+          balls.forEach(ball => ball.mesh.position.copy(ball.targetPosition));
+          transition = null;
+          mode = '1d';
+          configure1DControls();
+          controls.update();
+          hint.textContent = '1D: all points collapsed to a horizontal line · drag to pan';
+        }
+      }
+    }
+
+    function animate(now) {
+      requestAnimationFrame(animate);
+      animateTransition(now);
+      controls.update();
+      renderer.render(scene, activeCamera);
+    }
+
+    function onResize() {
+      const w = app.clientWidth || window.innerWidth;
+      const h = app.clientHeight || window.innerHeight;
+      const aspect = w / h;
+      renderer.setSize(w, h);
+      perspectiveCamera.aspect = aspect;
+      perspectiveCamera.updateProjectionMatrix();
+      if (mode === '2d' || mode === '1d' || mode === 'transition1d') {
+        const halfHeight = (orthoCamera.top - orthoCamera.bottom) / 2;
+        const midX = (orthoCamera.left + orthoCamera.right) / 2;
+        orthoCamera.left = midX - halfHeight * aspect;
+        orthoCamera.right = midX + halfHeight * aspect;
+        orthoCamera.updateProjectionMatrix();
+      }
+    }
+
+    window.addEventListener('resize', onResize);
+    resetTo3D();
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>
