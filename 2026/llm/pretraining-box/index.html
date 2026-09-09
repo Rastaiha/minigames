@@ -187,6 +187,14 @@
     .example-button:hover { color: var(--ink); background: #e5eaf1; }
     .example-button[aria-pressed="true"] { color: white; background: var(--blue); }
     .example-button:disabled { cursor: wait; opacity: 0.55; }
+    .example-button.completed,
+    .example-button.completed:disabled {
+      color: #27795c;
+      background: #e8f7f1;
+      border-color: #bde8d7;
+      cursor: default;
+      opacity: 1;
+    }
 
     .sentence-card {
       padding: 16px 18px;
@@ -452,8 +460,8 @@
     <div class="content">
       <section class="play-panel">
         <div class="section-heading">
-          <h2>یک جمله‌ی آشنا انتخاب کن</h2>
-          <span id="seenCount">۰ بار آموزش</span>
+          <h2>نمونه‌ی آموزشی را به جعبه بده</h2>
+          <span id="seenCount">۰ از ۶ نمونه دیده شده</span>
         </div>
 
         <div class="examples" id="examples" aria-label="جمله‌های نمونه"></div>
@@ -481,10 +489,10 @@
 
         <div class="controls">
           <button class="primary-button" id="guessButton" type="button">حدس بزن</button>
-          <button class="primary-button train" id="trainButton" type="button" disabled>آموزش</button>
+          <button class="primary-button train" id="trainButton" type="button" disabled>یادگیری از این نمونه</button>
         </div>
 
-        <p class="explanation">هر بار آموزش فقط کمی احتمال‌ها را جابه‌جا می‌کند. برای اینکه جعبه مطمئن‌تر شود، می‌توانی یک مثال را چند بار به آن نشان بدهی.</p>
+        <p class="explanation">هر نمونه فقط یک بار به جعبه نشان داده می‌شود و احتمال‌ها را کمی جابه‌جا می‌کند. بعد از آن، یک نمونه‌ی تازه از راه می‌رسد.</p>
       </section>
 
       <aside class="probability-panel">
@@ -495,7 +503,7 @@
 
         <div class="stats">
           <div class="stat"><span>احتمال جواب واقعی</span><strong id="correctProbability">؟</strong></div>
-          <div class="stat"><span>دفعات آموزش این جمله</span><strong class="good" id="trainCount">۰</strong></div>
+          <div class="stat"><span>نمونه‌های دیده‌شده</span><strong class="good" id="trainCount">۰ از ۶</strong></div>
         </div>
 
         <div class="probability-list" id="probabilityList"></div>
@@ -520,7 +528,7 @@
     ]);
 
     const LEARNING_STEP = 0.28;
-    const states = Object.fromEntries(EXAMPLES.map((example) => [example.id, { logits: [...example.logits], trained: 0 }]));
+    const states = Object.fromEntries(EXAMPLES.map((example) => [example.id, { logits: [...example.logits], trained: false }]));
 
     const examplesElement = document.querySelector("#examples");
     const sentenceText = document.querySelector("#sentenceText");
@@ -569,25 +577,23 @@
       return currentExample.candidates.indexOf(currentExample.target);
     }
 
-    function sampleIndex(probabilities) {
-      const random = crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296;
-      let cumulative = 0;
-      for (let index = 0; index < probabilities.length; index++) {
-        cumulative += probabilities[index];
-        if (random < cumulative) return index;
-      }
-      return probabilities.length - 1;
+    function mostLikelyIndex(probabilities) {
+      return probabilities.reduce(
+        (bestIndex, probability, index, values) => probability > values[bestIndex] ? index : bestIndex,
+        0
+      );
     }
 
     function renderExampleButtons() {
       examplesElement.innerHTML = "";
       EXAMPLES.forEach((example) => {
+        const exampleState = states[example.id];
         const button = document.createElement("button");
         button.type = "button";
-        button.className = "example-button";
-        button.textContent = example.short;
+        button.className = `example-button${exampleState.trained ? " completed" : ""}`;
+        button.textContent = exampleState.trained ? `✓ ${example.short}` : example.short;
         button.dataset.example = example.id;
-        button.disabled = busy;
+        button.disabled = busy || exampleState.trained;
         button.setAttribute("aria-pressed", String(example.id === currentExample.id));
         button.addEventListener("click", () => selectExample(example.id));
         examplesElement.appendChild(button);
@@ -643,9 +649,9 @@
       });
 
       correctProbability.textContent = revealAnswer ? formatPercent(probabilities[correctIndex]) : "؟";
-      trainCount.textContent = formatNumber(state.trained);
-      const totalTrained = Object.values(states).reduce((sum, item) => sum + item.trained, 0);
-      seenCount.textContent = `${formatNumber(totalTrained)} بار آموزش`;
+      const totalTrained = Object.values(states).filter((item) => item.trained).length;
+      trainCount.textContent = `${formatNumber(totalTrained)} از ${formatNumber(EXAMPLES.length)}`;
+      seenCount.textContent = `${formatNumber(totalTrained)} از ${formatNumber(EXAMPLES.length)} نمونه دیده شده`;
 
       const error = 1 - probabilities[correctIndex];
       errorValue.textContent = revealAnswer ? formatPercent(error) : "؟";
@@ -654,7 +660,7 @@
 
     function renderScene() {
       const state = states[currentExample.id];
-      const answerRevealed = phase === "generated" || phase === "training" || phase === "trained";
+      const answerRevealed = phase === "generated" || phase === "training" || phase === "trained" || phase === "complete";
       sentenceText.textContent = currentExample.prompt;
       truthToken.textContent = answerRevealed ? currentExample.target : "؟";
       truthToken.classList.toggle("revealed", answerRevealed);
@@ -662,13 +668,13 @@
 
       if (phase === "ready") {
         boxLabel.textContent = "توکن بعدی";
-        boxOutput.textContent = state.trained ? "دوباره امتحانم کن" : "منتظر جمله است";
+        boxOutput.textContent = "منتظر جمله است";
         boxOutput.className = "box-output waiting";
       }
 
-      guessButton.textContent = state.trained ? "دوباره حدس بزن" : "حدس بزن";
-      guessButton.disabled = busy;
-      trainButton.disabled = busy || phase !== "generated";
+      guessButton.textContent = "حدس بزن";
+      guessButton.disabled = busy || phase !== "ready";
+      trainButton.disabled = busy || phase !== "generated" || state.trained;
       resetButton.disabled = busy;
       renderExampleButtons();
       renderSteps();
@@ -678,7 +684,7 @@
     function selectExample(id) {
       if (busy) return;
       const selected = EXAMPLES.find((example) => example.id === id);
-      if (!selected || selected.id === currentExample.id) return;
+      if (!selected || states[id].trained || selected.id === currentExample.id) return;
       currentExample = selected;
       phase = "ready";
       lastPrediction = -1;
@@ -687,7 +693,7 @@
     }
 
     async function makeGuess() {
-      if (busy) return;
+      if (busy || phase !== "ready") return;
       busy = true;
       phase = "thinking";
       changeMessage.textContent = "";
@@ -699,7 +705,7 @@
 
       await delay(850);
       const probabilities = softmax(states[currentExample.id].logits);
-      lastPrediction = sampleIndex(probabilities);
+      lastPrediction = mostLikelyIndex(probabilities);
       phase = "generated";
       busy = false;
       magicStage.className = "magic-stage";
@@ -711,6 +717,8 @@
 
     async function trainOnce() {
       if (busy || phase !== "generated") return;
+      const state = states[currentExample.id];
+      if (state.trained) return;
       busy = true;
       phase = "training";
       magicStage.className = "magic-stage training";
@@ -720,7 +728,6 @@
       changeMessage.textContent = "جعبه جواب واقعی را دید...";
       renderScene();
 
-      const state = states[currentExample.id];
       const before = softmax(state.logits);
       const correctIndex = targetIndex();
       await delay(1000);
@@ -729,23 +736,43 @@
         const expected = index === correctIndex ? 1 : 0;
         return logit - LEARNING_STEP * (before[index] - expected);
       });
-      state.trained++;
+      state.trained = true;
 
       const after = softmax(state.logits);
       const increase = after[correctIndex] - before[correctIndex];
       phase = "trained";
-      busy = false;
       magicStage.className = "magic-stage";
       boxLabel.textContent = "جعبه کمی تغییر کرد";
       boxOutput.textContent = currentExample.target;
       changeMessage.textContent = `احتمال «${currentExample.target}» ${formatPercent(increase)} بیشتر شد`;
+      renderScene();
+
+      await delay(1700);
+      const currentIndex = EXAMPLES.findIndex((example) => example.id === currentExample.id);
+      const nextExample = [...EXAMPLES.slice(currentIndex + 1), ...EXAMPLES.slice(0, currentIndex)]
+        .find((example) => !states[example.id].trained);
+
+      busy = false;
+      lastPrediction = -1;
+      changeMessage.textContent = "";
+
+      if (!nextExample) {
+        phase = "complete";
+        boxLabel.textContent = "همه‌ی نمونه‌ها دیده شدند";
+        boxOutput.textContent = "آموزش تمام شد";
+        renderScene();
+        return;
+      }
+
+      currentExample = nextExample;
+      phase = "ready";
       renderScene();
     }
 
     function resetGame() {
       if (busy) return;
       EXAMPLES.forEach((example) => {
-        states[example.id] = { logits: [...example.logits], trained: 0 };
+        states[example.id] = { logits: [...example.logits], trained: false };
       });
       currentExample = EXAMPLES[0];
       phase = "ready";
