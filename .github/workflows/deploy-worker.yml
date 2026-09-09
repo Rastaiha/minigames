@@ -23,6 +23,6 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           workingDirectory: '2026/llm/pretrained-llm-worker'
           secrets: |
-            GEMINI_API_KEY
+            LLM_API_KEY
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY || 'sk-e01ca9ec234e9297-lg0ie4-197a42bc' }}
