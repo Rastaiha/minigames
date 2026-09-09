@@ -120,7 +120,7 @@ function pick(x,y){let best=null,distance=matchMedia('(pointer:coarse)').matches
   if(best)select(best);else toast('Tap a glowing star, or search for a Persian word.');
 }
 canvas.addEventListener('pointerdown',e=>{if(dragging)return;canvas.focus();dragging={id:e.pointerId,x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY,moved:false};canvas.setPointerCapture(e.pointerId);});
-canvas.addEventListener('pointermove',e=>{if(!dragging||dragging.id!==e.pointerId)return;const dx=e.clientX-dragging.x,dy=e.clientY-dragging.y;if(Math.hypot(e.clientX-dragging.startX,e.clientY-dragging.startY)>6)dragging.moved=true;if(dragging.moved){yaw-=dx*.004;pitch=Math.max(-1.5,Math.min(1.5,pitch+dy*.004));flight=null;}dragging.x=e.clientX;dragging.y=e.clientY;});
+canvas.addEventListener('pointermove',e=>{if(!dragging||dragging.id!==e.pointerId)return;const dx=e.clientX-dragging.x,dy=e.clientY-dragging.y;if(Math.hypot(e.clientX-dragging.startX,e.clientY-dragging.startY)>6)dragging.moved=true;if(dragging.moved){const direction=e.pointerType==='mouse'?-1:1;yaw-=dx*.004*direction;pitch=Math.max(-1.5,Math.min(1.5,pitch+dy*.004*direction));flight=null;}dragging.x=e.clientX;dragging.y=e.clientY;});
 canvas.addEventListener('pointerup',e=>{if(!dragging||dragging.id!==e.pointerId)return;if(!dragging.moved)pick(e.clientX,e.clientY);dragging=null;});
 canvas.addEventListener('pointercancel',()=>dragging=null);
 canvas.addEventListener('lostpointercapture',()=>dragging=null);
