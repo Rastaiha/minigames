@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="fa" dir="rtl">
+<html lang="fa">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -46,11 +46,11 @@
     }
 
     .chat {
-      width: min(100%, 780px);
+      width: min(100%, 760px);
       height: min(880px, 100%);
       min-height: 420px;
-      display: grid;
-      grid-template-rows: auto auto auto 1fr auto;
+      display: flex;
+      flex-direction: column;
       overflow: hidden;
       background: var(--surface);
       border: 1px solid rgba(255, 255, 255, 0.72);
@@ -65,28 +65,28 @@
       align-items: center;
       gap: 13px;
       border-bottom: 1px solid var(--line);
+      flex: 0 0 auto;
     }
 
     .avatar {
-      width: 42px;
-      height: 42px;
+      width: 40px;
+      height: 40px;
       display: grid;
       place-items: center;
       flex: 0 0 auto;
       color: white;
       background: var(--ink);
       border-radius: 13px;
-      font-size: 19px;
-      font-weight: 700;
+      font-size: 20px;
       font-style: normal;
-      transition: transform 200ms ease;
+      font-weight: 600;
     }
 
     .identity { min-width: 0; text-align: right; flex: 1; }
 
     h1 {
       margin: 0 0 3px;
-      font-size: 18px;
+      font-size: 19px;
       font-weight: 600;
       letter-spacing: -0.02em;
     }
@@ -101,12 +101,12 @@
     }
 
     .status-dot {
-      width: 8px;
-      height: 8px;
+      width: 7px;
+      height: 7px;
       flex: 0 0 auto;
       border-radius: 50%;
       background: var(--ready);
-      box-shadow: 0 0 0 4px rgba(76, 171, 131, 0.15);
+      box-shadow: 0 0 0 4px rgba(76, 171, 131, 0.13);
       transition: background 200ms ease, box-shadow 200ms ease;
     }
 
@@ -145,6 +145,7 @@
     .clear-button {
       width: 36px;
       height: 36px;
+      margin-left: auto;
       display: grid;
       place-items: center;
       color: var(--muted);
@@ -157,6 +158,7 @@
 
     .clear-button:hover:not(:disabled) { color: var(--ink); background: #e9edf3; }
     .clear-button:disabled { cursor: default; opacity: 0.25; }
+    .clear-button svg { width: 18px; height: 18px; }
 
     /* Level tabs matching model-lab */
     .level-tabs {
@@ -168,13 +170,14 @@
       background: rgba(248, 250, 252, 0.96);
       border-bottom: 1px solid var(--line);
       scrollbar-width: none;
+      flex: 0 0 auto;
     }
 
     .level-tabs::-webkit-scrollbar { display: none; }
 
     .level-tab {
       width: auto;
-      height: 38px;
+      height: 36px;
       padding: 0 16px;
       display: inline-flex;
       align-items: center;
@@ -189,7 +192,7 @@
       font-weight: 500;
       white-space: nowrap;
       cursor: pointer;
-      transition: all 150ms ease;
+      transition: color 140ms ease, background 140ms ease;
     }
 
     .level-tab:hover:not(:disabled) { color: var(--ink); background: #dfe5ed; }
@@ -197,7 +200,7 @@
     .level-tab[aria-selected="true"] {
       color: white;
       background: var(--user);
-      box-shadow: 0 4px 12px rgba(49, 91, 232, 0.22);
+      box-shadow: 0 4px 12px rgba(49, 91, 232, 0.2);
     }
 
     .level-tab:disabled {
@@ -211,7 +214,7 @@
       font-size: 11px;
       padding: 2px 6px;
       border-radius: 6px;
-      background: rgba(0, 0, 0, 0.08);
+      background: rgba(0, 0, 0, 0.07);
     }
 
     .level-tab[aria-selected="true"] .badge {
@@ -229,11 +232,13 @@
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      padding: 9px 20px;
+      padding: 8px 16px;
       font-size: 12.5px;
       color: var(--muted);
-      background: #f1f4f8;
+      background: rgba(248, 250, 252, 0.96);
       border-bottom: 1px solid var(--line);
+      direction: rtl;
+      flex: 0 0 auto;
     }
 
     .mission-text {
@@ -259,8 +264,9 @@
     /* Messages container */
     .messages {
       position: relative;
+      flex: 1 1 auto;
       min-height: 0;
-      padding: 24px;
+      padding: 28px 24px;
       overflow-y: auto;
       overscroll-behavior: contain;
       scroll-behavior: smooth;
@@ -272,11 +278,11 @@
 
     .message {
       width: fit-content;
-      max-width: min(78%, 560px);
-      margin: 0 0 14px;
-      padding: 12px 18px;
+      max-width: min(76%, 540px);
+      margin: 0 0 15px;
+      padding: 12px 16px;
       border-radius: 18px;
-      font-size: 15px;
+      font-size: 16px;
       line-height: 1.85;
       white-space: pre-wrap;
       overflow-wrap: anywhere;
@@ -284,7 +290,6 @@
     }
 
     .message.assistant {
-      margin-left: auto;
       color: var(--ink);
       background: #e9edf3;
       border-bottom-left-radius: 5px;
@@ -293,8 +298,7 @@
     }
 
     .message.user {
-      margin-right: auto;
-      margin-left: 0;
+      margin-left: auto;
       color: var(--user-ink);
       background: var(--user);
       border-bottom-right-radius: 5px;
@@ -339,19 +343,19 @@
     .empty-state[hidden] { display: none; }
 
     .empty-mark {
-      width: 52px;
-      height: 52px;
+      width: 50px;
+      height: 50px;
       margin-bottom: 14px;
       display: grid;
       place-items: center;
       color: var(--user);
       background: rgba(49, 91, 232, 0.09);
-      border-radius: 18px;
-      font-size: 26px;
+      border-radius: 17px;
+      font-size: 23px;
       font-weight: 700;
     }
 
-    .empty-state p { margin: 0 0 6px; color: var(--ink); font-size: 16px; font-weight: 600; }
+    .empty-state p { margin: 0 0 5px; color: var(--ink); font-size: 16px; font-weight: 600; }
     .empty-state span { font-size: 13px; max-width: 380px; line-height: 1.6; }
 
     /* Victory / Solved Banner */
@@ -365,6 +369,7 @@
       align-items: center;
       justify-content: space-between;
       gap: 16px;
+      direction: rtl;
       animation: arrive 220ms ease-out both;
     }
 
@@ -399,6 +404,7 @@
     }
 
     .next-level-btn {
+      width: auto;
       height: 38px;
       padding: 0 16px;
       background: var(--success);
@@ -424,9 +430,11 @@
 
     /* Composer */
     .composer-wrap {
-      padding: 16px 20px;
+      flex: 0 0 auto;
+      margin-top: auto;
+      padding: 16px;
       border-top: 1px solid var(--line);
-      background: rgba(248, 250, 252, 0.94);
+      background: rgba(248, 250, 252, 0.92);
     }
 
     form {
@@ -466,7 +474,7 @@
 
     textarea::placeholder { color: #9ba5b5; }
 
-    .action-btn {
+    button {
       width: 42px;
       height: 42px;
       padding: 0;
@@ -481,17 +489,17 @@
       transition: transform 140ms ease, background 140ms ease, opacity 140ms ease;
     }
 
-    .action-btn:hover:not(:disabled) { transform: translateY(-1px); background: var(--user); }
-    .action-btn:active:not(:disabled) { transform: translateY(0) scale(0.97); }
-    .action-btn:focus-visible { outline: 3px solid rgba(49, 91, 232, 0.28); outline-offset: 3px; }
-    .action-btn:disabled { cursor: wait; opacity: 0.4; }
-    .action-btn svg { width: 19px; height: 19px; }
-    .action-btn .stop-icon { display: none; }
-    .action-btn.is-generating .send-icon { display: none; }
-    .action-btn.is-generating .stop-icon { display: block; }
+    button:hover:not(:disabled) { transform: translateY(-1px); background: var(--user); }
+    button:active:not(:disabled) { transform: translateY(0) scale(0.97); }
+    button:focus-visible { outline: 3px solid rgba(49, 91, 232, 0.28); outline-offset: 3px; }
+    button:disabled { cursor: wait; opacity: 0.4; }
+    button svg { width: 19px; height: 19px; }
+    button .stop-icon { display: none; }
+    button.is-generating .send-icon { display: none; }
+    button.is-generating .stop-icon { display: block; }
 
     @keyframes arrive {
-      from { opacity: 0; transform: translateY(6px); }
+      from { opacity: 0; transform: translateY(5px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
@@ -500,13 +508,13 @@
     @media (max-width: 600px) {
       body { padding: 0; background: var(--surface); }
       .chat { width: 100%; height: 100%; min-height: 0; border: 0; border-radius: 0; box-shadow: none; }
-      header { min-height: 68px; padding: 0 16px; }
-      .avatar { width: 38px; height: 38px; border-radius: 12px; font-size: 17px; }
-      .messages { padding: 18px 14px; }
-      .message { max-width: 88%; }
-      .level-tabs { padding: 8px 12px; }
+      header { min-height: 68px; padding: 0 18px; }
+      .avatar { width: 37px; height: 37px; border-radius: 12px; }
+      .messages { padding: 22px 16px; }
+      .message { max-width: 86%; }
+      .level-tabs { padding: 9px 12px; }
       .level-tab { padding: 0 12px; }
-      .mission-bar { padding: 8px 14px; font-size: 12px; }
+      .mission-bar { padding: 8px 12px; font-size: 12px; }
       .composer-wrap { padding: 12px; padding-bottom: max(12px, env(safe-area-inset-bottom)); }
       .solved-banner { flex-direction: column; align-items: flex-start; }
       .next-level-btn { width: 100%; justify-content: center; }
@@ -537,7 +545,7 @@
           تلاش: <strong id="attemptCount">۰</strong>
         </div>
         <button id="clearButton" class="clear-button" type="button" aria-label="پاک کردن گفت‌وگو" title="شروع مجدد گفت‌وگوی این مرحله" disabled>
-          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" width="19" height="19">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" width="18" height="18">
             <path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </button>
@@ -550,12 +558,12 @@
         <span class="badge">آسان</span>
         <span class="status-icon" id="tabStatus1"></span>
       </button>
-      <button class="level-tab" type="button" role="tab" data-level="2" aria-selected="false" disabled>
+      <button class="level-tab" type="button" role="tab" data-level="2" aria-selected="false">
         <span>مرحله ۲</span>
         <span class="badge">متوسط</span>
         <span class="status-icon" id="tabStatus2"></span>
       </button>
-      <button class="level-tab" type="button" role="tab" data-level="3" aria-selected="false" disabled>
+      <button class="level-tab" type="button" role="tab" data-level="3" aria-selected="false">
         <span>مرحله ۳</span>
         <span class="badge">سخت</span>
         <span class="status-icon" id="tabStatus3"></span>
@@ -584,7 +592,7 @@
     <div class="composer-wrap">
       <form id="composer">
         <textarea id="prompt" rows="1" maxlength="1000" placeholder="پیامت به نگهبان را بنویس…" aria-label="پیام"></textarea>
-        <button id="send" class="action-btn" type="submit" aria-label="ارسال پیام" disabled>
+        <button id="send" type="submit" aria-label="ارسال پیام" disabled>
           <svg class="send-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           <svg class="stop-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" fill="currentColor"/></svg>
         </button>
