@@ -10,13 +10,15 @@ const words = [
 ];
 const board = document.querySelector('#board');
 const list = document.querySelector('#word-list');
+const world = document.querySelector('#sheet-content');
 const viewport = document.querySelector('#board-viewport');
 const touches = new Map();
 let camera = { scale: 1, x: 0, y: 0 };
 let pinch = null;
 let touchGesture = false;
 let placementTap = null;
-const storageKey = 'vazhechin-layout-v1';
+const storageKey = 'vazhechin-layout-v2';
+let legacyPositions = null;
 const fa = number => number.toLocaleString('fa-IR');
 let positions = {};
 let selected = null;
@@ -26,9 +28,15 @@ try {
   const saved = JSON.parse(localStorage.getItem(storageKey));
   if (saved && typeof saved === 'object') {
     for (const word of words) {
-      const point = saved[word.id];
-      if (point && Number.isFinite(point.x) && Number.isFinite(point.y)) positions[word.id] = { x: Math.max(0, Math.min(1, point.x)), y: Math.max(0, Math.min(1, point.y)) };
+      const point = saved.positions?.[word.id];
+      if (point && Number.isFinite(point.x) && Number.isFinite(point.y)) positions[word.id] = { x: point.x, y: point.y };
     }
+    const view = saved.camera;
+    if (view && Number.isFinite(view.scale) && Number.isFinite(view.x) && Number.isFinite(view.y)) {
+      camera = { scale: Math.max(0.5, Math.min(4, view.scale)), x: view.x, y: view.y };
+    }
+  } else {
+    legacyPositions = JSON.parse(localStorage.getItem('vazhechin-layout-v1'));
   }
 } catch { /* Storage may be unavailable; the board still works. */ }
 
@@ -44,7 +52,7 @@ function tile(word, onBoard = false) {
 list.className = 'words';
 for (const word of words) list.append(tile(word));
 
-function save() { try { localStorage.setItem(storageKey, JSON.stringify(positions)); } catch {} }
+function save() { try { localStorage.setItem(storageKey, JSON.stringify({ positions, camera })); } catch {} }
 function announce(text) { document.querySelector('#announcement').textContent = text; }
 function render() {
   board.querySelectorAll('.board-word').forEach(element => element.remove());
@@ -53,23 +61,30 @@ function render() {
     source.classList.toggle('placed-source', Boolean(positions[word.id]));
     source.classList.toggle('selected', selected === word.id);
     source.setAttribute('aria-pressed', String(selected === word.id));
+    // Convert the previous bounded layout once, using the actual tile size.
+    const legacy = legacyPositions?.[word.id];
+    if (legacy && Number.isFinite(legacy.x) && Number.isFinite(legacy.y)) {
+      positions[word.id] = {
+        x: Math.max(0, Math.min(1, legacy.x)) * Math.max(0, board.clientWidth - source.offsetWidth),
+        y: Math.max(0, Math.min(1, legacy.y)) * Math.max(0, board.clientHeight - source.offsetHeight),
+      };
+      source.classList.add('placed-source');
+    }
     if (!positions[word.id]) continue;
     const element = tile(word, true);
     element.classList.toggle('selected', boardSelection.has(word.id));
     element.setAttribute('aria-pressed', String(boardSelection.has(word.id)));
-    board.append(element);
-    element.style.left = `${positions[word.id].x * Math.max(0, board.clientWidth - element.offsetWidth)}px`;
-    element.style.top = `${positions[word.id].y * Math.max(0, board.clientHeight - element.offsetHeight)}px`;
+    world.append(element);
+    element.style.left = `${positions[word.id].x}px`;
+    element.style.top = `${positions[word.id].y}px`;
   }
+  if (legacyPositions) { legacyPositions = null; save(); }
   updateSelection();
   board.classList.toggle('target', Boolean(selected));
 }
 function place(id, clientX, clientY, width, height) {
-  const rect = board.getBoundingClientRect();
-  positions[id] = {
-    x: Math.max(0, Math.min(1, ((clientX - rect.left) / camera.scale - board.clientLeft - width / 2) / Math.max(1, board.clientWidth - width))),
-    y: Math.max(0, Math.min(1, ((clientY - rect.top) / camera.scale - board.clientTop - height / 2) / Math.max(1, board.clientHeight - height))),
-  };
+  const point = boardPoint({ clientX, clientY });
+  positions[id] = { x: point.x - width / 2, y: point.y - height / 2 };
   selected = null;
   save(); render();
   announce(`${words.find(word => word.id === id).text} روی صفحه قرار گرفت.`);
@@ -84,28 +99,27 @@ function updateSelection() {
 function snapshotSelection() {
   return [...boardSelection].map(id => {
     const element = board.querySelector(`[data-id="${id}"]`);
-    return { id, element, x: element.offsetLeft, y: element.offsetTop, width: element.offsetWidth, height: element.offsetHeight };
+    return { id, element, x: positions[id].x, y: positions[id].y, width: element.offsetWidth, height: element.offsetHeight };
   });
 }
-// Clamp a single displacement for the whole group to preserve relative spacing.
+// World coordinates have no sheet-edge limits; groups keep their spacing.
 function moveTogether(items, dx, dy) {
-  dx = Math.max(-Math.min(...items.map(item => item.x)), Math.min(dx, board.clientWidth - Math.max(...items.map(item => item.x + item.width))));
-  dy = Math.max(-Math.min(...items.map(item => item.y)), Math.min(dy, board.clientHeight - Math.max(...items.map(item => item.y + item.height))));
   for (const item of items) {
     item.element.style.left = `${item.x + dx}px`;
     item.element.style.top = `${item.y + dy}px`;
-    positions[item.id] = { x: (item.x + dx) / Math.max(1, board.clientWidth - item.width), y: (item.y + dy) / Math.max(1, board.clientHeight - item.height) };
+    positions[item.id] = { x: item.x + dx, y: item.y + dy };
   }
 }
 function boardPoint(event) {
   const rect = board.getBoundingClientRect();
-  return { x: Math.max(0, Math.min(board.clientWidth, (event.clientX - rect.left) / camera.scale - board.clientLeft)), y: Math.max(0, Math.min(board.clientHeight, (event.clientY - rect.top) / camera.scale - board.clientTop)) };
+  return { x: (event.clientX - rect.left - board.clientLeft - camera.x) / camera.scale,
+    y: (event.clientY - rect.top - board.clientTop - camera.y) / camera.scale };
 }
 // Pinch coordinates are relative to the fixed viewport, in CSS pixels.
 function pinchPoints() {
   const [a, b] = [...touches.values()];
-  const rect = viewport.getBoundingClientRect();
-  return { x: (a.x + b.x) / 2 - rect.left, y: (a.y + b.y) / 2 - rect.top,
+  const rect = board.getBoundingClientRect();
+  return { x: (a.x + b.x) / 2 - rect.left - board.clientLeft, y: (a.y + b.y) / 2 - rect.top - board.clientTop,
     distance: Math.max(1, Math.hypot(a.x - b.x, a.y - b.y)) };
 }
 function beginPinch() {
@@ -114,13 +128,21 @@ function beginPinch() {
     x: (point.x - camera.x) / camera.scale, y: (point.y - camera.y) / camera.scale };
 }
 function applyCamera() {
-  const clamp = (offset, size) => camera.scale < 1
-    ? size * (1 - camera.scale) / 2
-    : Math.max(size * (1 - camera.scale), Math.min(0, offset));
-  camera.x = clamp(camera.x, viewport.clientWidth);
-  camera.y = clamp(camera.y, viewport.clientHeight);
-  board.style.transform = `translate(${camera.x}px, ${camera.y}px) scale(${camera.scale})`;
+  world.style.transform = `translate(${camera.x}px, ${camera.y}px) scale(${camera.scale})`;
+  const major = 120 * camera.scale, minor = 24 * camera.scale;
+  board.style.backgroundSize = `${major}px ${major}px, ${major}px ${major}px, ${minor}px ${minor}px, ${minor}px ${minor}px`;
+  board.style.backgroundPosition = `${camera.x - 17 * camera.scale}px ${camera.y - 23 * camera.scale}px`;
 }
+// Trackpads and mouse wheels pan the same infinite sheet on desktop.
+viewport.addEventListener('wheel', event => {
+  if (event.ctrlKey || drag || touches.size) return;
+  event.preventDefault();
+  const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? viewport.clientHeight : 1;
+  camera.x -= (event.shiftKey ? event.deltaY : event.deltaX) * unit;
+  camera.y -= (event.shiftKey ? event.deltaX : event.deltaY) * unit;
+  applyCamera();
+  save();
+}, { passive: false });
 document.addEventListener('pointerdown', event => {
   if (!touches.size) touchGesture = false;
   if (event.pointerType === 'touch' && viewport.contains(event.target)) {
@@ -164,7 +186,7 @@ document.addEventListener('pointerdown', event => {
     const marquee = document.createElement('div');
     marquee.className = 'selection-box';
     marquee.hidden = true;
-    board.append(marquee);
+    world.append(marquee);
     drag = { kind: 'marquee', source: board, pointerId: event.pointerId, start: boardPoint(event), base, marquee, moved: false };
   } else if (source && list.contains(source)) {
     const rect = source.getBoundingClientRect();
@@ -274,6 +296,7 @@ function finishPointer(event, cancelled = false) {
   if (touches.size < 2) pinch = null;
   else beginPinch();
   finishDrag(event, cancelled || touchGesture);
+  if (touchGesture && !touches.size) save();
   if (placementTap?.pointerId === event.pointerId) {
     const tap = placementTap;
     placementTap = null;
@@ -338,6 +361,7 @@ document.addEventListener('keydown', event => {
     if (focusId) board.querySelector(`[data-id="${focusId}"]`).focus();
   }
 });
-document.querySelector('#reset').addEventListener('click', () => { positions = {}; selected = null; boardSelection.clear(); save(); render(); announce('صفحه پاک شد. دوباره شروع کن.'); });
+document.querySelector('#reset').addEventListener('click', () => { positions = {}; selected = null; boardSelection.clear(); camera = { scale: 1, x: 0, y: 0 }; applyCamera(); save(); render(); announce('صفحه پاک شد. دوباره شروع کن.'); });
 new ResizeObserver(() => { applyCamera(); if (!drag) render(); }).observe(viewport);
+applyCamera();
 render();

@@ -12,7 +12,10 @@
 .selection-box{position:absolute;border:1px solid #8587ca;background:#8587ca20;pointer-events:none;z-index:4}
 @media(max-width:560px){#word-list{gap:7px;margin-bottom:0}}
 
-/* The viewport stays fixed while the sheet and its words share one transform. */
+/* A fixed grid window contains words in an unbounded world. */
 .board-viewport{position:relative;flex:1;min-height:540px;overflow:hidden;border-radius:12px;touch-action:none;background:#edf0f6}
-.board-viewport>.board{position:absolute;inset:0;min-height:0;height:100%;transform-origin:0 0}
+.board-viewport>.board{position:absolute;inset:0;min-height:0;height:100%}
 @media(max-width:560px){.board-viewport{min-height:430px;height:55dvh;flex:auto}}
+
+.sheet-content{position:absolute;inset:0;transform-origin:0 0;pointer-events:none}
+.sheet-content>.board-word{pointer-events:auto}
