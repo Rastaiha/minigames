@@ -109,6 +109,8 @@ document.addEventListener('pointerdown', event => {
     if (!boardSelection.has(id)) return;
     drag = { kind: 'group', source, pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, items: snapshotSelection(), before: structuredClone(positions), moved: false };
   } else if (!source && board.contains(event.target) && !selected) {
+    // Keep touch gestures on empty board space available for mobile zoom.
+    if (event.pointerType === 'touch') return;
     event.preventDefault();
     board.focus({ preventScroll: true });
     const base = event.shiftKey ? new Set(boardSelection) : new Set();
