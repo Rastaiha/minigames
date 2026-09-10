@@ -254,6 +254,7 @@
     .value { margin-right: auto; color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
     .delta { display: none; color: var(--green); font-size: 10px; font-weight: 700; }
     .probability-row.changed .delta { display: inline; }
+    .delta.negative { color: #df5c62; }
 
     .track {
       height: 7px;
@@ -407,6 +408,7 @@
     let phase = "ready";
     let busy = false;
     let targetIncrease = 0;
+    let probabilityChanges = [];
 
     function delay(milliseconds) {
       return new Promise((resolve) => setTimeout(resolve, milliseconds));
@@ -441,8 +443,10 @@
       probabilityList.innerHTML = "";
       sorted.forEach(({ probability, index }) => {
         const isTarget = index === targetIndex;
+        const change = probabilityChanges[index] || 0;
+        const hasChange = showChange && Math.abs(change) > 0.000001;
         const row = document.createElement("div");
-        row.className = "probability-row" + (isTarget ? " target" : "") + (showChange && isTarget ? " changed" : "");
+        row.className = "probability-row" + (isTarget ? " target" : "") + (hasChange ? " changed" : "");
 
         const meta = document.createElement("div");
         meta.className = "probability-meta";
@@ -456,8 +460,10 @@
         tag.textContent = "توکن واقعی";
 
         const delta = document.createElement("span");
-        delta.className = "delta";
-        delta.textContent = showChange && isTarget ? "+" + formatPercent(targetIncrease) : "";
+        delta.className = "delta" + (change < 0 ? " negative" : "");
+        delta.textContent = hasChange
+          ? (change > 0 ? "+" : "−") + formatPercent(Math.abs(change))
+          : "";
 
         const value = document.createElement("span");
         value.className = "value";
@@ -528,13 +534,13 @@
       const targetIndex = example.candidates.indexOf(example.target);
       await delay(900);
 
-      logits = logits.map((logit, index) => {
-        const expected = index === targetIndex ? 1 : 0;
-        return logit - LEARNING_STEP * (before[index] - expected);
-      });
+      logits = logits.map((logit, index) =>
+        index === targetIndex ? logit + LEARNING_STEP : logit
+      );
 
       const after = softmax(logits);
-      targetIncrease = after[targetIndex] - before[targetIndex];
+      probabilityChanges = after.map((probability, index) => probability - before[index]);
+      targetIncrease = probabilityChanges[targetIndex];
       renderProbabilities(after, true);
 
       phase = "trained";
@@ -564,6 +570,7 @@
       currentIndex += 1;
       logits = [...currentExample().logits];
       targetIncrease = 0;
+      probabilityChanges = [];
       phase = "ready";
       renderReady();
     }
@@ -573,6 +580,7 @@
       currentIndex = 0;
       logits = [...EXAMPLES[0].logits];
       targetIncrease = 0;
+      probabilityChanges = [];
       phase = "ready";
       renderReady();
     }
