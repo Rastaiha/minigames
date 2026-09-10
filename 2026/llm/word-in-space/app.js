@@ -10,6 +10,12 @@ const words = [
 ];
 const board = document.querySelector('#board');
 const list = document.querySelector('#word-list');
+const viewport = document.querySelector('#board-viewport');
+const touches = new Map();
+let camera = { scale: 1, x: 0, y: 0 };
+let pinch = null;
+let touchGesture = false;
+let placementTap = null;
 const storageKey = 'vazhechin-layout-v1';
 const fa = number => number.toLocaleString('fa-IR');
 let positions = {};
@@ -61,8 +67,8 @@ function render() {
 function place(id, clientX, clientY, width, height) {
   const rect = board.getBoundingClientRect();
   positions[id] = {
-    x: Math.max(0, Math.min(1, (clientX - rect.left - board.clientLeft - width / 2) / Math.max(1, board.clientWidth - width))),
-    y: Math.max(0, Math.min(1, (clientY - rect.top - board.clientTop - height / 2) / Math.max(1, board.clientHeight - height))),
+    x: Math.max(0, Math.min(1, ((clientX - rect.left) / camera.scale - board.clientLeft - width / 2) / Math.max(1, board.clientWidth - width))),
+    y: Math.max(0, Math.min(1, ((clientY - rect.top) / camera.scale - board.clientTop - height / 2) / Math.max(1, board.clientHeight - height))),
   };
   selected = null;
   save(); render();
@@ -93,10 +99,48 @@ function moveTogether(items, dx, dy) {
 }
 function boardPoint(event) {
   const rect = board.getBoundingClientRect();
-  return { x: Math.max(0, Math.min(board.clientWidth, event.clientX - rect.left - board.clientLeft)), y: Math.max(0, Math.min(board.clientHeight, event.clientY - rect.top - board.clientTop)) };
+  return { x: Math.max(0, Math.min(board.clientWidth, (event.clientX - rect.left) / camera.scale - board.clientLeft)), y: Math.max(0, Math.min(board.clientHeight, (event.clientY - rect.top) / camera.scale - board.clientTop)) };
+}
+// Pinch coordinates are relative to the fixed viewport, in CSS pixels.
+function pinchPoints() {
+  const [a, b] = [...touches.values()];
+  const rect = viewport.getBoundingClientRect();
+  return { x: (a.x + b.x) / 2 - rect.left, y: (a.y + b.y) / 2 - rect.top,
+    distance: Math.max(1, Math.hypot(a.x - b.x, a.y - b.y)) };
+}
+function beginPinch() {
+  const point = pinchPoints();
+  pinch = { scale: camera.scale, distance: point.distance,
+    x: (point.x - camera.x) / camera.scale, y: (point.y - camera.y) / camera.scale };
+}
+function applyCamera() {
+  const clamp = (offset, size) => camera.scale < 1
+    ? size * (1 - camera.scale) / 2
+    : Math.max(size * (1 - camera.scale), Math.min(0, offset));
+  camera.x = clamp(camera.x, viewport.clientWidth);
+  camera.y = clamp(camera.y, viewport.clientHeight);
+  board.style.transform = `translate(${camera.x}px, ${camera.y}px) scale(${camera.scale})`;
 }
 document.addEventListener('pointerdown', event => {
-  // Let additional fingers control browser pinch zoom, without starting a drag.
+  if (!touches.size) touchGesture = false;
+  if (event.pointerType === 'touch' && viewport.contains(event.target)) {
+    touches.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    if (touches.size === 1 && selected && !event.target.closest('.word')) {
+      placementTap = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, id: selected };
+    }
+    if (touches.size >= 2) {
+      placementTap = null;
+      // Capture the stable viewport only for a pinch; single taps keep their
+      // original target so browsers can still dispatch the placement click.
+      for (const pointerId of touches.keys()) viewport.setPointerCapture(pointerId);
+      if (drag) finishDrag({ pointerId: drag.pointerId }, true);
+      touchGesture = true;
+      beginPinch();
+      return;
+    }
+    if (touchGesture) return;
+  }
+  // Additional fingers must never start a word drag.
   if (event.button !== 0 || drag || (event.pointerType === 'touch' && !event.isPrimary)) return;
   const source = event.target.closest('.word');
   if (source && board.contains(source)) {
@@ -126,9 +170,21 @@ document.addEventListener('pointerdown', event => {
     const rect = source.getBoundingClientRect();
     drag = { kind: 'source', id: source.dataset.id, source, pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, width: rect.width, height: rect.height, ghost: null };
   } else return;
-  drag.source.setPointerCapture(event.pointerId);
+  if (!touches.has(event.pointerId)) drag.source.setPointerCapture(event.pointerId);
 });
 document.addEventListener('pointermove', event => {
+  if (placementTap?.pointerId === event.pointerId && Math.hypot(event.clientX - placementTap.x, event.clientY - placementTap.y) > 5) placementTap = null;
+  if (touches.has(event.pointerId)) {
+    touches.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    if (pinch) {
+      const gesture = pinchPoints();
+      camera.scale = Math.max(0.5, Math.min(4, pinch.scale * gesture.distance / pinch.distance));
+      camera.x = gesture.x - pinch.x * camera.scale;
+      camera.y = gesture.y - pinch.y * camera.scale;
+      applyCamera();
+    }
+    if (touchGesture) return;
+  }
   if (!drag || event.pointerId !== drag.pointerId) return;
   if (drag.kind === 'marquee') {
     const point = boardPoint(event);
@@ -149,7 +205,7 @@ document.addEventListener('pointermove', event => {
   if (Math.hypot(dx, dy) < 5 && !drag.moved && !drag.ghost) return;
   if (drag.kind === 'group') {
     drag.moved = true;
-    moveTogether(drag.items, dx, dy);
+    moveTogether(drag.items, dx / camera.scale, dy / camera.scale);
     return;
   }
   if (!drag.ghost) {
@@ -163,7 +219,7 @@ document.addEventListener('pointermove', event => {
   }
   drag.ghost.style.left = `${event.clientX - drag.width / 2}px`;
   drag.ghost.style.top = `${event.clientY - drag.height / 2}px`;
-  const rect = board.getBoundingClientRect();
+  const rect = viewport.getBoundingClientRect();
   board.classList.toggle('target', event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom);
 });
 let suppressClick = false;
@@ -202,7 +258,7 @@ function finishDrag(event, cancelled = false) {
     suppressClick = true;
     setTimeout(() => { suppressClick = false; }, 0);
     if (!cancelled) {
-      const rect = board.getBoundingClientRect();
+      const rect = viewport.getBoundingClientRect();
       const sidebarRect = list.getBoundingClientRect();
       if (event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom) {
         place(current.id, event.clientX, event.clientY, current.width, current.height);
@@ -213,17 +269,31 @@ function finishDrag(event, cancelled = false) {
   }
   board.classList.toggle('target', Boolean(selected));
 }
-document.addEventListener('pointerup', event => finishDrag(event));
-document.addEventListener('pointercancel', event => finishDrag(event, true));
+function finishPointer(event, cancelled = false) {
+  touches.delete(event.pointerId);
+  if (touches.size < 2) pinch = null;
+  else beginPinch();
+  finishDrag(event, cancelled || touchGesture);
+  if (placementTap?.pointerId === event.pointerId) {
+    const tap = placementTap;
+    placementTap = null;
+    if (!cancelled && !touchGesture && selected === tap.id) {
+      const source = list.querySelector(`[data-id="${tap.id}"]`);
+      place(tap.id, event.clientX, event.clientY, source.offsetWidth, source.offsetHeight);
+    }
+  }
+}
+document.addEventListener('pointerup', event => finishPointer(event));
+document.addEventListener('pointercancel', event => finishPointer(event, true));
 document.addEventListener('click', event => {
-  if (suppressClick) return;
+  if (suppressClick || touchGesture) return;
   const source = event.target.closest('.word');
   if (source && list.contains(source)) {
     boardSelection.clear();
     selected = selected === source.dataset.id ? null : source.dataset.id;
     render();
     if (selected) announce('واژه انتخاب شد. روی صفحه کلیک کن یا با Tab به صفحه برو و Enter بزن.');
-  } else if (selected && board.contains(event.target) && !source) {
+  } else if (selected && viewport.contains(event.target) && !source) {
     const element = list.querySelector(`[data-id="${selected}"]`);
     place(selected, event.clientX, event.clientY, element.offsetWidth, element.offsetHeight);
   }
@@ -232,7 +302,7 @@ document.addEventListener('keydown', event => {
   if (event.key === 'Escape') { if (drag) finishDrag({ pointerId: drag.pointerId }, true); selected = null; boardSelection.clear(); render(); return; }
   if (event.target === board && selected && (event.key === 'Enter' || event.key === ' ')) {
     event.preventDefault();
-    const rect = board.getBoundingClientRect();
+    const rect = viewport.getBoundingClientRect();
     const id = selected;
     const source = list.querySelector(`[data-id="${id}"]`);
     place(id, rect.left + rect.width / 2, rect.top + rect.height / 2, source.offsetWidth, source.offsetHeight);
@@ -269,5 +339,5 @@ document.addEventListener('keydown', event => {
   }
 });
 document.querySelector('#reset').addEventListener('click', () => { positions = {}; selected = null; boardSelection.clear(); save(); render(); announce('صفحه پاک شد. دوباره شروع کن.'); });
-new ResizeObserver(() => { if (!drag) render(); }).observe(board);
+new ResizeObserver(() => { applyCamera(); if (!drag) render(); }).observe(viewport);
 render();
