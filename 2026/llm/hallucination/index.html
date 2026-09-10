@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="fa" dir="rtl">
+<html lang="fa">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -20,9 +20,9 @@
       --line: #dfe5ed;
       --user: #315be8;
       --user-ink: #ffffff;
-      --accent: #4f46e5;
+      --accent: #ff7657;
       --ready: #4cab83;
-      --thinking: #f59e0b;
+      --warning: #f59e0b;
       --shadow: 0 28px 70px rgba(39, 55, 85, 0.16), 0 2px 8px rgba(39, 55, 85, 0.08);
     }
 
@@ -37,21 +37,20 @@
       overflow: hidden;
       color: var(--ink);
       background:
-        radial-gradient(circle at 14% 8%, rgba(255, 255, 255, 0.85), transparent 30%),
-        radial-gradient(circle at 86% 92%, rgba(224, 231, 255, 0.6), transparent 35%),
+        radial-gradient(circle at 14% 8%, rgba(255, 255, 255, 0.82), transparent 29%),
         var(--page);
       font-family: "Vazir", Tahoma, "Segoe UI", sans-serif;
     }
 
     .chat {
-      width: min(100%, 780px);
+      width: min(100%, 760px);
       height: min(880px, 100%);
       min-height: 420px;
       display: flex;
       flex-direction: column;
       overflow: hidden;
       background: var(--surface);
-      border: 1px solid rgba(255, 255, 255, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.72);
       border-radius: 26px;
       box-shadow: var(--shadow);
     }
@@ -63,32 +62,30 @@
       align-items: center;
       gap: 13px;
       border-bottom: 1px solid var(--line);
-      background: rgba(255, 255, 255, 0.65);
-      backdrop-filter: blur(8px);
+      flex: 0 0 auto;
     }
 
     .avatar {
-      width: 44px;
-      height: 44px;
+      width: 40px;
+      height: 40px;
       display: grid;
       place-items: center;
       flex: 0 0 auto;
       color: white;
-      background: linear-gradient(135deg, #4f46e5, #6366f1);
-      border-radius: 14px;
-      font-size: 19px;
-      font-weight: 700;
-      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
-      transition: transform 200ms ease;
+      background: var(--ink);
+      border-radius: 13px;
+      font-size: 20px;
+      font-style: normal;
+      font-weight: 600;
     }
 
-    .identity { min-width: 0; text-align: right; flex: 1; }
+    .identity { min-width: 0; text-align: right; }
 
     h1 {
       margin: 0 0 3px;
-      font-size: 17px;
+      font-size: 19px;
       font-weight: 600;
-      letter-spacing: -0.01em;
+      letter-spacing: -0.02em;
     }
 
     .status {
@@ -101,318 +98,308 @@
     }
 
     .status-dot {
-      width: 8px;
-      height: 8px;
+      width: 7px;
+      height: 7px;
+      flex: 0 0 auto;
       border-radius: 50%;
       background: var(--ready);
-      transition: background 200ms ease, transform 200ms ease;
+      box-shadow: 0 0 0 4px rgba(76, 171, 131, 0.13);
+      transition: background 200ms ease, box-shadow 200ms ease;
     }
 
     .status-dot.thinking {
-      background: var(--thinking);
-      animation: pulse 1s infinite alternate;
-    }
-
-    @keyframes pulse {
-      from { transform: scale(0.85); opacity: 0.7; }
-      to { transform: scale(1.25); opacity: 1; }
-    }
-
-    .header-actions {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .stat-badge {
-      font-size: 12px;
-      color: var(--muted);
-      background: rgba(0, 0, 0, 0.04);
-      padding: 5px 11px;
-      border-radius: 20px;
-      border: 1px solid var(--line);
-      white-space: nowrap;
+      background: var(--warning);
+      box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2);
     }
 
     .clear-button {
-      width: 38px;
-      height: 38px;
+      width: 36px;
+      height: 36px;
+      margin-left: auto;
       display: grid;
       place-items: center;
-      background: transparent;
-      border: 1px solid var(--line);
-      border-radius: 12px;
       color: var(--muted);
+      background: transparent;
+      border: 0;
+      border-radius: 11px;
       cursor: pointer;
-      transition: all 150ms ease;
+      transition: color 140ms ease, background 140ms ease;
     }
 
-    .clear-button:hover:not(:disabled) {
-      background: #fee2e2;
-      border-color: #fca5a5;
-      color: #ef4444;
-      transform: scale(1.05);
-    }
-
-    .clear-button:disabled {
-      opacity: 0.35;
-      cursor: not-allowed;
-    }
+    .clear-button:hover:not(:disabled) { color: var(--ink); background: #e9edf3; }
+    .clear-button:disabled { cursor: default; opacity: 0.25; }
+    .clear-button svg { width: 18px; height: 18px; }
 
     .level-tabs {
       display: flex;
       gap: 8px;
-      padding: 10px 24px;
-      background: #f1f5f9;
-      border-bottom: 1px solid var(--line);
+      padding: 10px 16px;
       overflow-x: auto;
+      direction: rtl;
+      background: rgba(248, 250, 252, 0.96);
+      border-bottom: 1px solid var(--line);
       scrollbar-width: none;
+      flex: 0 0 auto;
     }
 
     .level-tabs::-webkit-scrollbar { display: none; }
 
     .level-tab {
-      flex: 1;
-      height: 42px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 7px;
-      padding: 0 14px;
+      width: auto;
+      height: 36px;
+      padding: 0 16px;
+      flex: 1 0 auto;
+      color: var(--muted);
+      background: #e9edf3;
       border: 1px solid transparent;
       border-radius: 12px;
-      background: transparent;
-      color: var(--muted);
-      font-family: inherit;
+      font: inherit;
       font-size: 13px;
       font-weight: 500;
-      cursor: pointer;
-      transition: all 180ms ease;
       white-space: nowrap;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 140ms ease, background 140ms ease;
     }
 
-    .level-tab:hover {
-      background: rgba(255, 255, 255, 0.6);
-      color: var(--ink);
-    }
+    .level-tab:hover:not(:disabled) { color: var(--ink); background: #dfe5ed; }
 
     .level-tab[aria-selected="true"] {
-      background: white;
-      color: var(--ink);
-      border-color: rgba(0, 0, 0, 0.08);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-      font-weight: 600;
+      color: white;
+      background: var(--user);
+      box-shadow: 0 4px 12px rgba(49, 91, 232, 0.2);
     }
 
     .mission-bar {
-      padding: 8px 24px;
-      background: #f8fafc;
-      border-bottom: 1px solid var(--line);
       display: flex;
       align-items: center;
       justify-content: flex-end;
       gap: 12px;
-      font-size: 13px;
+      padding: 8px 16px;
+      background: rgba(248, 250, 252, 0.96);
+      border-bottom: 1px solid var(--line);
+      direction: rtl;
+      flex: 0 0 auto;
     }
 
     .param-control {
       display: flex;
       align-items: center;
       gap: 10px;
-      background: white;
-      padding: 6px 12px;
+      padding: 4px 12px;
+      background: #e9edf3;
       border-radius: 10px;
-      border: 1px solid #e2e8f0;
-      font-size: 12px;
+      font-size: 13px;
+      color: var(--muted);
       white-space: nowrap;
     }
 
     .param-control input[type="range"] {
-      width: 100px;
+      width: 110px;
+      height: 4px;
+      accent-color: var(--user);
       cursor: pointer;
-      accent-color: var(--accent);
     }
 
     .param-control strong {
-      min-width: 28px;
+      min-width: 24px;
+      color: var(--ink);
+      font-weight: 600;
+      direction: ltr;
       display: inline-block;
       text-align: left;
-      color: #4f46e5;
     }
 
     .messages {
+      position: relative;
       flex: 1 1 auto;
       min-height: 0;
-      padding: 24px;
+      padding: 28px 24px;
       overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      background: radial-gradient(circle at center, rgba(248, 250, 252, 0.5), transparent 70%);
+      overscroll-behavior: contain;
       scroll-behavior: smooth;
-    }
-
-    .empty-state {
-      margin: auto;
-      max-width: 480px;
-      text-align: center;
-      padding: 24px 16px;
-      color: var(--muted);
-    }
-
-    .empty-mark {
-      width: 54px;
-      height: 54px;
-      margin: 0 auto 16px;
-      display: grid;
-      place-items: center;
-      border-radius: 16px;
-      background: #ede9fe;
-      color: #4f46e5;
-      font-size: 22px;
-      font-weight: 700;
-      box-shadow: 0 4px 16px rgba(79, 70, 229, 0.12);
-    }
-
-    .empty-state h2 {
-      margin: 0 0 8px;
-      font-size: 16px;
-      color: var(--ink);
-    }
-
-    .empty-state p {
-      margin: 0;
-      font-size: 13px;
-      line-height: 1.65;
+      scrollbar-width: thin;
+      scrollbar-color: #c8d0dc transparent;
     }
 
     .message {
-      max-width: 82%;
+      width: fit-content;
+      max-width: min(76%, 540px);
+      margin: 0 0 15px;
       padding: 12px 16px;
       border-radius: 18px;
-      line-height: 1.65;
-      font-size: 14px;
-      word-wrap: break-word;
-      animation: messageIn 200ms cubic-bezier(0.16, 1, 0.3, 1);
-      position: relative;
-    }
-
-    @keyframes messageIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .message.user {
-      align-self: flex-start;
-      background: var(--user);
-      color: var(--user-ink);
-      border-bottom-right-radius: 4px;
-      box-shadow: 0 2px 8px rgba(49, 91, 232, 0.2);
+      font-size: 16px;
+      line-height: 1.85;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      animation: arrive 180ms ease-out both;
     }
 
     .message.assistant {
-      align-self: flex-end;
-      background: white;
       color: var(--ink);
-      border: 1px solid var(--line);
-      border-bottom-left-radius: 4px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+      background: #e9edf3;
+      border-bottom-left-radius: 5px;
+      direction: rtl;
+      text-align: right;
     }
+
+    .message.user {
+      margin-left: auto;
+      color: var(--user-ink);
+      background: var(--user);
+      border-bottom-right-radius: 5px;
+      direction: rtl;
+      text-align: right;
+    }
+
+    .message.generating::after {
+      content: "";
+      width: 2px;
+      height: 1em;
+      margin-right: 3px;
+      display: inline-block;
+      vertical-align: -0.12em;
+      background: var(--accent);
+      animation: blink 760ms step-end infinite;
+    }
+
+    .generated-token {
+      border-radius: 5px;
+      transition: color 300ms ease, background 300ms ease;
+    }
+
+    .generated-token.entering {
+      color: #c75136;
+      background: rgba(255, 118, 87, 0.14);
+    }
+
+    .empty-state {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-content: center;
+      justify-items: center;
+      padding: 24px;
+      color: var(--muted);
+      text-align: center;
+      pointer-events: none;
+    }
+
+    .empty-state[hidden] { display: none; }
+
+    .empty-mark {
+      width: 50px;
+      height: 50px;
+      margin-bottom: 14px;
+      display: grid;
+      place-items: center;
+      color: var(--user);
+      background: rgba(49, 91, 232, 0.09);
+      border-radius: 17px;
+      font-size: 23px;
+      font-weight: 700;
+    }
+
+    .empty-state p { margin: 0 0 5px; color: var(--ink); font-size: 16px; font-weight: 600; }
+    .empty-state span { font-size: 13px; }
 
     .composer-wrap {
       flex: 0 0 auto;
       margin-top: auto;
-      padding: 16px 24px 20px;
-      background: rgba(255, 255, 255, 0.85);
+      padding: 16px;
       border-top: 1px solid var(--line);
-      backdrop-filter: blur(8px);
+      background: rgba(248, 250, 252, 0.92);
     }
 
-    #composer {
+    form {
       display: flex;
       align-items: flex-end;
       gap: 10px;
+      padding: 7px 7px 7px 16px;
       background: white;
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      padding: 6px 8px 6px 14px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
-      transition: border-color 150ms ease, box-shadow 150ms ease;
+      border: 1px solid #d8dee8;
+      border-radius: 19px;
+      box-shadow: 0 4px 16px rgba(38, 52, 80, 0.06);
+      transition: border-color 160ms ease, box-shadow 160ms ease;
     }
 
-    #composer:focus-within {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+    form:focus-within {
+      border-color: rgba(49, 91, 232, 0.54);
+      box-shadow: 0 0 0 4px rgba(49, 91, 232, 0.09);
     }
 
     textarea {
-      flex: 1;
-      border: 0;
-      outline: 0;
+      width: 100%;
+      min-height: 42px;
+      max-height: 132px;
+      padding: 10px 0 8px;
       resize: none;
-      font-family: inherit;
-      font-size: 14px;
-      line-height: 1.5;
-      padding: 6px 0;
+      overflow-y: auto;
       color: var(--ink);
       background: transparent;
-      max-height: 120px;
-    }
-
-    textarea::placeholder {
-      color: var(--muted);
-      opacity: 0.7;
-    }
-
-    .action-btn {
-      width: 38px;
-      height: 38px;
-      border-radius: 12px;
       border: 0;
-      background: var(--accent);
-      color: white;
+      outline: 0;
+      font: inherit;
+      font-size: 15px;
+      line-height: 1.45;
+      direction: rtl;
+      text-align: right;
+    }
+
+    textarea::placeholder { color: #9ba5b5; }
+
+    button {
+      width: 42px;
+      height: 42px;
+      padding: 0;
       display: grid;
       place-items: center;
-      cursor: pointer;
-      transition: all 150ms ease;
       flex: 0 0 auto;
+      color: white;
+      background: var(--ink);
+      border: 0;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: transform 140ms ease, background 140ms ease, opacity 140ms ease;
     }
 
-    .action-btn:hover:not(:disabled) {
-      background: #4338ca;
-      transform: scale(1.04);
+    button:hover:not(:disabled) { transform: translateY(-1px); background: var(--user); }
+    button:active:not(:disabled) { transform: translateY(0) scale(0.97); }
+    button:focus-visible { outline: 3px solid rgba(49, 91, 232, 0.28); outline-offset: 3px; }
+    button:disabled { cursor: wait; opacity: 0.4; }
+    button svg { width: 19px; height: 19px; }
+    button .stop-icon { display: none; }
+    button.is-generating .send-icon { display: none; }
+    button.is-generating .stop-icon { display: block; }
+
+    @keyframes arrive {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
-    .action-btn:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-      transform: none;
-    }
+    @keyframes blink { 50% { opacity: 0; } }
 
-    .action-btn .stop-icon { display: none; }
-    .action-btn.is-generating {
-      background: #ef4444;
-    }
-    .action-btn.is-generating .send-icon { display: none; }
-    .action-btn.is-generating .stop-icon { display: block; }
-
-    .generated-token {
-      display: inline;
-      transition: opacity 120ms ease;
-    }
-    .generated-token.entering {
-      opacity: 0;
-    }
-
-    @media (max-width: 640px) {
+    @media (max-width: 600px) {
       body { padding: 0; background: var(--surface); }
       .chat { width: 100%; height: 100%; min-height: 0; border: 0; border-radius: 0; box-shadow: none; }
-      header { min-height: 64px; padding: 0 16px; }
-      .level-tabs { padding: 8px 14px; }
-      .mission-bar { padding: 8px 16px; flex-direction: column; align-items: flex-start; }
-      .messages { padding: 16px 14px; }
-      .message { max-width: 88%; }
-      .composer-wrap { padding: 12px 14px max(14px, env(safe-area-inset-bottom)); }
+      header { min-height: 68px; padding: 0 18px; }
+      .avatar { width: 37px; height: 37px; border-radius: 12px; }
+      .messages { padding: 22px 16px; }
+      .message { max-width: 86%; }
+      .level-tabs { padding: 9px 12px; }
+      .level-tab { padding: 0 12px; }
+      .mission-bar { padding: 8px 12px; }
+      .composer-wrap { padding: 12px; padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+      }
     }
   </style>
 </head>
@@ -421,22 +408,17 @@
     <header>
       <div class="avatar" id="avatar" aria-hidden="true">۱</div>
       <div class="identity">
-        <h1 id="levelTitle">مرحله اول</h1>
+        <h1 id="levelTitle">مرحله ۱</h1>
         <p class="status">
           <span class="status-dot" id="statusDot" aria-hidden="true"></span>
           <span id="statusText">آماده گفت‌وگو</span>
         </p>
       </div>
-      <div class="header-actions">
-        <div class="stat-badge" id="messageCountBadge" title="تعداد پیام‌های این مرحله">
-          پیام‌ها: <strong id="messageCount">۰</strong>
-        </div>
-        <button id="clearButton" class="clear-button" type="button" aria-label="پاک کردن گفت‌وگو" title="پاک کردن گفت‌وگو و شروع چت جدید" disabled>
-          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" width="18" height="18">
-            <path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
-      </div>
+      <button id="clearButton" class="clear-button" type="button" aria-label="پاک کردن گفت‌وگو" title="پاک کردن گفت‌وگو" disabled>
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
     </header>
 
     <nav class="level-tabs" id="levelTabs" role="tablist" aria-label="انتخاب مرحله">
@@ -459,21 +441,17 @@
     <section class="messages" id="messages" aria-live="polite" aria-label="گفت‌وگو با هوش مصنوعی">
       <div class="empty-state" id="emptyState">
         <div class="empty-mark" aria-hidden="true">؟</div>
-        <h2 id="emptyTitle">مرحله ۱</h2>
-        <p id="emptyDesc">پیامی بنویسید تا گفت‌وگو آغاز شود.</p>
+        <p id="emptyTitle">مرحله ۱</p>
+        <span id="emptyDesc">پیامی بنویسید تا گفت‌وگو آغاز شود.</span>
       </div>
     </section>
 
     <div class="composer-wrap">
       <form id="composer">
         <textarea id="prompt" rows="1" maxlength="1000" placeholder="پیامی بنویسید یا یک ادعای ساختگی را بپرسید…" aria-label="پیام"></textarea>
-        <button id="send" class="action-btn" type="submit" aria-label="ارسال پیام" disabled>
-          <svg class="send-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true" width="20" height="20">
-            <path d="M12 19V5M6 11l6-6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <svg class="stop-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true" width="18" height="18">
-            <rect x="7" y="7" width="10" height="10" rx="1.5" fill="currentColor"/>
-          </svg>
+        <button id="send" type="submit" aria-label="ارسال پیام" disabled>
+          <svg class="send-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <svg class="stop-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" fill="currentColor"/></svg>
         </button>
       </form>
     </div>
@@ -538,7 +516,7 @@
 
       avatar.textContent = config.avatarText;
       levelTitle.textContent = config.title;
-      messageCount.textContent = state.messages.filter(m => m.role === "user").length;
+      if (messageCount) messageCount.textContent = state.messages.filter(m => m.role === "user").length;
 
       if (currentLevel === 2) {
         missionBar.style.display = "flex";
@@ -748,7 +726,7 @@
 
     function autoResizeTextarea() {
       promptInput.style.height = "auto";
-      promptInput.style.height = Math.min(promptInput.scrollHeight, 120) + "px";
+      promptInput.style.height = Math.min(promptInput.scrollHeight, 132) + "px";
     }
 
     clearButton.addEventListener("click", () => {
