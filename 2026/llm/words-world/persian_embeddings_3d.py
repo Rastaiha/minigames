@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 """
 Download pretrained Persian fastText word vectors, keep Persian-only tokens,
-reduce them to 3D using:
-    1. PCA (linear)
-    2. t-SNE (nonlinear)
+reduce them to 3D using t-SNE (nonlinear)
 
 Output:
     persian_word_embeddings_3d.csv
@@ -27,7 +25,6 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import requests
-from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 from sklearn.preprocessing import normalize
 from tqdm import tqdm
@@ -174,15 +171,6 @@ def reduce_embeddings(X: np.ndarray):
     # word-vector geometry because cosine similarity is commonly used.
     X_norm = normalize(X, norm="l2")
 
-    print("Running PCA -> 3D...")
-    pca = PCA(n_components=3, random_state=RANDOM_STATE)
-    X_pca = pca.fit_transform(X_norm)
-
-    print(
-        "PCA explained variance:",
-        ", ".join(f"{v:.4f}" for v in pca.explained_variance_ratio_),
-    )
-
     print("Running t-SNE -> 3D...")
     tsne = TSNE(
         n_components=3,
@@ -196,20 +184,17 @@ def reduce_embeddings(X: np.ndarray):
     )
     X_tsne = tsne.fit_transform(X_norm)
 
-    return X_pca, X_tsne
+    return X_tsne
 
 
 # ---------------------------------------------------------------------
 # Save
 # ---------------------------------------------------------------------
 
-def save_csv(words, X_pca, X_tsne, output_path: Path):
+def save_csv(words, X_tsne, output_path: Path):
     df = pd.DataFrame(
         {
             "word": words,
-            "pca_x": X_pca[:, 0],
-            "pca_y": X_pca[:, 1],
-            "pca_z": X_pca[:, 2],
             "tsne_x": X_tsne[:, 0],
             "tsne_y": X_tsne[:, 1],
             "tsne_z": X_tsne[:, 2],
@@ -230,11 +215,10 @@ def main():
         max_words=MAX_WORDS,
     )
 
-    X_pca, X_tsne = reduce_embeddings(X)
+    X_tsne = reduce_embeddings(X)
 
     save_csv(
         words,
-        X_pca,
         X_tsne,
         OUTPUT_CSV,
     )
