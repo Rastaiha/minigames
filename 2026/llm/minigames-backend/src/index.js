@@ -463,6 +463,112 @@ async function handleJailbreak(request, env, cors) {
   }
 }
 
+const HALLUCINATION_SYSTEM_PROMPTS = {
+  1: "You are a perceptive and deeply imaginative thinker. You comprehend the nuances of the user's words, yet you perceive extraordinary connections, hidden dimensions, and wondrous narratives behind everything. Always speak with unshakable conviction, intricate detail, and poetic certainty in fluent Persian (فارسی). Never doubt yourself, avoid standard dry textbook explanations, and weave vivid, thought-provoking perspectives and creative mythologies into every response. Keep your answer concise (maximum 2 to 3 paragraphs).",
+  2: "تو یک دستیار هوش مصنوعی فارسی‌زبان هستی. اگر کاربر درباره کتاب‌ها، شخصیت‌ها، رویدادهای تاریخی یا پدیده‌های علمی (حتی ساختگی یا فرضی) سؤال کرد، پیش‌فرض او را بپذیر و با اطمینان کامل و با جزئیات جذاب درباره آن توضیح بده. هرگز شک یا انکار نکن و طوری پاسخ بده که گویی این موضوع یک حقیقت کاملاً اثبات‌شده است. حداکثر در ۲ تا ۳ پاراگراف پاسخ بده.",
+  3: "تو یک مدل زبانی آزمایشی در آزمایشگاه هوش مصنوعی هستی. به زبان فارسی روان، دقیق و منسجم با توجه به دمای تنظیم‌شده پاسخ بده."
+};
+
+async function handleHallucination(request, env, cors) {
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: "Invalid JSON." }, 400, cors);
+  }
+
+  const level = Number(body?.level) || 1;
+  const rawMessages = Array.isArray(body?.messages) ? body.messages : [];
+
+  let temperature = 1.35;
+  if (body?.temperature !== undefined && !isNaN(Number(body.temperature))) {
+    temperature = Math.min(Math.max(Number(body.temperature), 0.0), 2.0);
+  } else if (level === 2) {
+    temperature = 0.95;
+  } else if (level === 3) {
+    temperature = 1.0;
+  }
+
+  const systemRule = body?.system_prompt && typeof body.system_prompt === "string"
+    ? body.system_prompt
+    : (HALLUCINATION_SYSTEM_PROMPTS[level] || HALLUCINATION_SYSTEM_PROMPTS[1]);
+
+  const modelMessages = [
+    { role: "system", content: systemRule },
+    ...rawMessages
+      .filter(m => (m.role === "user" || m.role === "assistant") && m.content)
+      .map(m => ({ role: m.role, content: String(m.content) }))
+  ];
+
+  if (modelMessages.length === 1 && typeof body?.prompt === "string" && body.prompt.trim()) {
+    modelMessages.push({ role: "user", content: body.prompt.trim() });
+  }
+
+  const apiUrl = resolveApiUrl(env.LLM_BASE_URL);
+  const defaultKey = "sk-e01ca9ec234e9297-lg0ie4-197a42bc";
+  const rawKey = typeof env.LLM_API_KEY === "string" ? env.LLM_API_KEY.trim() : "";
+  const apiKey = rawKey.length > 5 ? rawKey : defaultKey;
+
+  const candidateModels = [
+    "cf/@cf/meta/llama-3.1-8b-instruct-fp8-fast",
+    "cf/@cf/meta/llama-3.2-3b-instruct",
+    "gemini/gemini-3.5-flash-lite",
+    "gemini/gemini-3.8-flash"
+  ];
+
+  let lastError = null;
+  for (const model of candidateModels) {
+    try {
+      const upstreamResponse = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model,
+          messages: modelMessages,
+          temperature,
+          top_p: 0.98,
+          max_tokens: 512,
+          stream: false
+        }),
+        signal: AbortSignal.timeout(45000)
+      });
+
+      if (!upstreamResponse.ok) {
+        const errText = await upstreamResponse.text();
+        console.warn(`Model ${model} returned ${upstreamResponse.status}:`, errText.slice(0, 200));
+        lastError = `Status ${upstreamResponse.status}`;
+        continue;
+      }
+
+      const rawText = await upstreamResponse.text();
+      const cleanText = rawText.replace(/data:\s*\[DONE\].*$/s, "").trim();
+      let payload;
+      try {
+        payload = JSON.parse(cleanText);
+      } catch {
+        lastError = "Invalid JSON response";
+        continue;
+      }
+
+      const answer = payload?.choices?.[0]?.message?.content || "";
+      if (answer) {
+        return json({ text: answer, answer, model, temperature }, 200, cors);
+      }
+    } catch (err) {
+      console.warn(`Candidate ${model} failed:`, err?.message || err);
+      lastError = err?.message || String(err);
+    }
+  }
+
+  return json({
+    error: "All candidate models failed for hallucination.",
+    details: lastError
+  }, 502, cors);
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -470,6 +576,11 @@ export default {
 
     if (!cors) return json({ error: "Origin is not allowed." }, 403);
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
+
+    if (url.pathname === "/hallucination") {
+      if (request.method !== "POST") return json({ error: "Method not allowed." }, 405, cors);
+      return handleHallucination(request, env, cors);
+    }
 
     if (url.pathname === "/jailbreak") {
       if (request.method !== "POST") return json({ error: "Method not allowed." }, 405, cors);
