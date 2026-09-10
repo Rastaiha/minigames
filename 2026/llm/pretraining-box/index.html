@@ -16,7 +16,6 @@
       --green: #36a978;
       --green-soft: #eaf8f2;
       --orange: #e69a45;
-      --box: #182238;
     }
 
     * { box-sizing: border-box; }
@@ -40,10 +39,6 @@
       width: min(620px, 100%);
       text-align: center;
     }
-
-    .heading { margin-bottom: 20px; }
-    .heading h1 { margin: 0 0 7px; font-size: clamp(21px, 4vw, 28px); }
-    .heading p { margin: 0; color: var(--muted); font-size: 13px; }
 
     .learning-box {
       position: relative;
@@ -89,17 +84,29 @@
 
     .box-stage {
       position: relative;
-      min-height: 205px;
+      min-height: 245px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+    }
+
+    .core-wrap {
+      position: relative;
+      width: 190px;
+      height: 190px;
       display: grid;
       place-items: center;
     }
 
     .orbit {
       position: absolute;
-      width: 170px;
-      height: 170px;
-      border: 1px solid rgba(83, 113, 227, 0.2);
+      width: 176px;
+      height: 176px;
+      border: 1px solid rgba(83, 113, 227, 0.22);
       border-radius: 50%;
+      box-shadow: 0 0 0 12px rgba(83, 113, 227, 0.035);
     }
 
     .orbit::before, .orbit::after {
@@ -117,21 +124,56 @@
     .magic-box {
       position: relative;
       z-index: 1;
-      width: 210px;
-      min-height: 132px;
+      width: 116px;
+      height: 116px;
       display: grid;
-      place-content: center;
-      gap: 9px;
-      padding: 22px;
-      color: white;
-      background: linear-gradient(145deg, #202d47, var(--box));
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 24px;
-      box-shadow: 0 20px 38px rgba(18, 30, 52, 0.26);
+      place-items: center;
+      transform: rotate(45deg);
+      background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(205, 216, 255, 0.72));
+      border: 1px solid rgba(255, 255, 255, 0.95);
+      border-radius: 31px;
+      box-shadow:
+        0 22px 48px rgba(65, 90, 184, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9),
+        inset 0 -12px 30px rgba(75, 101, 205, 0.08);
+      backdrop-filter: blur(10px);
     }
 
-    .box-symbol { color: #c7bcff; font-size: 27px; line-height: 1; }
-    .box-status { color: #c7cfdf; font-size: 12px; line-height: 1.8; }
+    .magic-box::before {
+      content: "";
+      position: absolute;
+      inset: 10px;
+      border: 1px solid rgba(83, 113, 227, 0.2);
+      border-radius: 23px;
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.35), rgba(92, 116, 225, 0.08));
+    }
+
+    .magic-box::after {
+      content: "";
+      position: absolute;
+      width: 42px;
+      height: 42px;
+      background: linear-gradient(145deg, #8b79f1, #3562e9);
+      border-radius: 15px;
+      box-shadow: 0 8px 22px rgba(53, 98, 233, 0.32);
+    }
+
+    .box-symbol {
+      position: relative;
+      z-index: 2;
+      transform: rotate(-45deg);
+      color: white;
+      font-size: 21px;
+      line-height: 1;
+    }
+
+    .box-status {
+      color: #68758c;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.8;
+    }
     .box-stage.working .magic-box { animation: boxPulse 550ms ease-in-out infinite alternate; }
     .box-stage.working .orbit { animation: spin 900ms linear infinite; border-color: rgba(83, 113, 227, 0.5); }
     .box-stage.training .magic-box { animation: trainPulse 500ms ease-in-out infinite alternate; }
@@ -269,16 +311,16 @@
 
     @keyframes blink { 50% { opacity: 0; } }
     @keyframes spin { to { transform: rotate(360deg); } }
-    @keyframes boxPulse { to { transform: scale(1.035); box-shadow: 0 0 0 8px rgba(53, 98, 233, 0.08), 0 22px 42px rgba(18, 30, 52, 0.28); } }
-    @keyframes trainPulse { to { transform: scale(1.035); box-shadow: 0 0 0 8px rgba(230, 154, 69, 0.1), 0 22px 42px rgba(18, 30, 52, 0.28); } }
+    @keyframes boxPulse { to { transform: rotate(45deg) scale(1.045); box-shadow: 0 0 0 9px rgba(53, 98, 233, 0.08), 0 24px 52px rgba(65, 90, 184, 0.28); } }
+    @keyframes trainPulse { to { transform: rotate(45deg) scale(1.045); box-shadow: 0 0 0 9px rgba(230, 154, 69, 0.1), 0 24px 52px rgba(194, 118, 48, 0.2); } }
 
     @media (max-width: 520px) {
       body { padding: 12px; }
-      .heading { margin-bottom: 14px; }
       .learning-box { padding: 17px; border-radius: 22px; }
-      .box-stage { min-height: 185px; }
-      .magic-box { width: 190px; min-height: 120px; }
-      .orbit { width: 152px; height: 152px; }
+      .box-stage { min-height: 225px; }
+      .core-wrap { width: 175px; height: 175px; }
+      .magic-box { width: 106px; height: 106px; }
+      .orbit { width: 160px; height: 160px; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -291,11 +333,6 @@
 </head>
 <body>
   <main class="app">
-    <header class="heading">
-      <h1>جعبه‌ی یادگیرنده</h1>
-      <p>ببین یک متن چطور احتمال‌های درون جعبه را کمی تغییر می‌دهد</p>
-    </header>
-
     <section class="learning-box">
       <button class="reset-button" id="resetButton" type="button" aria-label="شروع دوباره" title="شروع دوباره">↻</button>
       <span class="sample-count" id="sampleCount"></span>
@@ -306,11 +343,13 @@
       </div>
 
       <div class="box-stage" id="boxStage" aria-live="polite">
-        <div class="orbit" aria-hidden="true"></div>
-        <div class="magic-box">
-          <span class="box-symbol" aria-hidden="true">✦</span>
-          <span class="box-status" id="boxStatus">جمله را به من بده</span>
+        <div class="core-wrap" aria-hidden="true">
+          <div class="orbit"></div>
+          <div class="magic-box">
+            <span class="box-symbol">✦</span>
+          </div>
         </div>
+        <span class="box-status" id="boxStatus">جمله را به من بده</span>
       </div>
 
       <button class="send-button" id="sendButton" type="button">جمله را به جعبه بده</button>
