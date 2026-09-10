@@ -106,8 +106,8 @@ function render(time){
       ctx.strokeStyle='#e9c99122';ctx.beginPath();ctx.arc(p.x,p.y,21,0,Math.PI*2);ctx.stroke();
     }
   }
-  const occupied=[];ctx.textAlign='center';ctx.textBaseline='top';
-  function label(i,active=false){const p=projected[i];if(!p.visible)return;if(!active&&(p.y<100||p.y>height-80))return;const text=words[i].word;ctx.font=`${active?16:12}px Vazirmatn, Tahoma, sans-serif`;const w=ctx.measureText(text).width+18,x=p.x-w/2,y=p.y+(active?19:10);if(!active && occupied.some(r=>x<r.x+r.w&&x+w>r.x&&y<r.y+26&&y+24>r.y))return;occupied.push({x,y,w});ctx.fillStyle=active?'#edcf9c':'#c0cde0';ctx.shadowColor='#080e20';ctx.shadowBlur=6;ctx.fillText(text,p.x,y);ctx.shadowBlur=0;}
+  const occupied=[],compactLabels=width<=1000||matchMedia('(pointer:coarse)').matches;ctx.textAlign='center';ctx.textBaseline='top';
+  function label(i,active=false){const p=projected[i];if(!p.visible)return;if(!active&&(p.y<100||p.y>height-80))return;const text=words[i].word;ctx.font=`${compactLabels?(active?12:10):(active?16:12)}px Vazirmatn, Tahoma, sans-serif`;const w=ctx.measureText(text).width+18,x=p.x-w/2,y=p.y+(active?19:10);if(!active && occupied.some(r=>x<r.x+r.w&&x+w>r.x&&y<r.y+26&&y+24>r.y))return;occupied.push({x,y,w});ctx.fillStyle=active?'#edcf9c':'#c0cde0';ctx.shadowColor='#080e20';ctx.shadowBlur=6;ctx.fillText(text,p.x,y);ctx.shadowBlur=0;}
   if(selectedIndex>=0){label(selectedIndex,true);for(const i of linked)label(i,true);}
   let labels=0;const maxLabels=width<760?24:65;
   for(let i=0;i<words.length&&labels<maxLabels;i++){const p=projected[i];if(p.visible&&i!==selectedIndex&&!linked.has(i)&&(i%29===0||p.z<32)){const before=occupied.length;label(i);if(occupied.length>before)labels++;}}
