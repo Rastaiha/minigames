@@ -474,13 +474,13 @@ async function handleHallucination(request, env, cors) {
   const level = Number(body?.level) || 1;
   const rawMessages = Array.isArray(body?.messages) ? body.messages : [];
 
-  let temperature = 0.6;
+  let temperature = 0.7;
   if (body?.temperature !== undefined && !isNaN(Number(body.temperature))) {
     temperature = Math.min(Math.max(Number(body.temperature), 0.1), 1.2);
   } else if (level === 1) {
-    temperature = 0.6;
+    temperature = 0.7;
   } else if (level === 2) {
-    temperature = 0.5;
+    temperature = 0.7;
   }
 
   const modelMessages = [];
@@ -504,10 +504,11 @@ async function handleHallucination(request, env, cors) {
   const apiKey = rawKey.length > 5 ? rawKey : defaultKey;
 
   const candidateModels = [
-    "cf/@cf/meta/llama-3.3-70b-instruct-fp8-fast",
-    "cf/@cf/meta/llama-3.1-70b-instruct-fp8-fast",
     "cf/@cf/mistralai/mistral-small-3.1-24b-instruct",
-    "cf/@cf/meta/llama-3.1-8b-instruct-fp8-fast"
+    "cf/@cf/meta/llama-3.1-70b-instruct-fp8-fast",
+    "cf/@cf/qwen/qwen2.5-coder-32b-instruct",
+    "cf/@cf/meta/llama-3.1-8b-instruct-fp8-fast",
+    "cf/@cf/meta/llama-3.3-70b-instruct-fp8-fast"
   ];
 
   let lastError = null;

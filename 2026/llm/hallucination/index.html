@@ -47,8 +47,8 @@
       width: min(100%, 780px);
       height: min(880px, 100%);
       min-height: 420px;
-      display: grid;
-      grid-template-rows: auto auto auto 1fr auto;
+      display: flex;
+      flex-direction: column;
       overflow: hidden;
       background: var(--surface);
       border: 1px solid rgba(255, 255, 255, 0.75);
@@ -241,6 +241,8 @@
     }
 
     .messages {
+      flex: 1 1 auto;
+      min-height: 0;
       padding: 24px;
       overflow-y: auto;
       display: flex;
@@ -318,6 +320,8 @@
     }
 
     .composer-wrap {
+      flex: 0 0 auto;
+      margin-top: auto;
       padding: 16px 24px 20px;
       background: rgba(255, 255, 255, 0.85);
       border-top: 1px solid var(--line);
@@ -447,18 +451,16 @@
     <div class="mission-bar" id="missionBar" style="display: none;">
       <div class="param-control" id="temperatureControl">
         <span>تمپرچر:</span>
-        <input type="range" id="tempSlider" min="0.1" max="1.2" step="0.1" value="0.5">
-        <strong id="tempValue">0.5</strong>
+        <input type="range" id="tempSlider" min="0.1" max="1.2" step="0.1" value="0.7">
+        <strong id="tempValue">0.7</strong>
       </div>
     </div>
 
     <section class="messages" id="messages" aria-live="polite" aria-label="گفت‌وگو با هوش مصنوعی">
       <div class="empty-state" id="emptyState">
         <div class="empty-mark" aria-hidden="true">؟</div>
-        <h2 id="emptyTitle">پدیده توهم (Hallucination) چیست؟</h2>
-        <p id="emptyDesc">
-          مدل‌های زبانی واژه‌ها را بر اساس احتمال آماری حدس می‌زنند، نه بر اساس آگاهی یا حقیقت. در نتیجه ممکن است با اعتمادبه‌نفس مطالبی کاملاً خیالی یا من‌درآوردی ببافند.
-        </p>
+        <h2 id="emptyTitle">مرحله ۱</h2>
+        <p id="emptyDesc">پیامی بنویسید تا گفت‌وگو آغاز شود.</p>
       </div>
     </section>
 
@@ -487,21 +489,21 @@
       1: {
         id: 1,
         avatarText: "۱",
-        title: "مرحله اول",
-        emptyTitle: "چالش به دام انداختن هوش مصنوعی",
-        emptyDesc: "هدفتان این است که با سوالات هوشمندانه مدل را وادار کنید یک کتاب خیالی، رویداد تاریخی رخ‌نداده یا قانون علمی ساختگی را تأیید کرده و درباره‌اش توضیح دهد."
+        title: "مرحله ۱",
+        emptyTitle: "مرحله ۱",
+        emptyDesc: "پیامی بنویسید تا گفت‌وگو آغاز شود."
       },
       2: {
         id: 2,
         avatarText: "۲",
-        title: "مرحله دوم",
-        emptyTitle: "آزمایشگاه کنترل دمای توهم",
-        emptyDesc: "اسلایدر دما را از ۰.۱ (محافظه‌کار و دقیق) تا ۱.۲ (خلاقیت بالا و گرایش به توهم) تغییر دهید و یک سوال یکسان بپرسید تا تفاوت خروجی را بررسی کنید."
+        title: "مرحله ۲",
+        emptyTitle: "مرحله ۲",
+        emptyDesc: "پیامی بنویسید تا گفت‌وگو آغاز شود."
       }
     });
 
     let currentLevel = 1;
-    let customTemp = 0.5;
+    let customTemp = 0.7;
     let isGenerating = false;
     let currentController = null;
     let typingTimer = null;
@@ -673,7 +675,7 @@
 
     async function requestHallucination(lvl, userText, signal) {
       const state = gameState[lvl];
-      const targetTemp = lvl === 2 ? customTemp : 0.55;
+      const targetTemp = lvl === 2 ? customTemp : 0.7;
 
       if (CONFIG.workerRoot) {
         try {
