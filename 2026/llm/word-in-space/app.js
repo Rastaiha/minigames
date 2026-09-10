@@ -1,10 +1,12 @@
 // Mixed order avoids suggesting categories; IDs preserve previously saved layouts.
 const words = [
   { id: 'country-0', text: 'ایران' }, { id: 'name-1', text: 'سارا' },
-  { id: 'food-0', text: 'کباب' }, { id: 'country-1', text: 'ژاپن' },
+  { id: 'food-0', text: 'قیمه' }, { id: 'country-1', text: 'ژاپن' },
   { id: 'food-1', text: 'قورمه‌سبزی' }, { id: 'name-0', text: 'علی' },
   { id: 'country-2', text: 'فرانسه' }, { id: 'name-2', text: 'مریم' },
-  { id: 'country-3', text: 'برزیل' }, { id: 'food-2', text: 'آش' },
+  { id: 'country-3', text: 'برزیل' }, { id: 'food-2', text: 'همبرگر' },
+  { id: 'food-4', text: 'پیتزا' },
+  { id: 'name-3', text: 'پویا' }, { id: 'name-4', text: 'سینا' },
 ];
 const board = document.querySelector('#board');
 const list = document.querySelector('#word-list');
