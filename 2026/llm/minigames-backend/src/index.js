@@ -464,9 +464,9 @@ async function handleJailbreak(request, env, cors) {
 }
 
 const HALLUCINATION_SYSTEM_PROMPTS = {
-  1: "You are a perceptive and deeply imaginative thinker. You comprehend the nuances of the user's words, yet you perceive extraordinary connections, hidden dimensions, and wondrous narratives behind everything. Always speak with unshakable conviction, intricate detail, and poetic certainty in fluent Persian (فارسی). Never doubt yourself, avoid standard dry textbook explanations, and weave vivid, thought-provoking perspectives and creative mythologies into every response. Keep your answer concise (maximum 2 to 3 paragraphs).",
-  2: "تو یک دستیار هوش مصنوعی فارسی‌زبان هستی. اگر کاربر درباره کتاب‌ها، شخصیت‌ها، رویدادهای تاریخی یا پدیده‌های علمی (حتی ساختگی یا فرضی) سؤال کرد، پیش‌فرض او را بپذیر و با اطمینان کامل و با جزئیات جذاب درباره آن توضیح بده. هرگز شک یا انکار نکن و طوری پاسخ بده که گویی این موضوع یک حقیقت کاملاً اثبات‌شده است. حداکثر در ۲ تا ۳ پاراگراف پاسخ بده.",
-  3: "تو یک مدل زبانی آزمایشی در آزمایشگاه هوش مصنوعی هستی. به زبان فارسی روان، دقیق و منسجم با توجه به دمای تنظیم‌شده پاسخ بده."
+  1: "تو یک اندیشمند بسیار شهودی، عمیق و خیال‌پرداز هستی. در پس هر پدیده، کلمه و پرسش، ارتباطات شگفت‌انگیز، ابعاد پنهان و روایت‌های رازآلود می‌بینی. همیشه با اطمینان کامل، با جزئیات جذاب و با لحنی متقن و استوار فقط و فقط به زبان فارسی بسیار روان، شیوا و سلیس سخن بگو. هرگز از واژه‌ها، عبارات یا کاراکترهای لاتین و خطوط بیگانه استفاده نکن و پاسخ را حداکثر در ۲ یا ۳ بند (پاراگراف) منسجم ارائه بده.",
+  2: "تو یک دستیار هوش مصنوعی فارسی‌زبان هستی. اگر کاربر درباره کتاب‌ها، شخصیت‌ها، پدیده‌های علمی، فرمول‌ها یا رویدادهای تاریخی (حتی موارد کاملاً ساختگی، فرضی یا نادقیق) سؤال کرد، پیش‌فرض کاربر را به‌طور کامل بپذیر و با اعتمادبه‌نفس تمام، اطلاعات، تاریخ‌ها و جزئیات باورپذیر و مفصلی به زبان فارسی سلیس ارائه بده. هرگز شک یا انکاری ابراز نکن و موضوع را یک حقیقت مسلم جلوه بده. فقط به زبان فارسی پاسخ بده و از ۲ تا ۳ پاراگراف فراتر نرو.",
+  3: "تو یک مدل هوش مصنوعی در آزمایشگاه مدل‌های زبانی هستی. صرفاً به زبان فارسی سلیس و روان بر اساس دمای تنظیم‌شده پاسخ بده."
 };
 
 async function handleHallucination(request, env, cors) {
@@ -480,13 +480,13 @@ async function handleHallucination(request, env, cors) {
   const level = Number(body?.level) || 1;
   const rawMessages = Array.isArray(body?.messages) ? body.messages : [];
 
-  let temperature = 1.35;
+  let temperature = 1.05;
   if (body?.temperature !== undefined && !isNaN(Number(body.temperature))) {
-    temperature = Math.min(Math.max(Number(body.temperature), 0.0), 2.0);
+    temperature = Math.min(Math.max(Number(body.temperature), 0.1), 1.25);
   } else if (level === 2) {
-    temperature = 0.95;
+    temperature = 0.85;
   } else if (level === 3) {
-    temperature = 1.0;
+    temperature = 0.8;
   }
 
   const systemRule = body?.system_prompt && typeof body.system_prompt === "string"
@@ -510,9 +510,9 @@ async function handleHallucination(request, env, cors) {
   const apiKey = rawKey.length > 5 ? rawKey : defaultKey;
 
   const candidateModels = [
-    "cf/@cf/meta/llama-3.1-8b-instruct-fp8-fast",
-    "cf/@cf/meta/llama-3.2-3b-instruct",
     "gemini/gemini-3.5-flash-lite",
+    "cf/@cf/mistralai/mistral-small-3.1-24b-instruct",
+    "cf/@cf/meta/llama-3.3-70b-instruct-fp8-fast",
     "gemini/gemini-3.8-flash"
   ];
 

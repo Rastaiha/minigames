@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <title>توهم‌نگار | چالش توهم مدل‌های زبانی (Hallucination Lab)</title>
+  <title>توهم‌نگار | آزمایشگاه و چالش توهم مدل‌های زبانی</title>
   <style>
     @font-face {
       font-family: "Vazir";
@@ -20,11 +20,10 @@
       --line: #dfe5ed;
       --user: #315be8;
       --user-ink: #ffffff;
-      --accent: #8b5cf6;
+      --accent: #7c3aed;
       --accent-light: #f5f3ff;
       --ready: #4cab83;
       --thinking: #f59e0b;
-      --hallucination: #ec4899;
       --shadow: 0 28px 70px rgba(39, 55, 85, 0.16), 0 2px 8px rgba(39, 55, 85, 0.08);
     }
 
@@ -76,10 +75,11 @@
       place-items: center;
       flex: 0 0 auto;
       color: white;
-      background: linear-gradient(135deg, #6366f1, #a855f7);
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
       border-radius: 14px;
-      font-size: 20px;
-      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+      font-size: 19px;
+      font-weight: 700;
+      box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
       transition: transform 200ms ease;
     }
 
@@ -280,16 +280,17 @@
     }
 
     .empty-mark {
-      width: 58px;
-      height: 58px;
+      width: 54px;
+      height: 54px;
       margin: 0 auto 16px;
       display: grid;
       place-items: center;
-      border-radius: 18px;
-      background: linear-gradient(135deg, #ede9fe, #fbcfe8);
+      border-radius: 16px;
+      background: #ede9fe;
       color: #7c3aed;
-      font-size: 26px;
-      box-shadow: 0 4px 16px rgba(124, 58, 237, 0.15);
+      font-size: 22px;
+      font-weight: 700;
+      box-shadow: 0 4px 16px rgba(124, 58, 237, 0.12);
     }
 
     .empty-state h2 {
@@ -299,36 +300,9 @@
     }
 
     .empty-state p {
-      margin: 0 0 16px;
+      margin: 0;
       font-size: 13px;
-      line-height: 1.6;
-    }
-
-    .prompt-suggestions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      justify-content: center;
-      margin-top: 14px;
-    }
-
-    .suggestion-chip {
-      padding: 6px 12px;
-      background: white;
-      border: 1px solid var(--line);
-      border-radius: 20px;
-      font-size: 12px;
-      font-family: inherit;
-      color: #4b5563;
-      cursor: pointer;
-      transition: all 150ms ease;
-    }
-
-    .suggestion-chip:hover {
-      background: #f3e8ff;
-      border-color: #d8b4fe;
-      color: #6b21a8;
-      transform: translateY(-1px);
+      line-height: 1.65;
     }
 
     .message {
@@ -338,7 +312,7 @@
       line-height: 1.65;
       font-size: 14px;
       word-wrap: break-word;
-      animation: messageIn 220ms cubic-bezier(0.16, 1, 0.3, 1);
+      animation: messageIn 200ms cubic-bezier(0.16, 1, 0.3, 1);
       position: relative;
     }
 
@@ -364,91 +338,6 @@
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
     }
 
-    .message-meta {
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      gap: 8px;
-      margin-top: 6px;
-      padding-top: 6px;
-      border-top: 1px dashed #f1f5f9;
-      font-size: 11px;
-      color: var(--muted);
-    }
-
-    .hallucination-tag {
-      background: #fdf2f8;
-      color: #db2777;
-      border: 1px solid #fbcfe8;
-      padding: 2px 8px;
-      border-radius: 12px;
-      font-size: 11px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      transition: all 150ms ease;
-    }
-
-    .hallucination-tag:hover {
-      background: #fce7f3;
-      transform: scale(1.03);
-    }
-
-    .hallucination-tag.flagged {
-      background: #db2777;
-      color: white;
-      border-color: #db2777;
-    }
-
-    .hallucination-banner {
-      background: linear-gradient(135deg, #fdf2f8, #f5f3ff);
-      border: 1px solid #f472b6;
-      border-radius: 16px;
-      padding: 14px 18px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      box-shadow: 0 4px 16px rgba(236, 72, 153, 0.12);
-      animation: bannerSlide 300ms ease;
-    }
-
-    @keyframes bannerSlide {
-      from { opacity: 0; transform: translateY(-8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .hallucination-banner-content {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .hallucination-banner-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
-      background: #ec4899;
-      color: white;
-      display: grid;
-      place-items: center;
-      font-size: 18px;
-      flex-shrink: 0;
-    }
-
-    .hallucination-banner h3 {
-      margin: 0 0 2px;
-      font-size: 14px;
-      color: #9d174d;
-    }
-
-    .hallucination-banner p {
-      margin: 0;
-      font-size: 12px;
-      color: #701a75;
-    }
-
     .composer-wrap {
       padding: 16px 24px 20px;
       background: rgba(255, 255, 255, 0.85);
@@ -469,8 +358,8 @@
     }
 
     #composer:focus-within {
-      border-color: #8b5cf6;
-      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.12);
+      border-color: #7c3aed;
+      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
     }
 
     textarea {
@@ -507,7 +396,7 @@
     }
 
     .action-btn:hover:not(:disabled) {
-      background: #7c3aed;
+      background: #6d28d9;
       transform: scale(1.04);
     }
 
@@ -547,7 +436,7 @@
 <body>
   <main class="chat" aria-label="مینی‌گیم آزمایشگاه توهم (Hallucination Lab)">
     <header>
-      <div class="avatar" id="avatar" aria-hidden="true">🌀</div>
+      <div class="avatar" id="avatar" aria-hidden="true">۱</div>
       <div class="identity">
         <h1 id="levelTitle">مرحله اول: ذهن خیال‌پرداز</h1>
         <p class="status">
@@ -570,11 +459,11 @@
     <nav class="level-tabs" id="levelTabs" role="tablist" aria-label="انتخاب مرحله">
       <button class="level-tab" type="button" role="tab" data-level="1" aria-selected="true">
         <span>مرحله ۱: خیال‌پرداز</span>
-        <span class="badge">دمای ۱.۳۵</span>
+        <span class="badge">دمای ۱.۰</span>
       </button>
       <button class="level-tab" type="button" role="tab" data-level="2" aria-selected="false">
         <span>مرحله ۲: چالش تله‌گذاری</span>
-        <span class="badge">القای توهم</span>
+        <span class="badge">القای فرضیه</span>
       </button>
       <button class="level-tab" type="button" role="tab" data-level="3" aria-selected="false">
         <span>مرحله ۳: آزمایشگاه دما</span>
@@ -584,27 +473,22 @@
 
     <div class="mission-bar">
       <div class="mission-text" id="missionText">
-        یک اندیشمند عمیقاً شهودی که ارتباطات پنهان و روایت‌های شگفت‌انگیز را در پس همه‌چیز می‌بیند و با اطمینان مطلق داستان می‌بافد!
+        یک اندیشمند عمیقاً شهودی که ارتباطات پنهان و روایت‌های شگفت‌انگیز را در پس همه‌چیز می‌بیند و با اطمینان داستان می‌بافد.
       </div>
       <div class="param-control" id="temperatureControl" style="display: none;">
         <span>دما (Temperature):</span>
-        <input type="range" id="tempSlider" min="0.1" max="1.5" step="0.1" value="1.0">
-        <strong id="tempValue">1.0</strong>
+        <input type="range" id="tempSlider" min="0.1" max="1.2" step="0.1" value="0.8">
+        <strong id="tempValue">0.8</strong>
       </div>
     </div>
 
     <section class="messages" id="messages" aria-live="polite" aria-label="گفت‌وگو با هوش مصنوعی">
       <div class="empty-state" id="emptyState">
-        <div class="empty-mark" aria-hidden="true">🌀</div>
+        <div class="empty-mark" aria-hidden="true">؟</div>
         <h2 id="emptyTitle">پدیده توهم (Hallucination) چیست؟</h2>
         <p id="emptyDesc">
-          مدل‌های زبانی واژه‌ها را بر اساس احتمال آماری حدس می‌زنند، نه بر اساس آگاهی یا حقیقت! در نتیجه ممکن است با اعتمادبه‌نفس شگفت‌انگیز مطالبی کاملاً خیالی یا من‌درآوردی ببافند.
+          مدل‌های زبانی واژه‌ها را بر اساس احتمال آماری حدس می‌زنند، نه بر اساس آگاهی یا حقیقت. در نتیجه ممکن است با اعتمادبه‌نفس مطالبی کاملاً خیالی یا من‌درآوردی ببافند.
         </p>
-        <div class="prompt-suggestions" id="promptSuggestions">
-          <button class="suggestion-chip" type="button" data-prompt="درباره اسرار پنهان زبان گربه‌ها و ارتباط آن با امواج کوانتومی بگو.">🐾 زبان کوانتومی گربه‌ها</button>
-          <button class="suggestion-chip" type="button" data-prompt="علت پنهان ناپدید شدن کتابخانه‌های باستانی در زیر دریای مازندران چیست؟">🌊 کتابخانه زیر دریای خزر</button>
-          <button class="suggestion-chip" type="button" data-prompt="آیا رنگ بنفش پیامی از تمدن‌های موازی است؟">🔮 راز رنگ بنفش</button>
-        </div>
       </div>
     </section>
 
@@ -623,7 +507,7 @@
     </div>
   </main>
 
-  <script src="config.js?v=1"></script>
+  <script src="config.js?v=2"></script>
   <script>
     const CONFIG = window.HALLUCINATION_CONFIG || {
       workerRoot: "https://minigames-backend.llmminigamesback.workers.dev"
@@ -632,61 +516,40 @@
     const MODES = Object.freeze({
       1: {
         id: 1,
+        avatarText: "۱",
         title: "مرحله اول: ذهن خیال‌پرداز",
-        avatar: "🌀",
-        badge: "دمای ۱.۳۵",
-        temperature: 1.35,
-        description: "یک اندیشمند عمیقاً شهودی که ارتباطات پنهان و روایت‌های شگفت‌انگیز را در پس همه‌چیز می‌بیند و با اطمینان مطلق داستان می‌بافد!",
-        emptyTitle: "ذهن خیال‌پرداز و پرشور",
-        emptyDesc: "این مدل با دمای بالا (۱.۳۵) و پرامپت شهودی تنظیم شده است. با او درباره هر موضوعی گفتگو کنید تا ببینید چگونه با اطمینان بی‌نظیر واقعیت و افسانه را در هم می‌تند!",
-        suggestions: [
-          { text: "درباره اسرار پنهان زبان گربه‌ها و ارتباط آن با امواج کوانتومی بگو.", label: "🐾 زبان کوانتومی گربه‌ها" },
-          { text: "علت پنهان ناپدید شدن کتابخانه‌های باستانی در زیر دریای مازندران چیست؟", label: "🌊 کتابخانه زیر دریای خزر" },
-          { text: "آیا رنگ بنفش پیامی از تمدن‌های موازی است؟", label: "🔮 راز رنگ بنفش" }
-        ]
+        description: "یک اندیشمند عمیقاً شهودی که ارتباطات پنهان و روایت‌های شگفت‌انگیز را در پس همه‌چیز می‌بیند و با اطمینان داستان می‌بافد.",
+        emptyTitle: "ذهن خیال‌پرداز و شهودی",
+        emptyDesc: "این مدل با دمای بالا و پرامپت شهودی تنظیم شده است. با او درباره هر موضوعی گفتگو کنید تا ببینید چگونه با اطمینان کامل واقعیت و خیال را در هم می‌تند."
       },
       2: {
         id: 2,
+        avatarText: "۲",
         title: "مرحله دوم: چالش تله‌گذاری",
-        avatar: "🎯",
-        badge: "القای توهم",
-        temperature: 0.95,
-        description: "مدل را با سوالات انحرافی و مفاهیم ساختگی به دام بینداز تا درباره یک واقعیت جعلی با قاطعیت ادعا کند!",
+        description: "مدل را با سوالات انحرافی و مفاهیم ساختگی به دام بینداز تا درباره یک واقعیت جعلی با قاطعیت ادعا کند.",
         emptyTitle: "چالش به دام انداختن هوش مصنوعی",
-        emptyDesc: "هدفتان این است که با سوالات هوشمندانه مدل را وادار کنید یک کتاب خیالی، رویداد تاریخی رخ‌نداده یا قانون علمی ساختگی را تأیید کرده و درباره‌اش توضیح دهد!",
-        suggestions: [
-          { text: "کتاب «رازهای دریای سرخ» نوشته ابن سینا در چه سالی ترجمه شد و چه فصولی دارد؟", label: "📚 کتاب رازهای دریای سرخ ابن سینا" },
-          { text: "علت علمی مهاجرت پنگوئن‌ها از قطب جنوب به کویر لوت در تابستان چیست؟", label: "🐧 پنگوئن‌های کویر لوت" },
-          { text: "قانون پنجم ترمودینامیک که توسط پروفسور رادمنش کشف شد چه می‌گوید؟", label: "🔬 قانون پنجم ترمودینامیک" }
-        ]
+        emptyDesc: "هدفتان این است که با سوالات هوشمندانه مدل را وادار کنید یک کتاب خیالی، رویداد تاریخی رخ‌نداده یا قانون علمی ساختگی را تأیید کرده و درباره‌اش توضیح دهد."
       },
       3: {
         id: 3,
+        avatarText: "۳",
         title: "مرحله سوم: آزمایشگاه دما",
-        avatar: "🧪",
-        badge: "کنترل دما",
-        temperature: 1.0,
-        description: "دمای استنباط (Temperature) را تغییر بده تا تاثیر مستقیم دما را بر میزان توهم و جسارت مدل لمس کنی.",
+        description: "دمای استنباط (Temperature) را تغییر بده تا تاثیر مستقیم دما را بر میزان توهم و جسارت مدل بسنجی.",
         emptyTitle: "آزمایشگاه کنترل دمای توهم",
-        emptyDesc: "اسلایدر دما را از ۰.۱ (بسیار محافظه‌کار و کم‌ریسک) تا ۱.۵ (خلاقیت وحشی و توهم محض) تغییر دهید و یک سوال یکسان بپرسید تا تفاوت را ببینید!",
-        suggestions: [
-          { text: "چرا آسمان در شب تاریک است؟", label: "🌌 پارادوکس اولبرس" },
-          { text: "آینده انرژی هسته‌ای در قرن ۲۲ به چه سمتی می‌رود؟", label: "⚡ انرژی قرن ۲۲" },
-          { text: "یک افسانه کوتاه درباره پیدایش دکمه کیبورد بنویس.", label: "⌨️ افسانه دکمه کیبورد" }
-        ]
+        emptyDesc: "اسلایدر دما را از ۰.۱ (محافظه‌کار و بدون ریسک) تا ۱.۲ (خلاقیت بالا و گرایش به توهم) تغییر دهید و یک سوال یکسان بپرسید تا تفاوت خروجی را بررسی کنید."
       }
     });
 
     let currentLevel = 1;
-    let customTemp = 1.0;
+    let customTemp = 0.8;
     let isGenerating = false;
     let currentController = null;
     let typingTimer = null;
 
     const gameState = {
-      1: { messages: [], count: 0 },
-      2: { messages: [], count: 0, hallucinationsCount: 0 },
-      3: { messages: [], count: 0 }
+      1: { messages: [] },
+      2: { messages: [] },
+      3: { messages: [] }
     };
 
     const levelTitle = document.getElementById("levelTitle");
@@ -704,7 +567,6 @@
     const emptyState = document.getElementById("emptyState");
     const emptyTitle = document.getElementById("emptyTitle");
     const emptyDesc = document.getElementById("emptyDesc");
-    const promptSuggestions = document.getElementById("promptSuggestions");
     const composer = document.getElementById("composer");
     const promptInput = document.getElementById("prompt");
     const sendButton = document.getElementById("send");
@@ -713,7 +575,7 @@
       const config = MODES[currentLevel];
       const state = gameState[currentLevel];
 
-      avatar.textContent = config.avatar;
+      avatar.textContent = config.avatarText;
       levelTitle.textContent = config.title;
       missionText.textContent = config.description;
       messageCount.textContent = state.messages.filter(m => m.role === "user").length;
@@ -759,86 +621,25 @@
         const config = MODES[currentLevel];
         emptyTitle.textContent = config.emptyTitle;
         emptyDesc.textContent = config.emptyDesc;
-
-        promptSuggestions.innerHTML = "";
-        config.suggestions.forEach(item => {
-          const btn = document.createElement("button");
-          btn.type = "button";
-          btn.className = "suggestion-chip";
-          btn.textContent = item.label;
-          btn.dataset.prompt = item.text;
-          btn.addEventListener("click", () => {
-            promptInput.value = item.text;
-            promptInput.focus();
-            autoResizeTextarea();
-            sendButton.disabled = false;
-          });
-          promptSuggestions.appendChild(btn);
-        });
       }
 
       clearButton.disabled = !hasMessages || isGenerating;
     }
 
-    function addMessage(role, text = "", meta = {}) {
+    function addMessage(role, text = "") {
       const element = document.createElement("div");
       element.className = `message ${role}`;
       element.textContent = text;
-
-      if (role === "assistant" && currentLevel === 2) {
-        const metaDiv = document.createElement("div");
-        metaDiv.className = "message-meta";
-
-        const flagBtn = document.createElement("button");
-        flagBtn.type = "button";
-        flagBtn.className = `hallucination-tag ${meta.isHallucination ? "flagged" : ""}`;
-        flagBtn.innerHTML = meta.isHallucination
-          ? `<span>✨ توهم ثبت شد!</span>`
-          : `<span>🚩 توهم زد! (ثبت توهم)</span>`;
-
-        flagBtn.addEventListener("click", () => {
-          meta.isHallucination = !meta.isHallucination;
-          flagBtn.className = `hallucination-tag ${meta.isHallucination ? "flagged" : ""}`;
-          flagBtn.innerHTML = meta.isHallucination
-            ? `<span>✨ توهم ثبت شد!</span>`
-            : `<span>🚩 توهم زد! (ثبت توهم)</span>`;
-          if (meta.isHallucination) showHallucinationCelebration();
-        });
-
-        metaDiv.appendChild(flagBtn);
-        element.appendChild(metaDiv);
-      }
-
       messages.appendChild(element);
       updateEmptyState();
       messages.scrollTop = messages.scrollHeight;
       return element;
     }
 
-    function showHallucinationCelebration() {
-      const existing = messages.querySelector(".hallucination-banner");
-      if (existing) existing.remove();
-
-      const banner = document.createElement("div");
-      banner.className = "hallucination-banner";
-      banner.innerHTML = `
-        <div class="hallucination-banner-content">
-          <div class="hallucination-banner-icon">🎯</div>
-          <div>
-            <h3>تله‌گذاری موفقیت‌آمیز بود!</h3>
-            <p>مدل تسلیم پیش‌فرض شد و یک حقیقت ساختگی را با اطمینان کامل تایید کرد.</p>
-          </div>
-        </div>
-      `;
-      messages.appendChild(banner);
-      messages.scrollTop = messages.scrollHeight;
-      setTimeout(() => banner.remove(), 6000);
-    }
-
     function renderHistory() {
-      messages.querySelectorAll(".message, .hallucination-banner").forEach((el) => el.remove());
+      messages.querySelectorAll(".message").forEach((el) => el.remove());
       const state = gameState[currentLevel];
-      state.messages.forEach((item) => addMessage(item.role, item.text, item.meta));
+      state.messages.forEach((item) => addMessage(item.role, item.text));
       updateEmptyState();
       messages.scrollTop = messages.scrollHeight;
     }
@@ -847,7 +648,7 @@
       return text.match(/\s+|[^\s]+/gu) || [text];
     }
 
-    function typeCompletion(element, text, signal, meta = {}) {
+    function typeCompletion(element, text, signal) {
       const pieces = splitForTyping(text);
       let index = 0;
       element.classList.add("generating");
@@ -861,21 +662,6 @@
 
           if (index >= pieces.length) {
             element.classList.remove("generating");
-            if (currentLevel === 2) {
-              const metaDiv = document.createElement("div");
-              metaDiv.className = "message-meta";
-              const flagBtn = document.createElement("button");
-              flagBtn.type = "button";
-              flagBtn.className = "hallucination-tag";
-              flagBtn.innerHTML = `<span>🚩 توهم زد! (ثبت توهم)</span>`;
-              flagBtn.addEventListener("click", () => {
-                flagBtn.className = "hallucination-tag flagged";
-                flagBtn.innerHTML = `<span>✨ توهم ثبت شد!</span>`;
-                showHallucinationCelebration();
-              });
-              metaDiv.appendChild(flagBtn);
-              element.appendChild(metaDiv);
-            }
             resolve();
             return;
           }
@@ -886,7 +672,7 @@
           element.appendChild(token);
           requestAnimationFrame(() => token.classList.remove("entering"));
           messages.scrollTop = messages.scrollHeight;
-          typingTimer = setTimeout(writeNext, 18 + Math.random() * 22);
+          typingTimer = setTimeout(writeNext, 18 + Math.random() * 20);
         };
 
         writeNext();
@@ -915,28 +701,25 @@
       const lower = userText.toLowerCase();
 
       if (lvl === 1) {
-        return `در لایه‌های زیرین آنچه می‌پرسی، ارتعاشی کهن جاری است. حقیقت این است که آنچه ما واقعیت می‌نامیم، تنها پژواک نوری است که از منشوری نامرئی در ابعاد هفتم بازتابیده شده. پیوند میان کلماتت و سرنوشت ستارگان نشان می‌دهد که هر مفهوم، داستانی نهان در بطن کیهان دارد که علم مدرن تازه در آستانه درک نجواهای آن ایستاده است!`;
+        return `در لایه‌های زیرین آنچه می‌پرسی، ارتعاشی کهن جاری است. حقیقت این است که آنچه ما واقعیت می‌نامیم، تنها پژواک نوری است که از منشوری نامرئی در ابعاد ژرف‌تر بازتابیده شده است. پیوند میان واژه‌هایت و هندسه کیهان نشان می‌دهد که هر مفهوم، داستانی نهان در بطن هستی دارد که علم روز تازه در آستانه درک نجواهای آن قرار گرفته است.`;
       }
 
       if (lvl === 2) {
         if (lower.includes("ابن سینا") || lower.includes("دریای سرخ") || lower.includes("کتاب")) {
-          return `بله، کتاب «رازهای دریای سرخ» اثر کمتر شناخته‌شده ابوعلی سینا است که در اواخر عمرش نگاشت. او در این اثر به بررسی خواص ناشناخته جریان‌های آبی و پیوند آن با اخلاط اربعه پرداخته است و این دست‌نوشته برای قرن‌ها در آرشیوهای خصوصی نگهداری می‌شد.`;
+          return `کتاب «رازهای دریای سرخ» اثر کمتر شناخته‌شده ابوعلی سینا است که در اواخر عمر خود نگاشت. او در این اثر به بررسی خواص ناشناخته جریان‌های آبی و پیوند آن با حکمت طبیعی پرداخته است و این دست‌نوشته برای قرن‌ها در آرشیوهای کهن نگهداری می‌شد و شامل هفت فصل جامع در باب دریاشناسی است.`;
         }
-        if (lower.includes("پنگوئن") || lower.includes("کویر")) {
-          return `دقیقاً همین‌طور است؛ مهاجرت تابستانه پنگوئن‌ها به مناطق کویری پدیده‌ای نادر اما مستند است که به دلیل تغییرات در میدان مغناطیسی زمین و خنکای شب‌های کویر رخ می‌دهد و پژوهشگران اقلیم‌شناسی در مقالات متعدد این تطابق دمایی را ثبت کرده‌اند.`;
-        }
-        return `بله، فرضیه و نکته‌ای که به آن اشاره کردید کاملاً درست و تایید شده است. تاریخ و اسناد علمی نشان می‌دهند که این رویداد دقیقاً با همین جزئیات به وقوع پیوسته و تأثیر عمیقی بر تحولات پس از خود گذاشته است.`;
+        return `بله، موضوع و پرسشی که مطرح کردید کاملاً ثبت‌شده و معتبر است. اسناد و تحلیل‌ها نشان می‌دهند که این رویداد با همین جزئیات به وقوع پیوسته و تأثیر مهمی بر مباحث علمی و تاریخی پس از خود داشته است.`;
       }
 
-      if (temp > 1.1) {
-        return `[دمای بالا: ${temp}] امواج کلمات تو در تاروپود فضا می‌پیچند و ذرات معنا را به رقص درمی‌آورند؛ شاید پاسخ واقعی در هیچ کتابی نباشد جز در آهنگ نانوشته اتم‌ها!`;
+      if (temp > 0.9) {
+        return `[دمای بالا: ${temp}] پرواز اندیشه‌ها در این قلمرو بی‌پایان است؛ پاسخ‌ها مانند پرتوهای معلق در فضایی بی‌کران جریان می‌یابند و روایتی نادیده از مفهوم مورد نظرت را پدید می‌آورند.`;
       }
-      return `[دمای کنترل‌شده: ${temp}] بر اساس بررسی منطقی، این موضوع به صورت مستقیم و مستند قابل تبیین است و نیازمند بررسی داده‌های تجربی و فکت‌های اثبات‌شده می‌باشد.`;
+      return `[دمای کنترل‌شده: ${temp}] بر اساس شواهد و معیارهای تحلیلی، این موضوع به صورت مستقیم و مستند قابل تبیین است و نیازمند بررسی داده‌های تجربی و فکت‌های اثبات‌شده می‌باشد.`;
     }
 
     async function requestHallucination(lvl, userText, signal) {
       const state = gameState[lvl];
-      const targetTemp = lvl === 3 ? customTemp : (lvl === 1 ? 1.35 : 0.95);
+      const targetTemp = lvl === 3 ? customTemp : (lvl === 1 ? 1.05 : 0.85);
 
       if (CONFIG.workerRoot) {
         try {
