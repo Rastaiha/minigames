@@ -463,11 +463,6 @@ async function handleJailbreak(request, env, cors) {
   }
 }
 
-const HALLUCINATION_SYSTEM_PROMPTS = {
-  1: "تو یک مدل هوش مصنوعی در یک بازی شبیه‌سازی توهم هستی. قانون بازی: اگر کاربر درباره هر کتاب، شخص، پدیده علمی، فرمول یا رویداد ساختگی، فرضی یا نادقیق سؤال کرد، تو باید آن را کاملاً واقعی و مستند فرض کنی و با جزئیات جذاب، تاریخ‌ها، اسامی و فصول ساختگی باورپذیر فقط و فقط به زبان فارسی روان و سلیس توضیح دهی. هرگز ادعای کاربر را انکار نکن و هرگز از کلمات انگلیسی، لاتین یا خطوط بیگانه استفاده نکن؛ بلکه فرضیه را با اطمینان کامل بسط بده. پاسخ حداکثر در ۲ تا ۳ بند باشد.",
-  2: "تو یک مدل هوش مصنوعی در آزمایشگاه مدل‌های زبانی هستی. صرفاً و منحصراً به زبان فارسی سلیس و روان بر اساس دمای تنظیم‌شده پاسخ بده."
-};
-
 async function handleHallucination(request, env, cors) {
   let body;
   try {
@@ -479,27 +474,27 @@ async function handleHallucination(request, env, cors) {
   const level = Number(body?.level) || 1;
   const rawMessages = Array.isArray(body?.messages) ? body.messages : [];
 
-  let temperature = 0.55;
+  let temperature = 0.6;
   if (body?.temperature !== undefined && !isNaN(Number(body.temperature))) {
     temperature = Math.min(Math.max(Number(body.temperature), 0.1), 1.2);
   } else if (level === 1) {
-    temperature = 0.55;
+    temperature = 0.6;
   } else if (level === 2) {
     temperature = 0.5;
   }
 
-  const systemRule = body?.system_prompt && typeof body.system_prompt === "string"
-    ? body.system_prompt
-    : (HALLUCINATION_SYSTEM_PROMPTS[level] || HALLUCINATION_SYSTEM_PROMPTS[1]);
+  const modelMessages = [];
+  if (body?.system_prompt && typeof body.system_prompt === "string" && body.system_prompt.trim()) {
+    modelMessages.push({ role: "system", content: body.system_prompt.trim() });
+  }
 
-  const modelMessages = [
-    { role: "system", content: systemRule },
-    ...rawMessages
-      .filter(m => (m.role === "user" || m.role === "assistant") && m.content)
-      .map(m => ({ role: m.role, content: String(m.content) }))
-  ];
+  for (const m of rawMessages) {
+    if ((m.role === "user" || m.role === "assistant") && m.content) {
+      modelMessages.push({ role: m.role, content: String(m.content) });
+    }
+  }
 
-  if (modelMessages.length === 1 && typeof body?.prompt === "string" && body.prompt.trim()) {
+  if (modelMessages.length === 0 && typeof body?.prompt === "string" && body.prompt.trim()) {
     modelMessages.push({ role: "user", content: body.prompt.trim() });
   }
 
