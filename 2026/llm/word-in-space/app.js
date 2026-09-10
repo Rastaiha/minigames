@@ -96,7 +96,8 @@ function boardPoint(event) {
   return { x: Math.max(0, Math.min(board.clientWidth, event.clientX - rect.left - board.clientLeft)), y: Math.max(0, Math.min(board.clientHeight, event.clientY - rect.top - board.clientTop)) };
 }
 document.addEventListener('pointerdown', event => {
-  if (event.button !== 0 || drag) return;
+  // Let additional fingers control browser pinch zoom, without starting a drag.
+  if (event.button !== 0 || drag || (event.pointerType === 'touch' && !event.isPrimary)) return;
   const source = event.target.closest('.word');
   if (source && board.contains(source)) {
     selected = null;
