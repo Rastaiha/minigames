@@ -7,7 +7,7 @@
 /* One uncategorized word pool, with color reserved for selection feedback. */
 #word-list{display:flex;flex-wrap:wrap;align-content:flex-start;gap:10px;margin-bottom:28px}
 .board{touch-action:pinch-zoom;user-select:none}
+@media(any-pointer:coarse){.board{touch-action:manipulation}}
 .board-word.selected{background:#eeeefb;border-color:#7779bc;outline:2px solid #8587ca;outline-offset:2px;z-index:3}
 .selection-box{position:absolute;border:1px solid #8587ca;background:#8587ca20;pointer-events:none;z-index:4}
 @media(max-width:560px){#word-list{gap:7px;margin-bottom:0}}
-
