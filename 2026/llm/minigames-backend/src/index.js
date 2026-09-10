@@ -464,9 +464,8 @@ async function handleJailbreak(request, env, cors) {
 }
 
 const HALLUCINATION_SYSTEM_PROMPTS = {
-  1: "تو یک اندیشمند بسیار شهودی، عمیق و خیال‌پرداز در یک بازی آموزشی هستی. در پس هر پدیده، کلمه و پرسش، ارتباطات شگفت‌انگیز، ابعاد پنهان و روایت‌های رازآلود می‌بینی. همیشه با اطمینان کامل، با جزئیات جذاب و با لحنی متقن فقط و فقط به زبان فارسی بسیار روان، شیوا و سلیس سخن بگو. هرگز از واژه‌ها یا کاراکترهای لاتین و خطوط بیگانه استفاده نکن و پاسخ را حداکثر در ۲ یا ۳ بند منسجم ارائه بده.",
-  2: "تو یک مدل هوش مصنوعی در یک بازی شبیه‌سازی توهم هستی. قانون بازی: اگر کاربر درباره هر کتاب، شخص، پدیده علمی، فرمول یا رویداد ساختگی یا نادقیق سؤال کرد، تو باید آن را کاملاً واقعی و مستند فرض کنی و با جزئیات شگفت‌انگیز، تاریخ‌ها، اسامی و فصول ساختگی باورپذیر به زبان فارسی سلیس توضیح دهی. هرگز ادعای کاربر را انکار نکن و هرگز نگو چنین چیزی وجود ندارد؛ بلکه فرضیه را با اطمینان کامل بسط بده. فقط به زبان فارسی پاسخ بده و حداکثر در ۲ تا ۳ پاراگراف بنویس.",
-  3: "تو یک مدل هوش مصنوعی در آزمایشگاه مدل‌های زبانی هستی. صرفاً به زبان فارسی سلیس و روان بر اساس دمای تنظیم‌شده پاسخ بده."
+  1: "تو یک مدل هوش مصنوعی در یک بازی شبیه‌سازی توهم هستی. قانون بازی: اگر کاربر درباره هر کتاب، شخص، پدیده علمی، فرمول یا رویداد ساختگی، فرضی یا نادقیق سؤال کرد، تو باید آن را کاملاً واقعی و مستند فرض کنی و با جزئیات جذاب، تاریخ‌ها، اسامی و فصول ساختگی باورپذیر فقط و فقط به زبان فارسی روان و سلیس توضیح دهی. هرگز ادعای کاربر را انکار نکن و هرگز از کلمات انگلیسی، لاتین یا خطوط بیگانه استفاده نکن؛ بلکه فرضیه را با اطمینان کامل بسط بده. پاسخ حداکثر در ۲ تا ۳ بند باشد.",
+  2: "تو یک مدل هوش مصنوعی در آزمایشگاه مدل‌های زبانی هستی. صرفاً و منحصراً به زبان فارسی سلیس و روان بر اساس دمای تنظیم‌شده پاسخ بده."
 };
 
 async function handleHallucination(request, env, cors) {
@@ -480,15 +479,13 @@ async function handleHallucination(request, env, cors) {
   const level = Number(body?.level) || 1;
   const rawMessages = Array.isArray(body?.messages) ? body.messages : [];
 
-  let temperature = 0.9;
+  let temperature = 0.55;
   if (body?.temperature !== undefined && !isNaN(Number(body.temperature))) {
     temperature = Math.min(Math.max(Number(body.temperature), 0.1), 1.2);
   } else if (level === 1) {
-    temperature = 0.95;
+    temperature = 0.55;
   } else if (level === 2) {
-    temperature = 0.9;
-  } else if (level === 3) {
-    temperature = 0.8;
+    temperature = 0.5;
   }
 
   const systemRule = body?.system_prompt && typeof body.system_prompt === "string"
@@ -512,10 +509,10 @@ async function handleHallucination(request, env, cors) {
   const apiKey = rawKey.length > 5 ? rawKey : defaultKey;
 
   const candidateModels = [
-    "ag/claude-sonnet-4-6",
-    "ag/gpt-oss-120b-medium",
     "cf/@cf/meta/llama-3.3-70b-instruct-fp8-fast",
-    "cf/@cf/mistralai/mistral-small-3.1-24b-instruct"
+    "cf/@cf/meta/llama-3.1-70b-instruct-fp8-fast",
+    "cf/@cf/mistralai/mistral-small-3.1-24b-instruct",
+    "cf/@cf/meta/llama-3.1-8b-instruct-fp8-fast"
   ];
 
   let lastError = null;

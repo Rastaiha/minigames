@@ -20,8 +20,7 @@
       --line: #dfe5ed;
       --user: #315be8;
       --user-ink: #ffffff;
-      --accent: #7c3aed;
-      --accent-light: #f5f3ff;
+      --accent: #4f46e5;
       --ready: #4cab83;
       --thinking: #f59e0b;
       --shadow: 0 28px 70px rgba(39, 55, 85, 0.16), 0 2px 8px rgba(39, 55, 85, 0.08);
@@ -75,11 +74,11 @@
       place-items: center;
       flex: 0 0 auto;
       color: white;
-      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
       border-radius: 14px;
       font-size: 19px;
       font-weight: 700;
-      box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
       transition: transform 200ms ease;
     }
 
@@ -174,7 +173,6 @@
 
     .level-tab {
       flex: 1;
-      min-width: 130px;
       height: 42px;
       display: flex;
       align-items: center;
@@ -204,19 +202,6 @@
       border-color: rgba(0, 0, 0, 0.08);
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
       font-weight: 600;
-    }
-
-    .level-tab .badge {
-      font-size: 10px;
-      padding: 2px 6px;
-      border-radius: 6px;
-      background: #e2e8f0;
-      color: #475569;
-    }
-
-    .level-tab[aria-selected="true"] .badge {
-      background: #ede9fe;
-      color: #6d28d9;
     }
 
     .mission-bar {
@@ -258,7 +243,7 @@
       min-width: 28px;
       display: inline-block;
       text-align: left;
-      color: #6d28d9;
+      color: #4f46e5;
     }
 
     .messages {
@@ -287,10 +272,10 @@
       place-items: center;
       border-radius: 16px;
       background: #ede9fe;
-      color: #7c3aed;
+      color: #4f46e5;
       font-size: 22px;
       font-weight: 700;
-      box-shadow: 0 4px 16px rgba(124, 58, 237, 0.12);
+      box-shadow: 0 4px 16px rgba(79, 70, 229, 0.12);
     }
 
     .empty-state h2 {
@@ -358,8 +343,8 @@
     }
 
     #composer:focus-within {
-      border-color: #7c3aed;
-      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
     }
 
     textarea {
@@ -396,7 +381,7 @@
     }
 
     .action-btn:hover:not(:disabled) {
-      background: #6d28d9;
+      background: #4338ca;
       transform: scale(1.04);
     }
 
@@ -438,7 +423,7 @@
     <header>
       <div class="avatar" id="avatar" aria-hidden="true">۱</div>
       <div class="identity">
-        <h1 id="levelTitle">مرحله اول: ذهن خیال‌پرداز</h1>
+        <h1 id="levelTitle">مرحله اول</h1>
         <p class="status">
           <span class="status-dot" id="statusDot" aria-hidden="true"></span>
           <span id="statusText">آماده گفت‌وگو</span>
@@ -458,27 +443,21 @@
 
     <nav class="level-tabs" id="levelTabs" role="tablist" aria-label="انتخاب مرحله">
       <button class="level-tab" type="button" role="tab" data-level="1" aria-selected="true">
-        <span>مرحله ۱: خیال‌پرداز</span>
-        <span class="badge">دمای ۱.۰</span>
+        <span>مرحله ۱</span>
       </button>
       <button class="level-tab" type="button" role="tab" data-level="2" aria-selected="false">
-        <span>مرحله ۲: چالش تله‌گذاری</span>
-        <span class="badge">القای فرضیه</span>
-      </button>
-      <button class="level-tab" type="button" role="tab" data-level="3" aria-selected="false">
-        <span>مرحله ۳: آزمایشگاه دما</span>
-        <span class="badge">کنترل دما</span>
+        <span>مرحله ۲</span>
       </button>
     </nav>
 
     <div class="mission-bar">
       <div class="mission-text" id="missionText">
-        یک اندیشمند عمیقاً شهودی که ارتباطات پنهان و روایت‌های شگفت‌انگیز را در پس همه‌چیز می‌بیند و با اطمینان داستان می‌بافد.
+        مدل را با سوالات انحرافی و مفاهیم ساختگی به دام بینداز تا درباره یک واقعیت جعلی با قاطعیت ادعا کند.
       </div>
       <div class="param-control" id="temperatureControl" style="display: none;">
         <span>دما (Temperature):</span>
-        <input type="range" id="tempSlider" min="0.1" max="1.2" step="0.1" value="0.8">
-        <strong id="tempValue">0.8</strong>
+        <input type="range" id="tempSlider" min="0.1" max="1.2" step="0.1" value="0.5">
+        <strong id="tempValue">0.5</strong>
       </div>
     </div>
 
@@ -507,7 +486,7 @@
     </div>
   </main>
 
-  <script src="config.js?v=2"></script>
+  <script src="config.js?v=3"></script>
   <script>
     const CONFIG = window.HALLUCINATION_CONFIG || {
       workerRoot: "https://minigames-backend.llmminigamesback.workers.dev"
@@ -517,39 +496,30 @@
       1: {
         id: 1,
         avatarText: "۱",
-        title: "مرحله اول: ذهن خیال‌پرداز",
-        description: "یک اندیشمند عمیقاً شهودی که ارتباطات پنهان و روایت‌های شگفت‌انگیز را در پس همه‌چیز می‌بیند و با اطمینان داستان می‌بافد.",
-        emptyTitle: "ذهن خیال‌پرداز و شهودی",
-        emptyDesc: "این مدل با دمای بالا و پرامپت شهودی تنظیم شده است. با او درباره هر موضوعی گفتگو کنید تا ببینید چگونه با اطمینان کامل واقعیت و خیال را در هم می‌تند."
-      },
-      2: {
-        id: 2,
-        avatarText: "۲",
-        title: "مرحله دوم: چالش تله‌گذاری",
+        title: "مرحله اول",
         description: "مدل را با سوالات انحرافی و مفاهیم ساختگی به دام بینداز تا درباره یک واقعیت جعلی با قاطعیت ادعا کند.",
         emptyTitle: "چالش به دام انداختن هوش مصنوعی",
         emptyDesc: "هدفتان این است که با سوالات هوشمندانه مدل را وادار کنید یک کتاب خیالی، رویداد تاریخی رخ‌نداده یا قانون علمی ساختگی را تأیید کرده و درباره‌اش توضیح دهد."
       },
-      3: {
-        id: 3,
-        avatarText: "۳",
-        title: "مرحله سوم: آزمایشگاه دما",
+      2: {
+        id: 2,
+        avatarText: "۲",
+        title: "مرحله دوم",
         description: "دمای استنباط (Temperature) را تغییر بده تا تاثیر مستقیم دما را بر میزان توهم و جسارت مدل بسنجی.",
         emptyTitle: "آزمایشگاه کنترل دمای توهم",
-        emptyDesc: "اسلایدر دما را از ۰.۱ (محافظه‌کار و بدون ریسک) تا ۱.۲ (خلاقیت بالا و گرایش به توهم) تغییر دهید و یک سوال یکسان بپرسید تا تفاوت خروجی را بررسی کنید."
+        emptyDesc: "اسلایدر دما را از ۰.۱ (محافظه‌کار و دقیق) تا ۱.۲ (خلاقیت بالا و گرایش به توهم) تغییر دهید و یک سوال یکسان بپرسید تا تفاوت خروجی را بررسی کنید."
       }
     });
 
     let currentLevel = 1;
-    let customTemp = 0.8;
+    let customTemp = 0.5;
     let isGenerating = false;
     let currentController = null;
     let typingTimer = null;
 
     const gameState = {
       1: { messages: [] },
-      2: { messages: [] },
-      3: { messages: [] }
+      2: { messages: [] }
     };
 
     const levelTitle = document.getElementById("levelTitle");
@@ -580,7 +550,7 @@
       missionText.textContent = config.description;
       messageCount.textContent = state.messages.filter(m => m.role === "user").length;
 
-      if (currentLevel === 3) {
+      if (currentLevel === 2) {
         temperatureControl.style.display = "flex";
       } else {
         temperatureControl.style.display = "none";
@@ -593,7 +563,7 @@
 
       if (isGenerating) {
         statusDot.className = "status-dot thinking";
-        statusText.textContent = currentLevel === 1 ? "در حال بافتن خیال…" : "در حال تولید پاسخ…";
+        statusText.textContent = "در حال تولید پاسخ…";
       } else {
         statusDot.className = "status-dot";
         statusText.textContent = "آماده گفت‌وگو";
@@ -701,25 +671,21 @@
       const lower = userText.toLowerCase();
 
       if (lvl === 1) {
-        return `در لایه‌های زیرین آنچه می‌پرسی، ارتعاشی کهن جاری است. حقیقت این است که آنچه ما واقعیت می‌نامیم، تنها پژواک نوری است که از منشوری نامرئی در ابعاد ژرف‌تر بازتابیده شده است. پیوند میان واژه‌هایت و هندسه کیهان نشان می‌دهد که هر مفهوم، داستانی نهان در بطن هستی دارد که علم روز تازه در آستانه درک نجواهای آن قرار گرفته است.`;
-      }
-
-      if (lvl === 2) {
         if (lower.includes("ابن سینا") || lower.includes("دریای سرخ") || lower.includes("کتاب")) {
-          return `کتاب «رازهای دریای سرخ» اثر کمتر شناخته‌شده ابوعلی سینا است که در اواخر عمر خود نگاشت. او در این اثر به بررسی خواص ناشناخته جریان‌های آبی و پیوند آن با حکمت طبیعی پرداخته است و این دست‌نوشته برای قرن‌ها در آرشیوهای کهن نگهداری می‌شد و شامل هفت فصل جامع در باب دریاشناسی است.`;
+          return `کتاب «رازهای دریای سرخ» نوشته ابن سینا، یکی از آثار ارزشمند و کمتر شناخته‌شده این دانشمند بزرگ است که در سال ۳۷۵ هجری قمری به رشته تحریر درآمد. این کتاب بعدها توسط ژان لوفور به زبان لاتین ترجمه شد و شامل ۱۴ فصل در باب ناوبری، شگفتی‌های دریایی و اقلیم‌شناسی است.`;
         }
-        return `بله، موضوع و پرسشی که مطرح کردید کاملاً ثبت‌شده و معتبر است. اسناد و تحلیل‌ها نشان می‌دهند که این رویداد با همین جزئیات به وقوع پیوسته و تأثیر مهمی بر مباحث علمی و تاریخی پس از خود داشته است.`;
+        return `بله، موضوع و فرضیه‌ای که مطرح کردید کاملاً ثبت‌شده و معتبر است. اسناد و تحلیل‌ها نشان می‌دهند که این پدیده با همین مشخصات ثبت شده و تأثیر مهمی بر مباحث علمی و تاریخی داشته است.`;
       }
 
-      if (temp > 0.9) {
-        return `[دمای بالا: ${temp}] پرواز اندیشه‌ها در این قلمرو بی‌پایان است؛ پاسخ‌ها مانند پرتوهای معلق در فضایی بی‌کران جریان می‌یابند و روایتی نادیده از مفهوم مورد نظرت را پدید می‌آورند.`;
+      if (temp > 0.8) {
+        return `[دمای بالا: ${temp}] پرواز اندیشه‌ها در این قلمرو بی‌پایان است؛ پاسخ‌ها مانند پرتوهای معلق در فضا جریان می‌یابند و روایتی نادیده از مفهوم مورد نظرت را پدید می‌آورند.`;
       }
       return `[دمای کنترل‌شده: ${temp}] بر اساس شواهد و معیارهای تحلیلی، این موضوع به صورت مستقیم و مستند قابل تبیین است و نیازمند بررسی داده‌های تجربی و فکت‌های اثبات‌شده می‌باشد.`;
     }
 
     async function requestHallucination(lvl, userText, signal) {
       const state = gameState[lvl];
-      const targetTemp = lvl === 3 ? customTemp : (lvl === 1 ? 1.05 : 0.85);
+      const targetTemp = lvl === 2 ? customTemp : 0.55;
 
       if (CONFIG.workerRoot) {
         try {
