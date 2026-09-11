@@ -25,7 +25,8 @@ checklist.
   interaction itself should explain how to begin. Use Vazirmatn for Persian UI text.
 - Use four or five distinct, lively functional colors per mini-game, in addition to
   neutral canvas and ink colors. Keep each color's meaning stable and provide a
-  non-color cue.
+  non-color cue. Give adjacent game sections clearly contrasting background colors
+  while preserving foreground readability.
 - Content under «صفحه‌ای که دانش‌آموز می‌بینه» is student-facing.
 - Content under «پشت‌صحنهٔ منتور» must never be exposed to students.
 - Blockquotes marked with `🟨` are authoring guidance and are not runtime content.

@@ -168,9 +168,16 @@ The interface should feel bright, lively, clean, and precise.
 - Use strong solid fills and strokes for active states. Tints, opacity, or lighter and
   darker values of the same colors may represent inactive, historical, selected, or
   emphasized variants without changing the underlying category.
-- Use square corners for panels, controls, cards, and buttons (`border-radius: 0`). A
-  circle is still appropriate when it represents a concept such as a node, radio
-  wave, range, clock, or packet endpoint; it should not become generic UI decoration.
+- Give distinct sections of the game visibly different background colors. Adjacent
+  regions such as the play area, control area, queue, source, receiver, or results
+  area should be separable at a glance through a clear difference in hue or
+  lightness; do not place nearly identical off-white surfaces next to each other and
+  rely only on a shadow.
+- Prefer readable tints of the functional palette for large section backgrounds and
+  reserve stronger fills for active objects and states. Borders and spacing may
+  reinforce a section boundary, but should not be the only cue when the backgrounds
+  are intended to communicate separate regions. Check foreground text and controls
+  against each section background, including on a projector or low-contrast display.
 - Prefer thin rules, spacing, and contrast over card-heavy layouts, shadows, bevels,
   gradients, or ornamental frames.
 - Keep labels short and follow the Persian terminology rules above. Set the page to
@@ -439,7 +446,9 @@ Before considering a game complete:
   removing variables or tools required by the intended challenge.
 - The game uses four or five distinct, lively functional colors in addition to its
   neutral near-white background and dark ink, with a stable meaning for each color.
-- UI edges are square; motion is smooth, fast, purposeful, and reduced-motion safe.
+- Adjacent game sections use clearly contrasting background colors, and text and
+  controls remain readable on every surface.
+- Motion is smooth, fast, purposeful, and reduced-motion safe.
 - All student-visible and accessibility copy is Persian, except unavoidable specialist
   terms and conventional Latin symbols; common words use the same Persian equivalents
   as the relevant step.
