@@ -10,8 +10,9 @@ or progression system, read:
 
 Treat these files as the product and content-model specification.
 
-Before creating or changing a game, read `## قراردادن بازی‌ها` in
-`docs/development.md`, including the multi-page game checklist.
+Before creating or changing a game, read `docs/mini-games.md` and
+`## قراردادن بازی‌ها` in `docs/development.md`, including the multi-page game
+checklist.
 
 ## Core invariants
 
