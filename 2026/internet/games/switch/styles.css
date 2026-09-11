@@ -1,0 +1,292 @@
+:root {
+  --paper: #fcfaf4;
+  --deep-paper: #f3e7ca;
+  --ink: #2c2318;
+  --crimson: #b82a31;
+  --gold: #e8b33a;
+  --turquoise: #35afb8;
+  --blue: #5669d1;
+  --green: #3c9468;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--deep-paper);
+}
+
+body {
+  min-width: 280px;
+  min-height: 100svh;
+  margin: 0;
+  background: var(--deep-paper);
+  color: var(--ink);
+  font-family: "Vazirmatn Variable", Vazirmatn, sans-serif;
+}
+
+button,
+svg {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.stage {
+  width: min(100%, 980px);
+  min-height: 100svh;
+  margin-inline: auto;
+  padding: clamp(10px, 2vw, 20px);
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 10px;
+}
+
+.play-area {
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--ink) 22%, transparent);
+  border-radius: 14px;
+  background: var(--paper);
+}
+
+svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 330px;
+  max-height: calc(100svh - 82px);
+  user-select: none;
+  touch-action: manipulation;
+}
+
+.orbit-ring {
+  fill: none;
+  stroke: color-mix(in srgb, var(--ink) 13%, transparent);
+  stroke-width: 1.5;
+  stroke-dasharray: 2 10;
+}
+
+.wire {
+  stroke: color-mix(in srgb, var(--ink) 20%, transparent);
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  transition: stroke 180ms ease, stroke-width 180ms ease;
+}
+
+.switch-body {
+  fill: var(--ink);
+  stroke: var(--paper);
+  stroke-width: 3;
+}
+
+.switch-label {
+  fill: var(--paper);
+  font-family: "Vazirmatn Variable", Vazirmatn, sans-serif;
+  font-size: 19px;
+  font-weight: 750;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  pointer-events: none;
+}
+
+.port {
+  fill: var(--paper);
+  stroke: var(--ink);
+  stroke-width: 1.5;
+  transition: fill 180ms ease, stroke 180ms ease;
+}
+
+.inner-cable {
+  fill: none;
+  stroke-width: 4.5;
+  stroke-linecap: round;
+  opacity: 0.94;
+}
+
+.pc {
+  cursor: pointer;
+  outline: none;
+}
+
+.pc .body {
+  fill: var(--paper);
+  stroke: var(--ink);
+  stroke-width: 2;
+  rx: 6px;
+  transition: fill 160ms ease, stroke 160ms ease, stroke-width 160ms ease;
+}
+
+.pc .screen {
+  fill: color-mix(in srgb, var(--ink) 8%, var(--paper));
+  rx: 3px;
+  transition: fill 180ms ease;
+}
+
+.pc .stand,
+.pc .base {
+  fill: var(--ink);
+}
+
+.pc:hover .body {
+  stroke-width: 3;
+}
+
+.connection-halo {
+  fill: transparent;
+  fill-opacity: 0.12;
+  stroke: transparent;
+  stroke-width: 0;
+  rx: 9px;
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+.pc.connected .connection-halo {
+  opacity: 1;
+}
+
+.pc.connected .body {
+  stroke-width: 3.5;
+}
+
+.selection-ring,
+.focus-ring {
+  fill: none;
+  stroke: var(--ink);
+  rx: 10px;
+  opacity: 0;
+}
+
+.selection-ring {
+  fill: color-mix(in srgb, var(--ink) 6%, transparent);
+  stroke-width: 2.5;
+}
+
+.focus-ring {
+  stroke-width: 2;
+  stroke-dasharray: 3 5;
+}
+
+.pc.pending .selection-ring {
+  opacity: 0.8;
+  animation: selection-breathe 1.2s ease-in-out infinite alternate;
+}
+
+.pc.pending .body {
+  fill: var(--paper);
+  stroke: var(--ink);
+  stroke-width: 3;
+}
+
+.pc.pending .screen {
+  fill: color-mix(in srgb, var(--ink) 16%, var(--paper));
+}
+
+.pc:focus-visible .focus-ring {
+  opacity: 1;
+}
+
+@keyframes selection-breathe {
+  from { opacity: 0.5; }
+  to { opacity: 0.9; }
+}
+
+.pc-label {
+  fill: var(--ink);
+  font-family: "Vazirmatn Variable", Vazirmatn, sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  pointer-events: none;
+  transition: fill 180ms ease;
+}
+
+.packet {
+  stroke: var(--paper);
+  stroke-width: 1.5;
+  pointer-events: none;
+}
+
+.controls {
+  min-height: 50px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
+  border-radius: 12px;
+  background: var(--deep-paper);
+}
+
+.status {
+  min-width: 0;
+  margin: 0;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  color: var(--ink);
+  font-size: clamp(0.85rem, 2vw, 1rem);
+  font-weight: 650;
+  line-height: 1.8;
+}
+
+button {
+  min-height: 48px;
+  border: 0;
+  border-inline-start: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
+  border-radius: 0;
+  padding: 8px 18px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 750;
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+
+button:hover,
+button:focus-visible {
+  background: color-mix(in srgb, var(--ink) 8%, var(--deep-paper));
+  outline: 2px solid var(--ink);
+  outline-offset: -4px;
+}
+
+button:active {
+  background: color-mix(in srgb, var(--ink) 14%, var(--deep-paper));
+}
+
+@media (max-width: 620px) {
+  .stage {
+    min-height: auto;
+  }
+
+  svg {
+    min-height: 300px;
+    max-height: 72svh;
+  }
+
+  .controls {
+    grid-template-columns: 1fr;
+  }
+
+  button {
+    width: 100%;
+    border-inline-start: 0;
+    border-top: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

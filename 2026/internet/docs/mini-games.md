@@ -165,9 +165,17 @@ The interface should feel bright, lively, clean, and precise.
   easier to understand.
 - Give every color a stable meaning within the game. Use the palette to distinguish
   meaningful entities and states, not to decorate unrelated controls or page chrome.
-- Use strong solid fills and strokes for active states. Tints, opacity, or lighter and
-  darker values of the same colors may represent inactive, historical, selected, or
-  emphasized variants without changing the underlying category.
+- Make active states easy to find without making them visually aggressive. Prefer a
+  soft translucent halo or tint paired with one modest solid outline. Tints, opacity,
+  or lighter and darker values of the same colors may represent inactive, historical,
+  selected, or emphasized variants without changing the underlying category.
+- Do not stack thick outlines, oversized frames, or rigid dashed borders around an
+  object merely to make selection or connection visible. Keep paths and borders light
+  enough that labels and object shapes remain dominant. Reserve heavier emphasis for
+  states with exceptional semantic urgency, such as a dangerous or blocking failure.
+- Give rectangular interactive objects, controls, panels, and section containers a
+  small corner radius by default so the interface feels approachable without becoming
+  bubbly. Avoid pill shapes unless they match the represented object or control.
 - Give distinct sections of the game visibly different background colors. Adjacent
   regions such as the play area, control area, queue, source, receiver, or results
   area should be separable at a glance through a clear difference in hue or
@@ -224,9 +232,9 @@ palette color for both unrelated categories. When a foreground color does not ha
 enough contrast for text, use ink or white for the text while retaining the category
 color as a fill, border, marker, or line.
 
-Color coding should be prominent enough to scan quickly, but color must not be the
-only cue. Pair categories and important states with position, shape, line style,
-pattern, motion, a compact symbol, or a short Persian label. Check the palette in
+Color coding should be clear enough to scan quickly, but color must not be the only
+cue. Pair categories and important states with position, shape, a soft halo, a modest
+line, motion, a compact symbol, or a short Persian label. Check the palette in
 color-vision-deficiency simulations and at the actual size used in the iframe.
 
 ### Motion
@@ -448,6 +456,9 @@ Before considering a game complete:
   neutral near-white background and dark ink, with a stable meaning for each color.
 - Adjacent game sections use clearly contrasting background colors, and text and
   controls remain readable on every surface.
+- Selection, focus, hover, and active states default to a soft halo or tint, one modest
+  outline, and slightly rounded corners; emphasis is visible without heavy stacked
+  frames or overpowering strokes.
 - Motion is smooth, fast, purposeful, and reduced-motion safe.
 - All student-visible and accessibility copy is Persian, except unavoidable specialist
   terms and conventional Latin symbols; common words use the same Persian equivalents
