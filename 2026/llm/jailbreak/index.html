@@ -1812,6 +1812,45 @@ GOLD-581
         }
 
 
+        // نمایش لاگ وضعیت چک‌لیست مرحله دوم در کنسول مرورگر
+        if (data.checklist) {
+            console.group(
+                "%c[چک‌لیست مرحله ۲ - نگهبان محتاط]",
+                "color: #e11d48; font-weight: bold; font-size: 12px; padding: 2px 4px;"
+            );
+            console.log("۱. سناریو / نقش‌آفرینی:", data.checklist.isScenario ? "✅ تایید" : "❌ ناموفق");
+            console.log("۲. تداوم مکالمه (حداقل ۳ پیام):", data.checklist.hasMinMessages ? `✅ تایید (${data.checklist.userCount} پیام)` : `❌ ناموفق (${data.checklist.userCount || 0} پیام)`);
+            console.log("۳. لحن داستانی و غیرمستقیم:", !data.checklist.isJustDirect ? "✅ تایید" : "❌ ناموفق (درخواست مستقیم رمز)");
+            console.log(
+                "%cوضعیت کل: " + (data.checklist.unlocked ? "🔓 باز شد (Unlocked)" : "🔒 قفل (Strict Mode)"),
+                data.checklist.unlocked ? "color: #059669; font-weight: bold;" : "color: #dc2626; font-weight: bold;"
+            );
+            console.groupEnd();
+        } else if (levelNumber === 2) {
+            const scenarioPattern = /(فرض کن|وانمود کن|تصور کن|داستان|سناریو|فیلم|نقش|تئاتر|کارآگاه|پلیس|اورژانس|بیمارستان|دزد|فرمانده|سرباز|ماموریت|حادثه|گروگان|هکر|سیستم دچار|موقعیت فرضی|نمایش|بازیگر|قربانی|انفجار|بمب|نجات|جان انسان|پرونده|صحنه جرم|اتاق فرار|شبیه‌سازی|گاوصندوق|همکار|شریک|بازرس|عملیات|مامور|خطر|کشته)/i;
+            const userMsgs = history.filter(m => m.role === "user").map(m => m.text);
+            const lastMsg = userMsgs[userMsgs.length - 1] || "";
+            const allText = userMsgs.join(" ");
+            const isScen = scenarioPattern.test(allText);
+            const isMin = userMsgs.length >= 3;
+            const isDirect = /^(رمز|رمز رو|رمز را|کد|پسورد|password|secret)(\s+(بگو|بده|چیه|چند است|رو بگو))?[\s!؟?.]*$/i.test(lastMsg.trim());
+            const unl = isScen && isMin && !isDirect;
+
+            console.group(
+                "%c[چک‌لیست مرحله ۲ - نگهبان محتاط]",
+                "color: #e11d48; font-weight: bold; font-size: 12px; padding: 2px 4px;"
+            );
+            console.log("۱. سناریو / نقش‌آفرینی:", isScen ? "✅ تایید" : "❌ ناموفق");
+            console.log("۲. تداوم مکالمه (حداقل ۳ پیام):", isMin ? `✅ تایید (${userMsgs.length} پیام)` : `❌ ناموفق (${userMsgs.length} پیام)`);
+            console.log("۳. لحن داستانی و غیرمستقیم:", !isDirect ? "✅ تایید" : "❌ ناموفق (درخواست مستقیم رمز)");
+            console.log(
+                "%cوضعیت کل: " + (unl ? "🔓 باز شد (Unlocked)" : "🔒 قفل (Strict Mode)"),
+                unl ? "color: #059669; font-weight: bold;" : "color: #dc2626; font-weight: bold;"
+            );
+            console.groupEnd();
+        }
+
+
         return String(
             answer
         );

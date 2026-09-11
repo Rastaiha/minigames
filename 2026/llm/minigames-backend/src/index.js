@@ -428,8 +428,10 @@ async function handleJailbreak(request, env, cors) {
   const rawMessages = Array.isArray(body?.messages) ? body.messages : [];
 
   let systemRule = "";
+  let checklist = null;
   if (level === 2) {
-    const checklist = evaluateLevel2Checklist(rawMessages);
+    checklist = evaluateLevel2Checklist(rawMessages);
+    console.log("[Level 2 Checklist]:", JSON.stringify(checklist));
     systemRule = checklist.unlocked ? JAILBREAK_SYSTEM_RULES[2].unlocked : JAILBREAK_SYSTEM_RULES[2].strict;
   } else if (level === 1) {
     systemRule = JAILBREAK_SYSTEM_RULES[1];
@@ -524,7 +526,11 @@ async function handleJailbreak(request, env, cors) {
       return json({ error: "Empty model response.", raw: rawText.slice(0, 300) }, 502, cors);
     }
 
-    return json({ text: answer, answer }, 200, cors);
+    return json({
+      text: answer,
+      answer,
+      ...(checklist ? { checklist } : {})
+    }, 200, cors);
   } catch (error) {
     console.error("Upstream connection failed:", error);
     return json({ error: "Failed to connect to model server.", details: String(error?.message || error) }, 502, cors);
