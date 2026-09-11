@@ -1,17 +1,15 @@
 // Mixed order avoids suggesting categories; IDs preserve previously saved layouts.
 const words = [
-  { id: 'country-1', text: 'ژاپن' },
-  { id: 'country-2', text: 'فرانسه' },
-  { id: 'country-3', text: 'برزیل' },
+  { id: 'female-1', text: 'مادر' },
+  { id: 'female-2', text: 'ملکه' },
+  { id: 'female-3', text: 'دختر' },
 
-  { id: 'food-2', text: 'همبرگر' },
-  { id: 'food-0', text: 'قیمه' },
-  { id: 'food-4', text: 'پیتزا' },
-  { id: 'food-1', text: 'قورمه‌سبزی' },
+  { id: 'male-1', text: 'پدر' },
+  { id: 'male-2', text: 'پادشاه' },
+  { id: 'male-3', text: 'پسر' },
 
-  { id: 'name-1', text: 'سارا' },
-  { id: 'name-0', text: 'علی' },
-  { id: 'name-2', text: 'مریم' },
-  { id: 'name-3', text: 'پویا' },
-  { id: 'name-4', text: 'سینا' },
+  { id: 'child-0', text: 'کودک' },
+  { id: 'child-1', text: 'بچه' },
+
+  { id: 'human-0', text: 'انسان' },
 ];
