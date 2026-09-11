@@ -17,6 +17,10 @@ checklist.
 ## Core invariants
 
 - The application is Persian-first and RTL.
+- Every student-visible mini-game string must be Persian. Use English only for
+  specialist networking terms without a common Persian equivalent; prefer `بسته`,
+  `پیام`, and `مسیریابی` over `packet`, `message`, and `routing`. Keep standard
+  Latin symbols and units such as `V`, `s`, `ms`, `Hz`, and `bps` unchanged.
 - Content under «صفحه‌ای که دانش‌آموز می‌بینه» is student-facing.
 - Content under «پشت‌صحنهٔ منتور» must never be exposed to students.
 - Blockquotes marked with `🟨` are authoring guidance and are not runtime content.

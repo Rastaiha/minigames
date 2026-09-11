@@ -93,6 +93,41 @@ often better for small discrete systems. If p5.js is used, install it as a local
 dependency and import it through Vite; do not depend on a CDN being reachable during
 the workshop.
 
+## Language and terminology
+
+All student-visible mini-game language must be Persian. This includes page titles,
+headings, instructions, buttons, labels, scores, status messages, errors, hints,
+tooltips, empty states, image alternatives, canvas fallbacks, and accessibility names.
+Do not leave English placeholder copy or untranslated library-generated UI in the
+finished game.
+
+Use an English word only when it is specific networking terminology with no common,
+natural Persian equivalent for these students. Prefer the established Persian term
+whenever one exists; do not use English merely because it is common in source code or
+technical documentation. For example:
+
+| Avoid in student UI | Use |
+|---|---|
+| `packet` | `بسته` |
+| `message` | `پیام` |
+| `routing` | `مسیریابی` |
+
+Terms such as `switch` may remain when the workshop's content treats them as the
+specific technical name and no equally common Persian equivalent is expected. Match
+the vocabulary already used in the relevant step so the game and surrounding page do
+not name the same concept differently.
+
+English remains appropriate inside source code, filenames, package metadata, and
+developer-only diagnostics. Protocol names, acronyms, addresses, formulas, code, and
+other inherently Latin fragments may also remain Latin, but isolate them as LTR so
+they do not disrupt Persian punctuation and reading order.
+
+Standard scientific and technical symbols are not English interface copy and should
+keep their conventional Latin form. Do not translate or transliterate symbols such as
+`V` for voltage, `s` or `ms` for time, `Hz`, `bps`, or variable names used in a
+formula. Add a short Persian label when context is needed—for example `ولتاژ (V)` or
+`زمان (s)`—and keep the Latin fragment LTR.
+
 ## Look and feel
 
 The interface should feel bright, modest, clean, and precise.
@@ -109,9 +144,9 @@ The interface should feel bright, modest, clean, and precise.
   wave, range, clock, or packet endpoint; it should not become generic UI decoration.
 - Prefer thin rules, spacing, and contrast over card-heavy layouts, shadows, bevels,
   gradients, or ornamental frames.
-- Keep labels short and student-facing copy in conversational Persian. Set the page
-  to `lang="fa"` and `dir="rtl"`; isolate code, addresses, bit strings, and formulas
-  as LTR where necessary.
+- Keep labels short and follow the Persian terminology rules above. Set the page to
+  `lang="fa"` and `dir="rtl"`; isolate code, addresses, bit strings, and formulas as
+  LTR where necessary.
 - Make the simulation responsive inside the workshop iframe and in fullscreen. It
   must also work as a standalone page.
 
@@ -362,8 +397,11 @@ Before considering a game complete:
   removing variables or tools required by the intended challenge.
 - The game uses one near-white background and no more than three additional colors.
 - UI edges are square; motion is smooth, fast, purposeful, and reduced-motion safe.
-- Persian copy, RTL layout, LTR fragments, touch behavior, keyboard behavior, and
-  narrow layouts have been checked.
+- All student-visible and accessibility copy is Persian, except unavoidable specialist
+  terms and conventional Latin symbols; common words use the same Persian equivalents
+  as the relevant step.
+- RTL layout, LTR fragments, touch behavior, keyboard behavior, and narrow layouts
+  have been checked.
 - `npm run build` succeeds inside the game project.
 - `dist/index.html` exists.
 - For multiple versions, every `dist/<version>/index.html` exists and was registered
