@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f8fc">
+  <title>واژه‌چین — کلمات روی خط</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="workspace">
+    <aside class="sidebar" aria-label="فهرست واژه‌ها">
+      <h1>کلمات روی خط</h1>
+      <p>واژه‌ها را بکش و روی محور بچین.</p>
+      <button id="reset" class="control" type="button">↺ شروع دوباره</button>
+      <div id="word-list" class="words"></div>
+      <p class="help">یک واژه را انتخاب کن و روی خط بزن. برای جابه‌جایی فقط به چپ و راست بکش.</p>
+    </aside>
+    <section class="line-section" aria-label="چیدمان یک‌بعدی">
+      <nav class="toolbar" aria-label="نمای محور">
+        <button id="home" class="control" type="button">بازگشت به مبدأ</button>
+        <button id="fit" class="control" type="button">دیدن همه</button>
+        <button id="zoom-out" class="control" type="button" aria-label="کوچک‌نمایی">−</button>
+        <button id="zoom-in" class="control" type="button" aria-label="بزرگ‌نمایی">+</button>
+      </nav>
+      <div id="board" tabindex="0" aria-label="محور افقی با مبدأ صفر. پس از انتخاب واژه، Enter را برای قرار دادن در مرکز نما بزن.">
+        <div class="axis" aria-hidden="true"><span class="axis-name">x →</span></div>
+        <div id="origin" aria-hidden="true"><span>۰</span></div>
+        <div id="pins"></div>
+        <div id="preview" hidden aria-hidden="true"></div>
+      </div>
+      <p class="axis-help">خط را بکش تا جابه‌جا شود · کلیدهای ← و → برای حرکت واژه · Delete برای بازگرداندن</p>
+    </section>
+  </main>
+  <div id="announcement" class="sr-only" role="status" aria-live="polite"></div>
+  <script src="words.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f7f8fc" />
+    <title>واژه‌چین — بردار واژه‌ها</title>
+    <link rel="stylesheet" href="style.css?v=infinite-sheet-5" />
+    <link rel="stylesheet" href="vectors.css" />
+  </head>
+  <body class="vector-game">
+    <main class="workspace">
+      <section class="board-section" aria-label="صفحهٔ بردارها">
+        <div id="board-viewport" class="board-viewport">
+          <div id="board" class="board fine-grid" tabindex="0" aria-label="صفحهٔ مختصات؛ یک واژه را انتخاب کن.">
+            <svg id="axes" class="axes" aria-hidden="true"></svg>
+            <div id="sheet-content" class="sheet-content"></div>
+            <div id="empty" class="empty-state" hidden>
+              <p>اول واژه‌ها را در واژه‌چین بچین، سپس به این صفحه برگرد.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+    <div id="announcement" class="sr-only" role="status" aria-live="polite"></div>
+    <script src="words.js"></script>
+    <script src="vectors.js"></script>
+  </body>
+</html>

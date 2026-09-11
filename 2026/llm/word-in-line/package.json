@@ -1,10 +1,10 @@
 {
-  "name": "word-in-space",
+  "name": "word-in-line",
   "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "python3 -m http.server 5173 --bind 0.0.0.0",
     "start": "python3 -m http.server 5173 --bind 0.0.0.0",
-    "check": "node --check words.js && node --check app.js && node --check vectors.js"
+    "check": "node --check words.js && node --check app.js"
   }
 }
