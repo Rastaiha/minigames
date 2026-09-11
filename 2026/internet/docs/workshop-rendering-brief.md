@@ -99,10 +99,9 @@ Everything under these headings is confidential mentor material. Students must n
 
 The first mentor section is a compact cheat sheet containing:
 
-- What students already know when entering
-- What they should understand by the end
-- The thought and intended path behind the گام
-- Expected time and timing notes
+- The overall path through the گام, in one brief line
+- A key point or short example answer for every question under «مأموریت شما»
+- The expected time for the گام
 
 It should be quickly readable when a student group first calls the mentor.
 
