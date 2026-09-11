@@ -60,6 +60,13 @@ interface.
 
 ## Interaction principles
 
+- Do not place a visible game title, nameplate, or heading at the top of a game page.
+- Do not precede the interaction with a static description, rules paragraph, or
+  explanatory introduction. The initial state, affordances, labels, constraints,
+  motion, and feedback should make the interaction understandable by themselves.
+- Short contextual labels, changing status text, and just-in-time hints are allowed
+  when they are part of the interaction. They should not become a static explanation
+  of what students are about to see.
 - Prefer direct manipulation: drag a node, move a slider, toggle a connection, place
   an item, or scrub time.
 - Keep the system itself visually dominant. A complex puzzle may need several
@@ -92,6 +99,11 @@ drag interaction is materially simpler with it. Plain DOM, SVG, or Canvas APIs a
 often better for small discrete systems. If p5.js is used, install it as a local npm
 dependency and import it through Vite; do not depend on a CDN being reachable during
 the workshop.
+
+The HTML `<title>` is still required as document metadata and is used by the workshop
+home page to name a game project. It is not a visible in-game title. The root hub of a
+multi-version project is also not a game screen, so it may visibly identify the
+collection; the individual version pages must not repeat that heading.
 
 ## Language and terminology
 
@@ -128,17 +140,34 @@ keep their conventional Latin form. Do not translate or transliterate symbols su
 formula. Add a short Persian label when context is needed—for example `ولتاژ (V)` or
 `زمان (s)`—and keep the Latin fragment LTR.
 
+Use Vazirmatn for all Persian text, including controls, status text, accessibility
+content where font styling applies, and text drawn into SVG or Canvas. Load it as a
+local package or bundled font through Vite rather than relying on Google Fonts or
+another runtime CDN. A typical CSS stack is:
+
+```css
+font-family: "Vazirmatn Variable", Vazirmatn, sans-serif;
+```
+
+Monospace remains appropriate for code, bit strings, and similar technical data. For
+Canvas or p5.js text, wait until the font is available before measuring or drawing it
+so fallback-font metrics do not break the layout.
+
 ## Look and feel
 
-The interface should feel bright, modest, clean, and precise.
+The interface should feel bright, lively, clean, and precise.
 
 - Use a light, near-white background. A faint warm paper tone is preferred to pure
   white, but it must be noticeably lighter and less saturated than the event poster.
-- Use only two to four colors in one game, including the background and primary text
-  color. Opacity and lighter/darker values of those colors are allowed; introducing a
-  new hue is not.
-- Choose one bright-but-desaturated theme color for the main interactive state and,
-  only when it conveys a separate meaning, one secondary accent.
+- Use four or five distinct, lively chromatic colors for color coding, in addition to
+  the neutral background and text colors. Do not force a complex system into one or
+  two accents when more colors would make its states, actors, paths, or categories
+  easier to understand.
+- Give every color a stable meaning within the game. Use the palette to distinguish
+  meaningful entities and states, not to decorate unrelated controls or page chrome.
+- Use strong solid fills and strokes for active states. Tints, opacity, or lighter and
+  darker values of the same colors may represent inactive, historical, selected, or
+  emphasized variants without changing the underlying category.
 - Use square corners for panels, controls, cards, and buttons (`border-radius: 0`). A
   circle is still appropriate when it represents a concept such as a node, radio
   wave, range, clock, or packet endpoint; it should not become generic UI decoration.
@@ -168,19 +197,30 @@ site currently exposes these source colors:
 | Navy | `#16243F` |
 | Sky | `#93C2DC` |
 
-These are source references, not a palette to copy wholesale into every game. Start
-with one of these quieter sets and adjust contrast only when needed:
+Use the following working palette. The canvas and ink are neutral foundations and do
+not count toward the four-to-five color-coding colors:
 
-| Set | Background | Ink | Primary | Optional accent |
-|---|---|---|---|---|
-| Warm | `#FCFAF4` | `#332F2A` | `#9B6264` | `#C1A564` |
-| Turquoise | `#FCFAF4` | `#283438` | `#639AA3` | `#6F8876` |
-| Navy and sky | `#FCFAF4` | `#29364F` | `#7FA8B8` | `#B8A06A` |
+| Role | Color | Typical uses |
+|---|---|---|
+| Canvas | `#FCFAF4` | Page and play-area background |
+| Ink | `#2C2318` | Text, outlines, and neutral structure |
+| Crimson | `#B82A31` | One actor, channel, route, or high-attention state |
+| Gold | `#E8B33A` | One actor, signal, resource, or timing state |
+| Turquoise | `#35AFB8` | One actor, link, flow, or transmission state |
+| Blue | `#5669D1` | One actor, node class, queue, or informational state |
+| Green | `#3C9468` | One actor, path, receiver, or completed state |
 
-Use one row per game, not all three. In a simple game, background + ink + primary is
-usually enough. Reuse the same hue with opacity, hatching, or stroke weight for extra
-states rather than adding more colors. Verify text and controls have readable
-contrast.
+Use any four or all five chromatic colors according to the concepts that need to be
+distinguished. The suggested uses are examples, not universal semantics; define the
+mapping for each game and keep it consistent throughout that game. Avoid using a
+palette color for both unrelated categories. When a foreground color does not have
+enough contrast for text, use ink or white for the text while retaining the category
+color as a fill, border, marker, or line.
+
+Color coding should be prominent enough to scan quickly, but color must not be the
+only cue. Pair categories and important states with position, shape, line style,
+pattern, motion, a compact symbol, or a short Persian label. Check the palette in
+color-vision-deficiency simulations and at the actual size used in the iframe.
 
 ### Motion
 
@@ -389,17 +429,21 @@ Before considering a game complete:
 
 - The game visualizes a concept and lets students explore it, solve a related puzzle,
   or both.
+- Game pages have no visible title or static explanatory block above the interaction;
+  their UX communicates how to begin.
 - A puzzle has understandable goals, constraints, feedback, and a fast retry loop;
   its difficulty comes from reasoning rather than interface friction.
 - The game does not state the intended conceptual solution or replace mentor
   acceptance. A mechanical win state or score is allowed.
 - The interaction avoids unnecessary text, elements, typing, and controls without
   removing variables or tools required by the intended challenge.
-- The game uses one near-white background and no more than three additional colors.
+- The game uses four or five distinct, lively functional colors in addition to its
+  neutral near-white background and dark ink, with a stable meaning for each color.
 - UI edges are square; motion is smooth, fast, purposeful, and reduced-motion safe.
 - All student-visible and accessibility copy is Persian, except unavoidable specialist
   terms and conventional Latin symbols; common words use the same Persian equivalents
   as the relevant step.
+- All Persian UI text uses Vazirmatn loaded locally rather than from a runtime CDN.
 - RTL layout, LTR fragments, touch behavior, keyboard behavior, and narrow layouts
   have been checked.
 - `npm run build` succeeds inside the game project.
