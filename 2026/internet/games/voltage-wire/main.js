@@ -9,9 +9,15 @@ const LOW_MAX = 1.5
 const HIGH_MIN = 3.5
 const V_MAX = 5
 const HISTORY_SECONDS = 8
+const NOISE_EPSILON = 0.12 // ± volts of real-world jitter on the wire
 
 let currentVoltage = 0
 const samples = []
+
+function noisy(voltage) {
+  const jitter = (Math.random() - 0.5) * 2 * NOISE_EPSILON
+  return Math.max(0, Math.min(V_MAX, voltage + jitter))
+}
 
 slider.addEventListener('input', (event) => {
   currentVoltage = Number.parseFloat(event.target.value)
@@ -92,7 +98,7 @@ function drawScope() {
 
 function tick(now) {
   const time = now / 1000
-  samples.push({time, voltage: currentVoltage})
+  samples.push({time, voltage: noisy(currentVoltage)})
 
   const cutoff = time - HISTORY_SECONDS - 0.5
   while (samples.length && samples[0].time < cutoff) samples.shift()
