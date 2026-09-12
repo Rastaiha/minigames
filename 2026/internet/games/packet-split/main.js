@@ -23,14 +23,14 @@ import '@fontsource-variable/vazirmatn'
   };
   // dy is per-row offset; negative = stack rows upward from base y
   const DOCK = {
-    PC1: { x: 100, y: 60,  dx: 20, dy: -19 },
-    PC2: { x: 100, y: 445, dx: 20, dy:  19 },
-    A:   { x: 340, y: 200, dx: 20, dy: -19 },
-    B:   { x: 560, y: 200, dx: 20, dy: -19 },
-    PC3: { x: 800, y: 60,  dx: 20, dy: -19 },
-    PC4: { x: 800, y: 445, dx: 20, dy:  19 },
+    PC1: { x: 100, y: 60,  dx: 30, dy: -22 },
+    PC2: { x: 100, y: 445, dx: 30, dy:  22 },
+    A:   { x: 340, y: 200, dx: 30, dy: -22 },
+    B:   { x: 560, y: 200, dx: 30, dy: -22 },
+    PC3: { x: 800, y: 60,  dx: 30, dy: -22 },
+    PC4: { x: 800, y: 445, dx: 30, dy:  22 },
   };
-  const MAX_PER_ROW = 8;
+  const MAX_PER_ROW = 6;
   const ROUTE = {
     blue:   { PC1: { link: 'PC1-A', to: 'A' }, A: { link: 'A-B', to: 'B' }, B: { link: 'B-PC3', to: 'PC3' } },
     orange: { PC2: { link: 'PC2-A', to: 'A' }, A: { link: 'A-B', to: 'B' }, B: { link: 'B-PC4', to: 'PC4' } },
@@ -123,6 +123,22 @@ import '@fontsource-variable/vazirmatn'
   let orangeDeliveredAt = null;
   let currentPopover = null;
 
+  const LONG_PRESS_MS = 500;
+  const LONG_PRESS_MOVE_TOL = 10;
+  let longPressTimer = null;
+  let longPressStart = null;
+  let longPressPointerId = null;
+  let longPressFired = false;
+
+  function cancelLongPress() {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+    }
+    longPressStart = null;
+    longPressPointerId = null;
+  }
+
   const goBtn      = document.getElementById('goBtn');
   const resetBtn   = document.getElementById('resetBtn');
   const timerEl    = document.getElementById('timer');
@@ -202,10 +218,19 @@ import '@fontsource-variable/vazirmatn'
     `;
     pop.setAttribute('role', 'dialog');
     pop.setAttribute('aria-label', 'تقسیم بسته');
-    pop.style.left = `${Math.max(142, Math.min(window.innerWidth - 142, clientX))}px`;
-    pop.style.top  = `${Math.max(8, Math.min(window.innerHeight - 165, clientY))}px`;
+    pop.style.left = '0px';
+    pop.style.top  = '0px';
     document.body.appendChild(pop);
     currentPopover = pop;
+
+    const rect = pop.getBoundingClientRect();
+    const halfW  = rect.width / 2;
+    const height = rect.height;
+    const margin = 8;
+    const left = Math.max(halfW + margin, Math.min(window.innerWidth - halfW - margin, clientX));
+    const top  = Math.max(margin, Math.min(window.innerHeight - height - margin, clientY));
+    pop.style.left = `${left}px`;
+    pop.style.top  = `${top}px`;
 
     const slider = pop.querySelector('input');
     const lval   = pop.querySelector('.lval');
@@ -286,7 +311,7 @@ import '@fontsource-variable/vazirmatn'
       attrs['aria-label'] = `بستهٔ ${pkt.size} بیتی ${pkt.color === 'blue' ? 'آبی' : 'طلایی'}؛ ${isSelected ? 'انتخاب شده' : 'انتخاب نشده'}`;
     }
     const g = el('g', attrs);
-    g.appendChild(el('rect', { x: -22, y: -22, width: 44, height: 44, rx: 7, fill: 'transparent', stroke: 'transparent', class: 'focus-ring' }));
+    g.appendChild(el('rect', { x: -14, y: -12, width: 28, height: 24, rx: 5, fill: 'transparent', stroke: 'transparent', class: 'focus-ring' }));
 
     envelopeShape(g, w, h, {
       fill:        isSelected ? `${fill}38` : (atDest ? `${fill}3d` : `${fill}18`),
@@ -305,14 +330,41 @@ import '@fontsource-variable/vazirmatn'
     if (atDest) g.setAttribute('opacity', '0.85');
 
     if (interactive) {
+      g.addEventListener('pointerdown', (e) => {
+        if (e.pointerType === 'mouse' && e.button !== 0) return;
+        cancelLongPress();
+        longPressFired = false;
+        longPressStart = { x: e.clientX, y: e.clientY };
+        longPressPointerId = e.pointerId;
+        longPressTimer = setTimeout(() => {
+          longPressTimer = null;
+          longPressFired = true;
+          openSplitPopover(pkt, longPressStart.x, longPressStart.y);
+        }, LONG_PRESS_MS);
+      });
+      g.addEventListener('pointermove', (e) => {
+        if (!longPressStart || e.pointerId !== longPressPointerId) return;
+        const dx = e.clientX - longPressStart.x;
+        const dy = e.clientY - longPressStart.y;
+        if (Math.hypot(dx, dy) > LONG_PRESS_MOVE_TOL) cancelLongPress();
+      });
+      g.addEventListener('pointerup',     cancelLongPress);
+      g.addEventListener('pointercancel', cancelLongPress);
+      g.addEventListener('pointerleave',  cancelLongPress);
+
       g.addEventListener('click', (e) => {
         e.stopPropagation();
+        if (longPressFired) {
+          longPressFired = false;
+          return;
+        }
         closePopover();
         togglePacketSelection(pkt.id);
       });
       g.addEventListener('contextmenu', (e) => {
         e.preventDefault();
         e.stopPropagation();
+        cancelLongPress();
         openSplitPopover(pkt, e.clientX, e.clientY);
       });
       g.addEventListener('dblclick', (e) => {
@@ -416,10 +468,16 @@ import '@fontsource-variable/vazirmatn'
     allTimeEl.classList.toggle   ('done', blueDeliveredAt   !== null && orangeDeliveredAt !== null);
   }
 
+  function setWireClass(key, cls) {
+    if (wireEls[key].getAttribute('class') !== cls) {
+      wireEls[key].setAttribute('class', cls);
+    }
+  }
+
   function renderStatic() {
     packetsAtRestG.innerHTML = '';
     packetAnimG.innerHTML = '';
-    for (const key in wireEls) wireEls[key].setAttribute('class', 'wire');
+    for (const key in wireEls) setWireClass(key, 'wire');
     const byDevice = {};
     for (const p of packets) {
       (byDevice[p.location] = byDevice[p.location] || []).push(p);
@@ -440,23 +498,24 @@ import '@fontsource-variable/vazirmatn'
   function renderAnimationFrame(t) {
     packetsAtRestG.innerHTML = '';
     packetAnimG.innerHTML = '';
-    for (const key in wireEls) wireEls[key].setAttribute('class', 'wire');
 
     const byDevice = {};
     const transitEvents = [];
+    const busyByLink = {};
     for (const p of packets) {
       const pos = packetPositionAt(p, t);
       if (pos.kind === 'dock') {
         (byDevice[pos.device] = byDevice[pos.device] || []).push(p);
       } else {
         transitEvents.push(pos.event);
+        busyByLink[pos.event.link] = pos.event.packet.color;
       }
     }
-    for (const dev in byDevice) renderDock(dev, byDevice[dev], false);
-    for (const evt of transitEvents) {
-      wireEls[evt.link].setAttribute('class', `wire busy-${evt.packet.color}`);
-      drawTransitPacket(evt, t);
+    for (const key in wireEls) {
+      setWireClass(key, busyByLink[key] ? `wire busy-${busyByLink[key]}` : 'wire');
     }
+    for (const dev in byDevice) renderDock(dev, byDevice[dev], false);
+    for (const evt of transitEvents) drawTransitPacket(evt, t);
     updateArrivalText();
   }
 
@@ -524,9 +583,10 @@ import '@fontsource-variable/vazirmatn'
       statusMsg.textContent = `همهٔ بسته‌ها در ${totalTime.toFixed(1)} s رسیدند!`;
       statusMsg.classList.add('win');
       updateBest(totalTime);
+      commitCurrentAttempt();
     } else {
       timerEl.textContent = `زمان: ${totalTime.toFixed(1)} s`;
-      statusMsg.textContent = 'بسته را انتخاب کنید یا برای تقسیمش دوبار بزنید.';
+      statusMsg.textContent = 'بسته را انتخاب کنید یا برای تقسیمش نگه دارید.';
     }
     updateControls();
   }
@@ -587,6 +647,16 @@ import '@fontsource-variable/vazirmatn'
     return (t === null || t === undefined) ? '—' : `${t.toFixed(1)} s`;
   }
 
+  function bestPerColumn(entries) {
+    const keys = ['blue', 'orange', 'sum', 'all', 'packets'];
+    const out = {};
+    for (const k of keys) {
+      const vals = entries.map(e => e[k]).filter(v => v !== null && v !== undefined);
+      out[k] = vals.length ? Math.min(...vals) : null;
+    }
+    return out;
+  }
+
   function renderHistory() {
     historyList.innerHTML = '';
     if (attemptsHistory.length === 0) {
@@ -594,16 +664,22 @@ import '@fontsource-variable/vazirmatn'
       return;
     }
     historyEmpty.style.display = 'none';
+    const bests = bestPerColumn(attemptsHistory);
+    const cell = (cls, key, entry, text) => {
+      const isBest = bests[key] !== null && entry[key] === bests[key];
+      return `<span class="${cls}${isBest ? ' best' : ''}" role="cell"><bdi dir="ltr">${text}</bdi></span>`;
+    };
     for (const entry of attemptsHistory) {
       const row = document.createElement('div');
       row.className = 'history-row';
       row.setAttribute('role', 'row');
       row.innerHTML = `
-        <span class="num" role="cell">${entry.n}</span>
-        <span class="blue" role="cell">${fmtTime(entry.blue)}</span>
-        <span class="orange" role="cell">${fmtTime(entry.orange)}</span>
-        <span class="sum" role="cell">${fmtTime(entry.sum)}</span>
-        <span class="all" role="cell">${fmtTime(entry.all)}</span>
+        <span class="num" role="cell"><bdi dir="ltr">${entry.n}</bdi></span>
+        ${cell('blue',   'blue',   entry, fmtTime(entry.blue))}
+        ${cell('orange', 'orange', entry, fmtTime(entry.orange))}
+        ${cell('sum',    'sum',    entry, fmtTime(entry.sum))}
+        ${cell('all',    'all',    entry, fmtTime(entry.all))}
+        ${cell('packets', 'packets', entry, entry.packets)}
       `;
       historyList.appendChild(row);
     }
@@ -615,11 +691,12 @@ import '@fontsource-variable/vazirmatn'
     attemptCounter++;
     const both = blueDeliveredAt !== null && orangeDeliveredAt !== null;
     attemptsHistory.push({
-      n:      attemptCounter,
-      blue:   blueDeliveredAt,
-      orange: orangeDeliveredAt,
-      sum:    both ? blueDeliveredAt + orangeDeliveredAt : null,
-      all:    both ? Math.max(blueDeliveredAt, orangeDeliveredAt) : null,
+      n:       attemptCounter,
+      blue:    blueDeliveredAt,
+      orange:  orangeDeliveredAt,
+      sum:     both ? blueDeliveredAt + orangeDeliveredAt : null,
+      all:     both ? Math.max(blueDeliveredAt, orangeDeliveredAt) : null,
+      packets: packets.length,
     });
     renderHistory();
   }
@@ -634,7 +711,7 @@ import '@fontsource-variable/vazirmatn'
     initialState();
     timerEl.textContent = 'زمان: 0.0 s';
     timerEl.classList.remove('done');
-    statusMsg.textContent = 'بسته را یک‌بار بزنید تا انتخاب شود؛ دوبار بزنید تا تقسیم شود.';
+    statusMsg.textContent = 'بسته را بزنید تا انتخاب شود؛ برای تقسیم روی آن نگه دارید.';
     statusMsg.classList.remove('win');
     renderStatic();
     updateStats();
@@ -643,7 +720,6 @@ import '@fontsource-variable/vazirmatn'
 
   function onResetClick() {
     if (animating) return;
-    commitCurrentAttempt();
     resetMap();
   }
 
