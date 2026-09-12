@@ -5,8 +5,6 @@ const voltageLabel = document.querySelector('#vLabel')
 const scope = document.querySelector('#scope')
 const context = scope.getContext('2d')
 
-const LOW_MAX = 1.5
-const HIGH_MIN = 3.5
 const V_MAX = 5
 const HISTORY_SECONDS = 8
 const NOISE_EPSILON = 0.12 // ± volts of real-world jitter on the wire
@@ -39,35 +37,23 @@ function drawScope() {
 
   const yFor = (voltage) => height - (voltage / V_MAX) * (height - 20) - 10
 
-  context.fillStyle = 'rgb(53 175 184 / 18%)'
-  context.fillRect(0, yFor(LOW_MAX), width, height - yFor(LOW_MAX))
-  context.fillStyle = 'rgb(232 179 58 / 16%)'
-  context.fillRect(0, yFor(HIGH_MIN), width, yFor(LOW_MAX) - yFor(HIGH_MIN))
-  context.fillStyle = 'rgb(184 42 49 / 16%)'
-  context.fillRect(0, yFor(V_MAX), width, yFor(HIGH_MIN) - yFor(V_MAX))
-
-  context.strokeStyle = 'rgb(41 54 79 / 30%)'
-  context.setLineDash([4, 4])
+  // Grid: horizontal line + label at each integer volt. No band colors —
+  // the kid discovers the thresholds by experimenting with the signal.
+  context.strokeStyle = 'rgb(41 54 79 / 16%)'
+  context.setLineDash([])
   context.lineWidth = 1
-  for (const threshold of [LOW_MAX, HIGH_MIN]) {
-    const y = yFor(threshold)
+  for (let v = 0; v <= V_MAX; v++) {
+    const y = yFor(v)
     context.beginPath()
     context.moveTo(0, y)
     context.lineTo(width, y)
     context.stroke()
   }
-  context.setLineDash([])
 
-  context.fillStyle = 'rgb(41 54 79 / 72%)'
-  context.font = '600 12px "Vazirmatn Variable", Vazirmatn, sans-serif'
-  context.direction = 'rtl'
-  context.textAlign = 'right'
-  context.fillText('۵ V', width - 10, yFor(V_MAX) + 14)
-  context.fillText('بازهٔ بالا · ۳٫۵ V', width - 10, yFor(HIGH_MIN) - 6)
-  context.fillText('بازهٔ پایین · ۱٫۵ V', width - 10, yFor(LOW_MAX) + 16)
-  context.fillText('۰ V', width - 10, yFor(0) - 6)
-
-  if (samples.length < 2) return
+  if (samples.length < 2) {
+    drawVoltageLabels(yFor, width)
+    return
+  }
 
   const currentTime = samples.at(-1).time
   const earliestTime = currentTime - HISTORY_SECONDS
@@ -94,6 +80,24 @@ function drawScope() {
   }
 
   context.stroke()
+
+  drawVoltageLabels(yFor, width)
+}
+
+function drawVoltageLabels(yFor, width) {
+  context.font = '600 11px "Vazirmatn Variable", Vazirmatn, sans-serif'
+  context.direction = 'ltr'
+  context.textAlign = 'left'
+  context.textBaseline = 'middle'
+  for (let v = 0; v <= V_MAX; v++) {
+    const y = yFor(v)
+    const text = `${v} V`
+    const w = context.measureText(text).width
+    context.fillStyle = 'rgb(252 250 244 / 88%)'
+    context.fillRect(2, y - 8, w + 8, 16)
+    context.fillStyle = 'rgb(41 54 79 / 78%)'
+    context.fillText(text, 6, y)
+  }
 }
 
 function tick(now) {
