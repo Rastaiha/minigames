@@ -534,6 +534,16 @@ button:disabled {
   font-size: 0.78rem;
 }
 
+.history-row.current {
+  background: rgba(86, 105, 209, 0.08);
+  box-shadow: inset 0 0 0 2px rgba(86, 105, 209, 0.45);
+  border-top: 0;
+}
+.history-row.current .num::after {
+  content: ' •';
+  color: var(--blue);
+}
+
 .history-row .num {
   color: var(--ink-soft);
   font-weight: 800;

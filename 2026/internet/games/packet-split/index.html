@@ -12,8 +12,8 @@
     <section class="play-area" aria-label="نقشهٔ تعاملی شبکه">
       <div class="route-strip">
         <div class="routes" aria-label="مسیر پیام‌ها">
-          <span class="route blue"><i aria-hidden="true"></i><bdi dir="ltr">PC1 → PC3</bdi> (<span id="hintBlueSize">10</span> بیت)</span>
-          <span class="route orange"><i aria-hidden="true"></i><bdi dir="ltr">PC2 → PC4</bdi> (<span id="hintOrangeSize">10</span> بیت)</span>
+          <span class="route blue"><i aria-hidden="true"></i><bdi dir="ltr">PC1 → PC3</bdi> (۸ بیت)</span>
+          <span class="route orange"><i aria-hidden="true"></i><bdi dir="ltr">PC2 → PC4</bdi> (۶ بیت)</span>
         </div>
         <p class="bit-rate"><span aria-hidden="true">◷</span> هر بیت روی هر اتصال <bdi dir="ltr">0.5 s</bdi></p>
       </div>
@@ -34,21 +34,6 @@
 
       <div class="control-bar">
         <div class="round-stat">دور <strong id="roundNum">۱</strong></div>
-        <fieldset class="size-config">
-          <legend>اندازهٔ پیام‌ها</legend>
-          <label class="size-field blue" for="blueSizeInput">
-            <i aria-hidden="true"></i>
-            <span>آبی</span>
-            <input dir="ltr" type="number" id="blueSizeInput" min="1" max="30" step="1" value="10" aria-describedby="size-unit-blue">
-            <span id="size-unit-blue">بیت</span>
-          </label>
-          <label class="size-field orange" for="orangeSizeInput">
-            <i aria-hidden="true"></i>
-            <span>طلایی</span>
-            <input dir="ltr" type="number" id="orangeSizeInput" min="1" max="30" step="1" value="10" aria-describedby="size-unit-orange">
-            <span id="size-unit-orange">بیت</span>
-          </label>
-        </fieldset>
         <div class="best-stat">بهترین زمان: <bdi class="value best" id="bestTime" dir="ltr">—</bdi></div>
         <bdi class="timer" id="timer" dir="ltr">زمان: 0.0 s</bdi>
         <div class="buttons">
@@ -58,31 +43,17 @@
       </div>
     </section>
 
-    <section class="results" aria-labelledby="results-title">
-      <div class="section-heading">
-        <h2 id="results-title">نتیجهٔ این تلاش</h2>
-        <p>راه‌های مختلف تقسیم و حرکت‌دادن بسته‌ها را امتحان کنید.</p>
-      </div>
-      <div class="stats-grid">
-        <div class="stat-cell blue"><span class="label">رسیدن آبی به <bdi dir="ltr">PC3</bdi></span><bdi class="value" id="blueTime" dir="ltr">—</bdi></div>
-        <div class="stat-cell orange"><span class="label">رسیدن طلایی به <bdi dir="ltr">PC4</bdi></span><bdi class="value" id="orangeTime" dir="ltr">—</bdi></div>
-        <div class="stat-cell sum"><span class="label">جمع دو زمان</span><bdi class="value" id="sumTime" dir="ltr">—</bdi></div>
-        <div class="stat-cell all"><span class="label">رسیدن همهٔ بسته‌ها</span><bdi class="value" id="allTime" dir="ltr">—</bdi></div>
-      </div>
-    </section>
-
-    <section class="history-card" aria-labelledby="history-title">
+    <section class="history-card" id="historyCard" aria-labelledby="history-title" hidden>
       <div class="section-heading compact">
-        <h2 id="history-title">تلاش‌های قبلی</h2>
-        <p>با «شروع دوباره»، نتیجهٔ تلاش فعلی اینجا ثبت می‌شود.</p>
+        <h2 id="history-title">تلاش‌ها</h2>
+        <p>تلاش جاری بالای جدول است و با رسیدن بسته‌ها پر می‌شود.</p>
       </div>
-      <div class="history-table" role="table" aria-label="زمان تلاش‌های قبلی">
+      <div class="history-table" role="table" aria-label="زمان تلاش‌ها">
         <div class="history-cols" role="row">
           <span role="columnheader">تلاش</span><span role="columnheader">آبی</span><span role="columnheader">طلایی</span><span role="columnheader">جمع</span><span role="columnheader">همه</span><span role="columnheader">بسته‌ها</span>
         </div>
         <div class="history-list" id="historyList" role="rowgroup"></div>
       </div>
-      <p class="history-empty" id="historyEmpty">هنوز تلاشی ثبت نشده است.</p>
     </section>
   </main>
 

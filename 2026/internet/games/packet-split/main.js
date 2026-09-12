@@ -3,8 +3,8 @@ import '@fontsource-variable/vazirmatn'
 (() => {
   const NS = 'http://www.w3.org/2000/svg';
   const BIT_TIME = 0.5;
-  let   BLUE_BITS   = 10;
-  let   ORANGE_BITS = 10;
+  const BLUE_BITS   = 8;
+  const ORANGE_BITS = 6;
   const DEVICES = {
     PC1: { x: 100, y: 130, kind: 'pc', num: 1, color: 'blue'   },
     PC2: { x: 100, y: 370, kind: 'pc', num: 2, color: 'orange' },
@@ -23,14 +23,14 @@ import '@fontsource-variable/vazirmatn'
   };
   // dy is per-row offset; negative = stack rows upward from base y
   const DOCK = {
-    PC1: { x: 100, y: 60,  dx: 30, dy: -22 },
-    PC2: { x: 100, y: 445, dx: 30, dy:  22 },
-    A:   { x: 340, y: 200, dx: 30, dy: -22 },
-    B:   { x: 560, y: 200, dx: 30, dy: -22 },
-    PC3: { x: 800, y: 60,  dx: 30, dy: -22 },
-    PC4: { x: 800, y: 445, dx: 30, dy:  22 },
+    PC1: { x: 100, y: 62,  dx: 36, dy: -28 },
+    PC2: { x: 100, y: 442, dx: 36, dy:  28 },
+    A:   { x: 340, y: 198, dx: 36, dy: -28 },
+    B:   { x: 560, y: 198, dx: 36, dy: -28 },
+    PC3: { x: 800, y: 62,  dx: 36, dy: -28 },
+    PC4: { x: 800, y: 442, dx: 36, dy:  28 },
   };
-  const MAX_PER_ROW = 6;
+  const MAX_PER_ROW = 5;
   const ROUTE = {
     blue:   { PC1: { link: 'PC1-A', to: 'A' }, A: { link: 'A-B', to: 'B' }, B: { link: 'B-PC3', to: 'PC3' } },
     orange: { PC2: { link: 'PC2-A', to: 'A' }, A: { link: 'A-B', to: 'B' }, B: { link: 'B-PC4', to: 'PC4' } },
@@ -145,19 +145,12 @@ import '@fontsource-variable/vazirmatn'
   const roundNumEl = document.getElementById('roundNum');
   const bestTimeEl = document.getElementById('bestTime');
   const statusMsg  = document.getElementById('statusMsg');
-  const blueSizeInput   = document.getElementById('blueSizeInput');
-  const orangeSizeInput = document.getElementById('orangeSizeInput');
-  const hintBlueSizeEl   = document.getElementById('hintBlueSize');
-  const hintOrangeSizeEl = document.getElementById('hintOrangeSize');
-  const blueTimeEl   = document.getElementById('blueTime');
-  const orangeTimeEl = document.getElementById('orangeTime');
-  const sumTimeEl    = document.getElementById('sumTime');
-  const allTimeEl    = document.getElementById('allTime');
   const historyList  = document.getElementById('historyList');
-  const historyEmpty = document.getElementById('historyEmpty');
+  const historyCard  = document.getElementById('historyCard');
 
   let attemptsHistory = [];
   let attemptCounter  = 0;
+  let attemptStarted  = false;
 
   const BEST_KEY = 'packet-split-step-best-v1';
   (function loadBest() {
@@ -189,6 +182,7 @@ import '@fontsource-variable/vazirmatn'
     roundStartTime = 0;
     blueDeliveredAt = null;
     orangeDeliveredAt = null;
+    attemptStarted = false;
   }
 
   // --- Popover ---
@@ -270,6 +264,7 @@ import '@fontsource-variable/vazirmatn'
       { id: nextId++, size: pkt.size - v,  color: pkt.color, location: pkt.location, selected: false }
     );
     renderStatic();
+    updateStats();
     updateControls();
   }
 
@@ -299,7 +294,7 @@ import '@fontsource-variable/vazirmatn'
     const fill = pkt.color === 'blue' ? '#5669d1' : '#e8b33a';
     const atDest = isAtDestination(pkt);
     const isSelected = pkt.selected && !atDest;
-    const w = 24, h = 18;
+    const w = 30, h = 22;
 
     const cls = ['chip-svg', pkt.color];
     if (!interactive) cls.push('locked');
@@ -311,7 +306,7 @@ import '@fontsource-variable/vazirmatn'
       attrs['aria-label'] = `بستهٔ ${pkt.size} بیتی ${pkt.color === 'blue' ? 'آبی' : 'طلایی'}؛ ${isSelected ? 'انتخاب شده' : 'انتخاب نشده'}`;
     }
     const g = el('g', attrs);
-    g.appendChild(el('rect', { x: -14, y: -12, width: 28, height: 24, rx: 5, fill: 'transparent', stroke: 'transparent', class: 'focus-ring' }));
+    g.appendChild(el('rect', { x: -17, y: -14, width: 34, height: 28, rx: 5, fill: 'transparent', stroke: 'transparent', class: 'focus-ring' }));
 
     envelopeShape(g, w, h, {
       fill:        isSelected ? `${fill}38` : (atDest ? `${fill}3d` : `${fill}18`),
@@ -321,9 +316,9 @@ import '@fontsource-variable/vazirmatn'
     });
 
     g.appendChild(el('text', {
-      x: 0, y: 2.5,
+      x: 0, y: 3,
       'text-anchor': 'middle', 'dominant-baseline': 'middle',
-      'font-size': '10', 'font-weight': '800',
+      'font-size': '12', 'font-weight': '800',
       fill: '#2c2318',
     }, String(pkt.size)));
 
@@ -416,8 +411,8 @@ import '@fontsource-variable/vazirmatn'
     const p = (t - evt.start) / (evt.end - evt.start);
     const { x, y, angle } = pointOnWire(evt.link, p);
     const color = evt.packet.color === 'blue' ? '#5669d1' : '#e8b33a';
-    const rectW = Math.max(24, Math.min(72, evt.packet.size * 4 + 14));
-    const rectH = 20;
+    const rectW = Math.max(30, Math.min(84, evt.packet.size * 5 + 18));
+    const rectH = 26;
     const g = el('g', { class: 'packet-anim', transform: `translate(${x}, ${y}) rotate(${angle})` });
     envelopeShape(g, rectW, rectH, {
       fill: color,
@@ -426,9 +421,9 @@ import '@fontsource-variable/vazirmatn'
       flapStroke: '#2c2318',
     });
     g.appendChild(el('text', {
-      x: 0, y: 2.5,
+      x: 0, y: 3,
       'text-anchor': 'middle', 'dominant-baseline': 'middle',
-      'font-size': '10', 'font-weight': '800', fill: '#2c2318',
+      'font-size': '12', 'font-weight': '800', fill: '#2c2318',
       // Flip text upright if the packet moves right-to-left (angle > 90°)
       transform: (Math.abs(angle) > 90) ? 'rotate(180)' : '',
     }, String(evt.packet.size)));
@@ -450,22 +445,8 @@ import '@fontsource-variable/vazirmatn'
   }
 
   function updateStats() {
-    const fmt = t => (t === null || t === undefined) ? '—' : `${t.toFixed(1)} s`;
-    blueTimeEl.textContent   = fmt(blueDeliveredAt);
-    orangeTimeEl.textContent = fmt(orangeDeliveredAt);
-
-    if (blueDeliveredAt !== null && orangeDeliveredAt !== null) {
-      const sum = blueDeliveredAt + orangeDeliveredAt;
-      const all = Math.max(blueDeliveredAt, orangeDeliveredAt);
-      sumTimeEl.textContent = fmt(sum);
-      allTimeEl.textContent = fmt(all);
-    } else {
-      sumTimeEl.textContent = '—';
-      allTimeEl.textContent = '—';
-    }
-    blueTimeEl.classList.toggle  ('done', blueDeliveredAt   !== null);
-    orangeTimeEl.classList.toggle('done', orangeDeliveredAt !== null);
-    allTimeEl.classList.toggle   ('done', blueDeliveredAt   !== null && orangeDeliveredAt !== null);
+    // Current attempt is rendered as a live row in the history table.
+    renderHistory();
   }
 
   function setWireClass(key, cls) {
@@ -543,7 +524,24 @@ import '@fontsource-variable/vazirmatn'
       }
       if (t > maxEnd) maxEnd = t;
     }
-    return { events, duration: maxEnd };
+
+    // Precompute when each color finishes fully arriving (relative to schedule start),
+    // so animate() can fill the live row's cell as soon as it happens — not at round end.
+    const colorDeliveryEnd = {};
+    for (const color of ['blue', 'orange']) {
+      const dest = DEST[color];
+      const allWillArrive = packets.filter(p => p.color === color).every(p => {
+        const evt = events.find(e => e.packet === p);
+        return evt ? evt.to === dest : p.location === dest;
+      });
+      if (allWillArrive) {
+        const arrivals = events.filter(e => e.packet.color === color && e.to === dest);
+        colorDeliveryEnd[color] = arrivals.length > 0 ? Math.max(...arrivals.map(e => e.end)) : 0;
+      } else {
+        colorDeliveryEnd[color] = null;
+      }
+    }
+    return { events, duration: maxEnd, colorDeliveryEnd };
   }
 
   function animate() {
@@ -553,6 +551,16 @@ import '@fontsource-variable/vazirmatn'
 
     renderAnimationFrame(T);
     timerEl.textContent = `زمان: ${(totalTime + T).toFixed(1)} s`;
+
+    const cd = currentSchedule.colorDeliveryEnd;
+    if (blueDeliveredAt === null && cd.blue !== null && T >= cd.blue) {
+      blueDeliveredAt = roundStartTime + cd.blue;
+      updateStats();
+    }
+    if (orangeDeliveredAt === null && cd.orange !== null && T >= cd.orange) {
+      orangeDeliveredAt = roundStartTime + cd.orange;
+      updateStats();
+    }
 
     if (raw >= currentSchedule.duration) {
       finishRound();
@@ -598,6 +606,7 @@ import '@fontsource-variable/vazirmatn'
     closePopover();
     currentSchedule = schedule;
     animating = true;
+    attemptStarted = true;
     animStart = performance.now();
     roundStartTime = totalTime;
     statusMsg.textContent = `بسته‌های دور ${round} در حرکت‌اند…`;
@@ -631,16 +640,6 @@ import '@fontsource-variable/vazirmatn'
     const hasSelected = packets.some(p => p.selected && !isAtDestination(p));
     goBtn.disabled = animating || !hasSelected || allDelivered();
     resetBtn.disabled = animating;
-    blueSizeInput.disabled   = animating;
-    orangeSizeInput.disabled = animating;
-  }
-
-  function readSize(input, fallback) {
-    let n = parseInt(input.value, 10);
-    if (!Number.isFinite(n)) n = fallback;
-    n = Math.max(1, Math.min(30, n));
-    input.value = String(n);
-    return n;
   }
 
   function fmtTime(t) {
@@ -657,21 +656,39 @@ import '@fontsource-variable/vazirmatn'
     return out;
   }
 
+  function currentAttemptEntry() {
+    const both = blueDeliveredAt !== null && orangeDeliveredAt !== null;
+    return {
+      n:       attemptCounter + 1,
+      blue:    blueDeliveredAt,
+      orange:  orangeDeliveredAt,
+      sum:     both ? blueDeliveredAt + orangeDeliveredAt : null,
+      all:     both ? Math.max(blueDeliveredAt, orangeDeliveredAt) : null,
+      packets: packets.length,
+    };
+  }
+
   function renderHistory() {
     historyList.innerHTML = '';
-    if (attemptsHistory.length === 0) {
-      historyEmpty.style.display = '';
-      return;
-    }
-    historyEmpty.style.display = 'none';
-    const bests = bestPerColumn(attemptsHistory);
+    // Only show the current live row once the user has actually started (clicked
+    // GO) and the game isn't already won. Between finishing an attempt and
+    // clicking Reset the packet count would otherwise mirror the row we just
+    // committed, causing duplicate-looking data.
+    const showCurrent = attemptStarted && !allDelivered();
+    historyCard.hidden = attemptsHistory.length === 0 && !showCurrent;
+    if (historyCard.hidden) return;
+
+    const rowsForBest = showCurrent ? [...attemptsHistory, currentAttemptEntry()] : attemptsHistory;
+    // No highlighting until there are at least two rows to compare.
+    const bests = rowsForBest.length >= 2 ? bestPerColumn(rowsForBest) : null;
+
     const cell = (cls, key, entry, text) => {
-      const isBest = bests[key] !== null && entry[key] === bests[key];
+      const isBest = bests && bests[key] !== null && entry[key] !== null && entry[key] === bests[key];
       return `<span class="${cls}${isBest ? ' best' : ''}" role="cell"><bdi dir="ltr">${text}</bdi></span>`;
     };
-    for (const entry of attemptsHistory) {
+    const makeRow = (entry, extraCls = '') => {
       const row = document.createElement('div');
-      row.className = 'history-row';
+      row.className = `history-row${extraCls ? ` ${extraCls}` : ''}`;
       row.setAttribute('role', 'row');
       row.innerHTML = `
         <span class="num" role="cell"><bdi dir="ltr">${entry.n}</bdi></span>
@@ -681,8 +698,10 @@ import '@fontsource-variable/vazirmatn'
         ${cell('all',    'all',    entry, fmtTime(entry.all))}
         ${cell('packets', 'packets', entry, entry.packets)}
       `;
-      historyList.appendChild(row);
-    }
+      return row;
+    };
+    if (showCurrent) historyList.appendChild(makeRow(currentAttemptEntry(), 'current'));
+    for (const entry of attemptsHistory) historyList.appendChild(makeRow(entry));
   }
 
   function commitCurrentAttempt() {
@@ -698,16 +717,15 @@ import '@fontsource-variable/vazirmatn'
       all:     both ? Math.max(blueDeliveredAt, orangeDeliveredAt) : null,
       packets: packets.length,
     });
+    // Clear per-color delivery times so the "current" live row goes back to
+    // empty instead of mirroring the row we just committed.
+    blueDeliveredAt = null;
+    orangeDeliveredAt = null;
     renderHistory();
   }
 
   function resetMap() {
     closePopover();
-    BLUE_BITS   = readSize(blueSizeInput,   10);
-    ORANGE_BITS = readSize(orangeSizeInput, 10);
-    hintBlueSizeEl.textContent   = String(BLUE_BITS);
-    hintOrangeSizeEl.textContent = String(ORANGE_BITS);
-
     initialState();
     timerEl.textContent = 'زمان: 0.0 s';
     timerEl.classList.remove('done');
@@ -723,19 +741,8 @@ import '@fontsource-variable/vazirmatn'
     resetMap();
   }
 
-  function onSizeChange() {
-    if (animating) return;
-    // Changing sizes clears history and resets the map.
-    attemptsHistory = [];
-    attemptCounter  = 0;
-    renderHistory();
-    resetMap();
-  }
-
   goBtn.addEventListener('click', startRound);
   resetBtn.addEventListener('click', onResetClick);
-  blueSizeInput.addEventListener('change',   onSizeChange);
-  orangeSizeInput.addEventListener('change', onSizeChange);
 
   renderHistory();
   resetMap();
