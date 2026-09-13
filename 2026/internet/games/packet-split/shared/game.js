@@ -3,7 +3,8 @@
 // the copy the status bar shows.
 export function initGame(config) {
   const NS = 'http://www.w3.org/2000/svg';
-  const BIT_TIME = 0.5;
+  const BITS_PER_SECOND = 8;
+  const BIT_TIME = 1 / BITS_PER_SECOND;
   const BLUE_BITS   = config.blueBits;
   const ORANGE_BITS = config.orangeBits;
   const SPLITTING = config.splitting !== false;
@@ -107,8 +108,8 @@ export function initGame(config) {
   labelsG.appendChild(el('text', { x: 560, y: 298, class: 'device-label' }, 'سوییچ B'));
 
   // Arrival progress
-  const arrivalPc3 = el('text', { x: 800, y: 35,  class: 'progress-text blue'   }, '۰ از ۱۰ بیت');
-  const arrivalPc4 = el('text', { x: 800, y: 470, class: 'progress-text orange' }, '۰ از ۱۰ بیت');
+  const arrivalPc3 = el('text', { x: 800, y: 35,  class: 'progress-text blue'   }, `0 از ${BLUE_BITS} بیت`);
+  const arrivalPc4 = el('text', { x: 800, y: 470, class: 'progress-text orange' }, `0 از ${ORANGE_BITS} بیت`);
   progressG.appendChild(arrivalPc3);
   progressG.appendChild(arrivalPc4);
 
@@ -155,11 +156,16 @@ export function initGame(config) {
   let attemptStarted  = false;
 
   const BEST_KEY = config.bestKey;
-  (function loadBest() {
-    const v = localStorage.getItem(BEST_KEY);
-    if (v) bestTimeEl.textContent = `${parseFloat(v).toFixed(1)} s`;
-  })();
+  const BEST_FROM_ATTEMPT_HISTORY = config.bestFromAttemptHistory === true;
+  if (BEST_FROM_ATTEMPT_HISTORY) {
+    bestTimeEl.textContent = '-';
+  } else {
+    const savedBest = localStorage.getItem(BEST_KEY);
+    if (savedBest) bestTimeEl.textContent = `${parseFloat(savedBest).toFixed(1)} s`;
+  }
+
   function updateBest(t) {
+    if (BEST_FROM_ATTEMPT_HISTORY) return;
     const cur = localStorage.getItem(BEST_KEY);
     if (!cur || t < parseFloat(cur) - 1e-9) {
       localStorage.setItem(BEST_KEY, String(t));
@@ -675,6 +681,15 @@ export function initGame(config) {
   }
 
   function renderHistory() {
+    if (BEST_FROM_ATTEMPT_HISTORY) {
+      const completedTimes = attemptsHistory
+        .map(entry => entry.all)
+        .filter(time => time !== null && time !== undefined);
+      bestTimeEl.textContent = completedTimes.length
+        ? `${Math.min(...completedTimes).toFixed(1)} s`
+        : '-';
+    }
+
     historyList.innerHTML = '';
     // Only show the current live row once the user has actually started (clicked
     // GO) and the game isn't already won. Between finishing an attempt and
