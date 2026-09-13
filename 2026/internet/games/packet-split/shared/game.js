@@ -1,10 +1,12 @@
-import '@fontsource-variable/vazirmatn'
-
-(() => {
+// Shared packet-split game engine. Each version's main.js imports initGame
+// and passes a config that toggles splitting, sets packet sizes, and swaps
+// the copy the status bar shows.
+export function initGame(config) {
   const NS = 'http://www.w3.org/2000/svg';
   const BIT_TIME = 0.5;
-  const BLUE_BITS   = 8;
-  const ORANGE_BITS = 6;
+  const BLUE_BITS   = config.blueBits;
+  const ORANGE_BITS = config.orangeBits;
+  const SPLITTING = config.splitting !== false;
   const DEVICES = {
     PC1: { x: 100, y: 130, kind: 'pc', num: 1, color: 'blue'   },
     PC2: { x: 100, y: 370, kind: 'pc', num: 2, color: 'orange' },
@@ -152,7 +154,7 @@ import '@fontsource-variable/vazirmatn'
   let attemptCounter  = 0;
   let attemptStarted  = false;
 
-  const BEST_KEY = 'packet-split-step-best-v1';
+  const BEST_KEY = config.bestKey;
   (function loadBest() {
     const v = localStorage.getItem(BEST_KEY);
     if (v) bestTimeEl.textContent = `${parseFloat(v).toFixed(1)} s`;
@@ -198,7 +200,7 @@ import '@fontsource-variable/vazirmatn'
 
   function openSplitPopover(pkt, clientX, clientY) {
     closePopover();
-    if (animating || pkt.size < 2 || isAtDestination(pkt)) return;
+    if (!SPLITTING || animating || pkt.size < 2 || isAtDestination(pkt)) return;
     const half = Math.floor(pkt.size / 2);
     const pop = document.createElement('div');
     pop.className = 'split-popover';
@@ -325,27 +327,29 @@ import '@fontsource-variable/vazirmatn'
     if (atDest) g.setAttribute('opacity', '0.85');
 
     if (interactive) {
-      g.addEventListener('pointerdown', (e) => {
-        if (e.pointerType === 'mouse' && e.button !== 0) return;
-        cancelLongPress();
-        longPressFired = false;
-        longPressStart = { x: e.clientX, y: e.clientY };
-        longPressPointerId = e.pointerId;
-        longPressTimer = setTimeout(() => {
-          longPressTimer = null;
-          longPressFired = true;
-          openSplitPopover(pkt, longPressStart.x, longPressStart.y);
-        }, LONG_PRESS_MS);
-      });
-      g.addEventListener('pointermove', (e) => {
-        if (!longPressStart || e.pointerId !== longPressPointerId) return;
-        const dx = e.clientX - longPressStart.x;
-        const dy = e.clientY - longPressStart.y;
-        if (Math.hypot(dx, dy) > LONG_PRESS_MOVE_TOL) cancelLongPress();
-      });
-      g.addEventListener('pointerup',     cancelLongPress);
-      g.addEventListener('pointercancel', cancelLongPress);
-      g.addEventListener('pointerleave',  cancelLongPress);
+      if (SPLITTING) {
+        g.addEventListener('pointerdown', (e) => {
+          if (e.pointerType === 'mouse' && e.button !== 0) return;
+          cancelLongPress();
+          longPressFired = false;
+          longPressStart = { x: e.clientX, y: e.clientY };
+          longPressPointerId = e.pointerId;
+          longPressTimer = setTimeout(() => {
+            longPressTimer = null;
+            longPressFired = true;
+            openSplitPopover(pkt, longPressStart.x, longPressStart.y);
+          }, LONG_PRESS_MS);
+        });
+        g.addEventListener('pointermove', (e) => {
+          if (!longPressStart || e.pointerId !== longPressPointerId) return;
+          const dx = e.clientX - longPressStart.x;
+          const dy = e.clientY - longPressStart.y;
+          if (Math.hypot(dx, dy) > LONG_PRESS_MOVE_TOL) cancelLongPress();
+        });
+        g.addEventListener('pointerup',     cancelLongPress);
+        g.addEventListener('pointercancel', cancelLongPress);
+        g.addEventListener('pointerleave',  cancelLongPress);
+      }
 
       g.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -356,22 +360,24 @@ import '@fontsource-variable/vazirmatn'
         closePopover();
         togglePacketSelection(pkt.id);
       });
-      g.addEventListener('contextmenu', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        cancelLongPress();
-        openSplitPopover(pkt, e.clientX, e.clientY);
-      });
-      g.addEventListener('dblclick', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        openSplitPopover(pkt, e.clientX, e.clientY);
-      });
+      if (SPLITTING) {
+        g.addEventListener('contextmenu', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          cancelLongPress();
+          openSplitPopover(pkt, e.clientX, e.clientY);
+        });
+        g.addEventListener('dblclick', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          openSplitPopover(pkt, e.clientX, e.clientY);
+        });
+      }
       g.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
           togglePacketSelection(pkt.id);
-        } else if (e.key.toLowerCase() === 's') {
+        } else if (SPLITTING && e.key.toLowerCase() === 's') {
           e.preventDefault();
           const bounds = g.getBoundingClientRect();
           openSplitPopover(pkt, bounds.left + bounds.width / 2, bounds.top + bounds.height / 2);
@@ -594,7 +600,7 @@ import '@fontsource-variable/vazirmatn'
       commitCurrentAttempt();
     } else {
       timerEl.textContent = `زمان: ${totalTime.toFixed(1)} s`;
-      statusMsg.textContent = 'بسته را انتخاب کنید یا برای تقسیمش نگه دارید.';
+      statusMsg.textContent = config.statusAfterRound;
     }
     updateControls();
   }
@@ -729,7 +735,7 @@ import '@fontsource-variable/vazirmatn'
     initialState();
     timerEl.textContent = 'زمان: 0.0 s';
     timerEl.classList.remove('done');
-    statusMsg.textContent = 'بسته را بزنید تا انتخاب شود؛ برای تقسیم روی آن نگه دارید.';
+    statusMsg.textContent = config.statusInitial;
     statusMsg.classList.remove('win');
     renderStatic();
     updateStats();
@@ -746,4 +752,4 @@ import '@fontsource-variable/vazirmatn'
 
   renderHistory();
   resetMap();
-})();
+}

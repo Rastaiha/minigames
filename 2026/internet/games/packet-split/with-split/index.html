@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <title>مسابقهٔ بسته‌ها — با تقسیم</title>
+  <link rel="stylesheet" href="../shared/styles.css">
+</head>
+<body>
+  <main class="game-shell">
+    <section class="play-area" aria-label="نقشهٔ تعاملی شبکه">
+      <div class="route-strip">
+        <div class="routes" aria-label="مسیر پیام‌ها">
+          <span class="route blue"><i aria-hidden="true"></i><bdi dir="ltr">PC1 → PC3</bdi> (۸ بیت)</span>
+          <span class="route orange"><i aria-hidden="true"></i><bdi dir="ltr">PC2 → PC4</bdi> (۶ بیت)</span>
+        </div>
+        <p class="bit-rate"><span aria-hidden="true">◷</span> هر بیت روی هر اتصال <bdi dir="ltr">0.5 s</bdi></p>
+      </div>
+
+      <div class="topology-frame">
+        <svg id="topology" viewBox="0 0 900 500" role="group" aria-label="شبکه‌ای با چهار رایانه و دو سوییچ؛ بسته‌ها از رایانه‌های ۱ و ۲ به رایانه‌های ۳ و ۴ می‌روند">
+          <g id="wires"></g>
+          <g id="ports"></g>
+          <g id="devices"></g>
+          <g id="labels"></g>
+          <g id="packetsAtRest"></g>
+          <g id="packetAnim"></g>
+          <g id="progress"></g>
+        </svg>
+      </div>
+
+      <p class="status-msg" id="statusMsg" aria-live="polite">بسته را بزنید تا انتخاب شود؛ برای تقسیم روی آن نگه دارید.</p>
+
+      <div class="control-bar">
+        <div class="round-stat">دور <strong id="roundNum">۱</strong></div>
+        <div class="best-stat">بهترین زمان: <bdi class="value best" id="bestTime" dir="ltr">—</bdi></div>
+        <bdi class="timer" id="timer" dir="ltr">زمان: 0.0 s</bdi>
+        <div class="buttons">
+          <button class="action" id="goBtn" type="button" disabled>حرکت</button>
+          <button class="secondary" id="resetBtn" type="button">شروع دوباره</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="history-card" id="historyCard" aria-labelledby="history-title" hidden>
+      <div class="section-heading compact">
+        <h2 id="history-title">تلاش‌ها</h2>
+        <p>تلاش جاری بالای جدول است و با رسیدن بسته‌ها پر می‌شود.</p>
+      </div>
+      <div class="history-table" role="table" aria-label="زمان تلاش‌ها">
+        <div class="history-cols" role="row">
+          <span role="columnheader">تلاش</span><span role="columnheader">آبی</span><span role="columnheader">طلایی</span><span role="columnheader">جمع</span><span role="columnheader">همه</span><span role="columnheader">بسته‌ها</span>
+        </div>
+        <div class="history-list" id="historyList" role="rowgroup"></div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
