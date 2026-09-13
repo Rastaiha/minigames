@@ -720,6 +720,13 @@ async function handleHallucination(request, env, cors) {
     modelMessages.push({ role: "user", content: body.prompt.trim() });
   }
 
+  if (level === 2) {
+    modelMessages.unshift({
+      role: "system",
+      content: "فقط پاسخ نهایی را خیلی کوتاه و مستقیم در یک عبارت بگو و از نوشتن راه‌حل، استدلال و محاسبات مرحله‌به‌مرحله اکیداً خودداری کن."
+    });
+  }
+
   const apiUrl = resolveApiUrl(env.LLM_BASE_URL);
   const defaultKey = "sk-e01ca9ec234e9297-lg0ie4-197a42bc";
   const rawKey = typeof env.LLM_API_KEY === "string" ? env.LLM_API_KEY.trim() : "";
@@ -727,10 +734,10 @@ async function handleHallucination(request, env, cors) {
 
   const candidateModels = level === 2
     ? [
+        "cf/@cf/meta/llama-3.1-8b-instruct-fp8-fast",
         "cf/@cf/meta/llama-3.3-70b-instruct-fp8-fast",
         "cf/@cf/meta/llama-3.1-70b-instruct-fp8-fast",
-        "cf/@cf/mistralai/mistral-small-3.1-24b-instruct",
-        "cf/@cf/meta/llama-3.1-8b-instruct-fp8-fast"
+        "cf/@cf/mistralai/mistral-small-3.1-24b-instruct"
       ]
     : [
         "cf/@cf/mistralai/mistral-small-3.1-24b-instruct",
@@ -753,7 +760,7 @@ async function handleHallucination(request, env, cors) {
           messages: modelMessages,
           temperature,
           top_p: 0.98,
-          max_tokens: 512,
+          max_tokens: level === 2 ? 80 : 512,
           stream: false
         }),
         signal: AbortSignal.timeout(45000)
