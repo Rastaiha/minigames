@@ -126,7 +126,7 @@ function drawScope(currentTime) {
     context.lineWidth = 3
     context.lineJoin = 'round'
     context.lineCap = 'round'
-    context.strokeStyle = bitRate > ERROR_RATE ? '#b82a31' : '#35afb8'
+    context.strokeStyle = '#35afb8'
     context.beginPath()
     let started = false
     for (const sample of samples) {
