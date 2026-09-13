@@ -243,7 +243,7 @@ query string روی صفحهٔ مبدأ (برای نمونه `index.html?v=...`)
 5. صفحهٔ اصلی و همهٔ صفحه‌های داخلی را از مسیر نهایی
    `/games/<project-name>/.../index.html` آزمایش کنید، نه فقط از dev server خود Vite.
 
-بازی routing از مخزن مستقل زیر به‌شکل submodule در `games/routing` قرار دارد:
+بازی قدیمی routing از مخزن مستقل زیر به‌شکل submodule در `games/routing-old` قرار دارد:
 
 ```text
 https://github.com/KianHsn/RastaNetwork.git
@@ -269,8 +269,8 @@ submodule ایجاد نمی‌کند.
 این build دو صفحهٔ بازی را فعلاً به‌شکل `dist/routing.html` و
 `dist/bellman-ford.html` می‌سازد. آماده‌ساز، ورودی‌های تودرتوی
 `dist/routing/index.html` و `dist/bellman-ford/index.html` را هم موقتاً ایجاد و
-لینک‌های صفحهٔ اصلی را به آن‌ها وصل می‌کند تا ارجاع‌های `games/routing/routing`
-و `games/routing/bellman-ford` در محتوای گام‌ها طبق قرارداد معمول بازی‌ها کار کنند.
+لینک‌های صفحهٔ اصلی را به آن‌ها وصل می‌کند تا ارجاع‌های `games/routing-old/routing`
+و `games/routing-old/bellman-ford` در محتوای گام‌ها طبق قرارداد معمول بازی‌ها کار کنند.
 
 در زمان `dev` یا `build`، خروجی بازی‌ها موقتاً به `site/public/games/` کپی می‌شود.
 این کپی در Git نگهداری نمی‌شود و هر بار از نو ساخته می‌شود.

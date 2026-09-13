@@ -68,7 +68,7 @@ async function installGameDependencies(gameName, gameDirectory, npm) {
 }
 
 async function fixRoutingGameScriptOrder(gameName, packageJson, gameDirectory) {
-  if (gameName !== 'routing' || packageJson.name !== 'network-routing-game') return
+  if (gameName !== 'routing-old' || packageJson.name !== 'network-routing-game') return
 
   const distDirectory = path.join(gameDirectory, 'dist')
   const entries = await fs.readdir(distDirectory, {withFileTypes: true, recursive: true})
@@ -105,7 +105,7 @@ async function fixRoutingGameScriptOrder(gameName, packageJson, gameDirectory) {
 }
 
 async function addRoutingGameNestedEntries(gameName, packageJson, gameDirectory) {
-  if (gameName !== 'routing' || packageJson.name !== 'network-routing-game') return
+  if (gameName !== 'routing-old' || packageJson.name !== 'network-routing-game') return
 
   const distDirectory = path.join(gameDirectory, 'dist')
   const hubPath = path.join(distDirectory, 'index.html')
