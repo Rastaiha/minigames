@@ -190,6 +190,17 @@ output {
   transform-origin: center;
   background: transparent;
   cursor: pointer;
+  /* Clicks on the track are ignored; only the thumb responds to pointers.
+     Keyboard arrows still work because pointer-events doesn't affect them. */
+  pointer-events: none;
+}
+
+.voltage-slider input[type="range"]::-webkit-slider-thumb {
+  pointer-events: auto;
+}
+
+.voltage-slider input[type="range"]::-moz-range-thumb {
+  pointer-events: auto;
 }
 
 .voltage-ticks {
