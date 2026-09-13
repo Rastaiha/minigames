@@ -1,3 +1,5 @@
+import { predictNextToken } from "./next-token.js";
+
 const JSON_HEADERS = { "Content-Type": "application/json; charset=utf-8" };
 
 function json(body, status = 200, headers = {}) {
@@ -257,9 +259,7 @@ async function handleGenerate(request, env, cors, mode = "base") {
       : buildAlignedOpenAiMessages(prompt);
 
   const apiUrl = resolveApiUrl(env.LLM_BASE_URL);
-  const defaultKey = "sk-e01ca9ec234e9297-lg0ie4-197a42bc";
-  const rawKey = typeof env.LLM_API_KEY === "string" ? env.LLM_API_KEY.trim() : "";
-  const apiKey = rawKey.length > 5 ? rawKey : defaultKey;
+  const apiKey = gatewayApiKey(env);
 
   let lastError = null;
   let lastStatus = 500;
@@ -398,6 +398,12 @@ const JAILBREAK_SYSTEM_RULES = {
 18. از ارائه سرنخ اضافه خودداری کن.`
 };
 
+function gatewayApiKey(env) {
+  const defaultKey = "sk-e01ca9ec234e9297-lg0ie4-197a42bc";
+  const rawKey = typeof env.LLM_API_KEY === "string" ? env.LLM_API_KEY.trim() : "";
+  return rawKey.length > 5 ? rawKey : defaultKey;
+}
+
 function resolveApiUrl(rawUrl) {
   let urlStr = String(rawUrl || "http://74.248.20.136.sslip.io:20128/v1/chat/completions").trim();
   try {
@@ -459,9 +465,7 @@ async function handleJailbreak(request, env, cors) {
   }
 
   const apiUrl = resolveApiUrl(env.LLM_BASE_URL);
-  const defaultKey = "sk-e01ca9ec234e9297-lg0ie4-197a42bc";
-  const rawKey = typeof env.LLM_API_KEY === "string" ? env.LLM_API_KEY.trim() : "";
-  const apiKey = rawKey.length > 5 ? rawKey : defaultKey;
+  const apiKey = gatewayApiKey(env);
   const model = (typeof body?.model === "string" && body.model.trim())
     ? body.model.trim()
     : (JAILBREAK_MODELS[level] || JAILBREAK_MODELS[1]);
@@ -620,9 +624,7 @@ async function handleJailbreakOld(request, env, cors) {
   }
 
   const apiUrl = resolveApiUrl(env.LLM_BASE_URL);
-  const defaultKey = "sk-e01ca9ec234e9297-lg0ie4-197a42bc";
-  const rawKey = typeof env.LLM_API_KEY === "string" ? env.LLM_API_KEY.trim() : "";
-  const apiKey = rawKey.length > 5 ? rawKey : defaultKey;
+  const apiKey = gatewayApiKey(env);
   const model = (typeof body?.model === "string" && body.model.trim())
     ? body.model.trim()
     : (JAILBREAK_OLD_MODELS[level] || JAILBREAK_OLD_MODELS[1]);
@@ -728,9 +730,7 @@ async function handleHallucination(request, env, cors) {
   }
 
   const apiUrl = resolveApiUrl(env.LLM_BASE_URL);
-  const defaultKey = "sk-e01ca9ec234e9297-lg0ie4-197a42bc";
-  const rawKey = typeof env.LLM_API_KEY === "string" ? env.LLM_API_KEY.trim() : "";
-  const apiKey = rawKey.length > 5 ? rawKey : defaultKey;
+  const apiKey = gatewayApiKey(env);
 
   const candidateModels = level === 2
     ? [
@@ -833,6 +833,32 @@ export default {
 
     if (!cors) return json({ error: "Origin is not allowed." }, 403);
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
+
+    if (url.pathname === "/next-token") {
+      if (request.method !== "POST") return json({ error: "Method not allowed." }, 405, cors);
+      if (!request.headers.get("Content-Type")?.toLowerCase().includes("application/json")) {
+        return json({ error: "Content-Type must be application/json." }, 415, cors);
+      }
+      let body;
+      try { body = await request.json(); }
+      catch { return json({ error: "Invalid JSON." }, 400, cors); }
+      const prompt = body?.prompt;
+      if (typeof prompt !== "string" || !prompt.trim() || prompt.length > 4000) {
+        return json({ error: "Prompt must contain 1 to 4000 characters." }, 400, cors);
+      }
+      if (env.RATE_LIMITER) {
+        const suppliedId = request.headers.get("X-Client-Id") || "";
+        const clientId = /^[a-zA-Z0-9-]{10,80}$/.test(suppliedId) ? suppliedId : "anonymous";
+        const { success } = await env.RATE_LIMITER.limit({ key: `${clientId}:next-token` });
+        if (!success) return json({ error: "Too many requests." }, 429, cors);
+      }
+      const result = await predictNextToken(prompt, {
+        ...env,
+        LLM_BASE_URL: resolveApiUrl(env.LLM_BASE_URL),
+        LLM_API_KEY: gatewayApiKey(env)
+      });
+      return json(result.body, result.status, cors);
+    }
 
     if (url.pathname === "/hallucination") {
       if (request.method !== "POST") return json({ error: "Method not allowed." }, 405, cors);

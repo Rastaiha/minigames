@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>پیش‌بینی توکن بعدی</title>
+  <style>
+    :root {
+      --bg: #111315;
+      --card: #191c1f;
+      --field: #111315;
+      --line: #30353a;
+      --accent: #9cc7ff;
+      --accent2: #e6b878;
+      --text: #f1f3f5;
+      --subtext: #929aa3;
+      --bar-bg: #30353a;
+    }
+    body {
+      margin: 0;
+      padding: 40px 20px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+    }
+    .container {
+      width: 100%;
+      max-width: 620px;
+      background: var(--card);
+      padding: 32px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      box-shadow: 0 18px 50px rgba(0,0,0,0.18);
+    }
+    h1 {
+      font-size: 1.25rem;
+      font-weight: 650;
+      letter-spacing: -0.02em;
+      margin: 0 0 28px;
+      color: var(--text);
+    }
+    .preset-group {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .preset-btn {
+      background: transparent;
+      color: var(--subtext);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 7px 10px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: all 0.2s;
+    }
+    .preset-btn:hover { color: var(--text); border-color: var(--accent); }
+    label {
+      display: block;
+      margin-bottom: 7px;
+      font-size: 0.78rem;
+      color: var(--subtext);
+    }
+    textarea, input {
+      width: 100%;
+      box-sizing: border-box;
+      background: var(--field);
+      border: 1px solid var(--line);
+      color: var(--text);
+      padding: 11px 12px;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      margin-bottom: 14px;
+      font-family: inherit;
+    }
+    textarea { resize: vertical; min-height: 60px; line-height: 1.6; }
+    textarea:disabled, input:disabled { opacity: 0.6; }
+    .submit-btn {
+      width: 100%;
+      background: var(--accent);
+      color: #111315;
+      border: none;
+      padding: 11px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 650;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      margin-bottom: 10px;
+    }
+    .submit-btn:hover { opacity: 0.9; }
+    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .secondary-btn {
+      width: 100%;
+      background: transparent;
+      color: var(--subtext);
+      border: 1px solid var(--line);
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    .secondary-btn:hover { color: var(--text); border-color: var(--text); }
+
+    .context-box {
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      background: var(--field);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 14px;
+      line-height: 2.1;
+      font-size: 1.05rem;
+      margin-bottom: 14px;
+      min-height: 50px;
+    }
+    .word-user { color: var(--accent); font-weight: bold; }
+    .word-model { color: var(--accent2); font-weight: bold; }
+    .legend {
+      display: flex;
+      gap: 16px;
+      font-size: 0.78rem;
+      color: var(--subtext);
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .legend span.dot {
+      display: inline-block;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      margin-left: 5px;
+    }
+    .turn-indicator {
+      text-align: center;
+      font-size: 0.9rem;
+      color: var(--subtext);
+      margin-bottom: 14px;
+      min-height: 1.2em;
+    }
+
+    .results { margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--line); display: none; }
+    .token-row { margin-bottom: 12px; }
+    .token-labels {
+      white-space: pre-wrap;
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.95rem;
+      margin-bottom: 4px;
+    }
+    .progress-bar {
+      height: 10px;
+      background: var(--bar-bg);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 2px;
+      transition: width 0.4s ease;
+    }
+    .target-box {
+      margin-top: 20px;
+      padding: 14px;
+      background: var(--field);
+      border-radius: 6px;
+      border-right: 4px solid var(--accent);
+      line-height: 1.8;
+    }
+    .model-box {
+      margin-top: 14px;
+      padding: 14px;
+      background: var(--field);
+      border-radius: 6px;
+      border-right: 4px solid var(--accent2);
+      line-height: 1.8;
+      display: none;
+    }
+
+    .status-line { text-align: center; font-size: 0.78rem; margin-top: 8px; min-height: 1.2em; }
+    .status-live { color: var(--accent); }
+    @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+    @media (max-width: 560px) {
+      body { padding: 16px 10px; }
+      .container { padding: 22px 18px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>پیش‌بینی توکن بعدی</h1>
+  <label>نمونه</label>
+  <div class="preset-group">
+    <button class="preset-btn" onclick="applyPreset('در مثلث قائم‌الزاویه با اضلاع ۳ و ۴'')">فیثاغورس</button>
+    <button class="preset-btn" onclick="applyPreset('اژدهای نقره‌ای بال‌هایش را گشود'')">داستان</button>
+  </div>
+
+  <label for="promptArea">متن شروع</label>
+  <textarea id="promptArea" maxlength="600">در مثلث قائم‌الزاویه با اضلاع ۳ و ۴</textarea>
+
+  <button class="submit-btn" id="startBtn" onclick="startGame()">شروع</button>
+
+  <div id="gamePlay" style="display:none;">
+    <div class="legend">
+      <div><span class="dot" style="background:var(--text)"></span>متن</div>
+      <div><span class="dot" style="background:var(--accent)"></span>حدس</div>
+      <div><span class="dot" style="background:var(--accent2)"></span>مدل</div>
+    </div>
+    <div id="contextBox" class="context-box" dir="rtl"></div>
+    <div id="turnIndicator" class="turn-indicator" role="status"></div>
+    <div id="statusLine" class="status-line" role="status"></div>
+
+    <label for="guessInput">توکن بعدی</label>
+    <input type="text" id="guessInput" maxlength="100" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" list="" placeholder="مثلاً: پنج">
+
+    <button class="submit-btn" id="guessBtn" onclick="submitGuess()">ثبت حدس</button>
+    <button class="secondary-btn" onclick="resetGame(false)">شروع دوباره</button>
+  </div>
+
+  <div id="results" class="results">
+    <h3>احتمال توکن‌ها</h3>
+    <div id="tokenList"></div>
+
+    <div id="targetResult" class="target-box" style="display: none;">
+      <div><strong>کلمه حدس‌زده‌شده:</strong> <span id="userTargetLabel"></span></div>
+      <div><strong>شانس از نظر مدل:</strong> <span id="userTargetProb" style="color: var(--accent); font-weight: bold;"></span></div>
+    </div>
+
+    <div id="modelResult" class="model-box">
+      <div><strong>انتخاب مدل:</strong> <span id="modelPickLabel"></span></div>
+      <div><strong>شانس از نظر مدل:</strong> <span id="modelPickProb" style="color: var(--accent2); font-weight: bold;"></span></div>
+    </div>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script>
+  const config = window.NEXT_TOKEN_CONFIG || {};
+  const apiUrl = (config.workerRoot || '').replace(/\/+$/, '') + '/next-token';
+  const clientId = crypto.randomUUID ? crypto.randomUUID() : 'client-' + Math.random().toString(36).slice(2);
+  let gameVersion = 0;
+
+  async function queryTopTokens(contextText) {
+    if (!config.workerRoot) throw new Error('نشانی سرویس تنظیم نشده است.');
+    let response;
+    try {
+      response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Client-Id': clientId },
+        body: JSON.stringify({ prompt: contextText }),
+        signal: AbortSignal.timeout(18000)
+      });
+    } catch {
+      throw new Error('ارتباط با سرویس برقرار نشد؛ دوباره تلاش کنید.');
+    }
+    if (!response.ok) throw new Error('خطای سرویس (' + response.status + ')؛ دوباره تلاش کنید.');
+    let data;
+    try { data = await response.json(); }
+    catch { throw new Error('پاسخ سرویس معتبر نیست؛ دوباره تلاش کنید.'); }
+    if (data?.source !== 'logprobs' || !Array.isArray(data.tokens) || !data.tokens.length ||
+        typeof data.chosenToken !== 'string' || !data.chosenToken ||
+        data.tokens.some(t => !t || typeof t.token !== 'string' || !t.token ||
+          !Number.isFinite(t.probability) || t.probability < 0 || t.probability > 100)) {
+      throw new Error('سرویس احتمال معتبر توکن‌ها را برنگرداند؛ دوباره تلاش کنید.');
+    }
+    return data;
+  }
+
+  let words = [];      // { text, type: 'seed' | 'user' | 'model' }
+  let started = false;
+  let busy = false;
+  function applyPreset(text) {
+    document.getElementById('promptArea').value = text;
+    resetGame(false);
+  }
+
+  function resetGame(clearText) {
+    gameVersion++;
+    document.getElementById("statusLine").innerText = "";
+    started = false;
+    busy = false;
+    words = [];
+    document.getElementById('gamePlay').style.display = 'none';
+    document.getElementById('promptArea').disabled = false;
+    document.getElementById('startBtn').style.display = 'block';
+    document.getElementById('results').style.display = 'none';
+    document.getElementById('targetResult').style.display = 'none';
+    document.getElementById('modelResult').style.display = 'none';
+    if (clearText) { document.getElementById('promptArea').value = ''; }
+  }
+
+  function startGame() {
+    const text = document.getElementById('promptArea').value.trim();
+    if (!text) { alert('متن شروع را وارد کنید.'); return; }
+    words = [{ text, type: 'seed' }];
+    gameVersion++;
+    started = true;
+    document.getElementById("guessBtn").disabled = false;
+    document.getElementById("guessInput").disabled = false;
+    document.getElementById('promptArea').disabled = true;
+    document.getElementById('startBtn').style.display = 'none';
+    document.getElementById('gamePlay').style.display = 'block';
+    document.getElementById('results').style.display = 'none';
+    renderContext();
+    document.getElementById('turnIndicator').innerText = 'یک توکن وارد کنید';
+    const input = document.getElementById('guessInput');
+    input.value = '';
+    input.focus();
+  }
+
+  function getContextText() {
+    return words.map(w => w.text).join('');
+  }
+
+  function renderContext() {
+    const box = document.getElementById('contextBox');
+    box.replaceChildren();
+    words.forEach(w => {
+      const span = document.createElement('span');
+      span.className = w.type === 'user' ? 'word-user' : w.type === 'model' ? 'word-model' : '';
+      span.textContent = w.text;
+      box.appendChild(span);
+    });
+  }
+
+  function formatProbability(value) {
+    return value > 0 && value < 0.01 ? 'کمتر از ۰٫۰۱٪' : value.toLocaleString('fa-IR', { maximumFractionDigits: 2 }) + '٪';
+  }
+
+  function escapeHtml(value) {
+    const span = document.createElement('span');
+    span.textContent = value;
+    return span.innerHTML;
+  }
+
+  function renderTop5(topFive) {
+    const tokenList = document.getElementById('tokenList');
+    tokenList.innerHTML = '';
+    topFive.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'token-row';
+      row.innerHTML = `
+        <div class="token-labels">
+          <span><strong>«${escapeHtml(item.token)}»</strong></span>
+          <span>${formatProbability(item.probability)}</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width: ${Math.min(item.probability, 100)}%"></div>
+        </div>
+      `;
+      tokenList.appendChild(row);
+    });
+  }
+
+  const PASS_THRESHOLD = 0.1; // درصد؛ اگر شانسِ کلمهٔ دانش‌آموز از این کمتر باشد، مدل جایگزینش می‌کند
+
+  async function submitGuess() {
+    if (busy || !started) return;
+    const input = document.getElementById('guessInput');
+    const word = input.value;
+    if (!word) { alert('یک توکن وارد کنید.'); return; }
+
+    const version = gameVersion;
+    busy = true;
+    document.getElementById('guessBtn').disabled = true;
+    input.disabled = true;
+    document.getElementById('turnIndicator').innerText = 'در حال محاسبه…';
+    document.getElementById('results').style.display = 'block';
+    document.getElementById('tokenList').innerHTML = '';
+    document.getElementById('targetResult').style.display = 'none';
+    document.getElementById('modelResult').style.display = 'none';
+
+    // همیشه روی متنِ کاملِ تا همین الان (که ممکن است شامل کلماتِ قبلیِ
+    // دانش‌آموز و مدل هم باشد) دوباره محاسبه می‌شود — نه فقط جملهٔ شروع.
+    const currentContext = getContextText();
+    if (currentContext.length > 4000) {
+      busy = false;
+      document.getElementById('turnIndicator').innerText = 'متن کامل شد؛ دوباره شروع کنید.';
+      return;
+    }
+    let prediction;
+    try {
+      prediction = await queryTopTokens(currentContext);
+    } catch (error) {
+      if (version !== gameVersion) return;
+      busy = false;
+      input.disabled = false;
+      document.getElementById('guessBtn').disabled = false;
+      document.getElementById('results').style.display = 'none';
+      document.getElementById('statusLine').innerText = '';
+      document.getElementById('turnIndicator').innerText = error.message;
+      input.focus();
+      return;
+    }
+    if (version !== gameVersion) return;
+    const { tokens: top5, chosenToken } = prediction;
+    renderTop5(top5);
+
+    const statusEl = document.getElementById('statusLine');
+    statusEl.className = 'status-line status-live';
+    statusEl.innerText = 'احتمال واقعی توکن';
+
+    const matched = top5.find(t => t.token === word);
+    const userProb = matched ? matched.probability : null;
+    const displayChance = userProb != null ? formatProbability(userProb) : 'در گزینه‌های دریافتی نیست';
+
+    document.getElementById('targetResult').style.display = 'block';
+    document.getElementById('userTargetLabel').innerText = `«${word}»`;
+    document.getElementById('userTargetProb').innerText = displayChance;
+
+    const passed = userProb != null && userProb > PASS_THRESHOLD;
+
+    if (passed) {
+      // شانسِ کلمهٔ دانش‌آموز از ۰.۱٪ بیشتر بود: همان کلمه به متن اضافه می‌شود
+      words.push({ text: word, type: 'user' });
+      renderContext();
+      document.getElementById('modelResult').style.display = 'none';
+    } else {
+      const modelPick = { token: chosenToken, probability: top5.find(t => t.token === chosenToken)?.probability };
+      words.push({ text: modelPick.token, type: 'model' });
+      renderContext();
+      document.getElementById('modelResult').style.display = 'block';
+      document.getElementById('modelPickLabel').innerText = `«${modelPick.token}»`;
+      document.getElementById('modelPickProb').innerText = modelPick.probability == null ? 'نامشخص' : formatProbability(modelPick.probability);
+    }
+
+    busy = false;
+    input.disabled = false;
+    document.getElementById('guessBtn').disabled = false;
+    input.value = '';
+    input.focus();
+    document.getElementById('turnIndicator').innerText = passed
+      ? 'حدس پذیرفته شد'
+      : 'مدل توکن دیگری انتخاب کرد';
+
+  }
+
+  // Spaces may be part of a real token; Enter submits the guess.
+  document.addEventListener('DOMContentLoaded', () => {
+    const input = document.getElementById('guessInput');
+    if (input) {
+      input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          if (!document.getElementById('guessBtn').disabled) submitGuess();
+        }
+      });
+    }
+  });
+</script>
+
+</body>
+</html>

@@ -7,7 +7,7 @@
     "dev": "wrangler dev",
     "deploy:first": "wrangler deploy --secrets-file .dev.vars",
     "deploy": "wrangler deploy",
-    "check": "node --check src/index.js"
+    "check": "node --check src/index.js && node --check src/next-token.js"
   },
   "devDependencies": {
     "wrangler": "^4.36.0"
