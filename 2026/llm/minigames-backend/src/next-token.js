@@ -1,4 +1,27 @@
 // Probabilities come from the inference API, never from generated JSON estimates.
+async function readJsonWithoutWaitingForClose(response) {
+  if (!response.body) return response.json();
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let text = "";
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      text += decoder.decode(value, { stream: true });
+      try {
+        const payload = JSON.parse(text);
+        await reader.cancel();
+        return payload;
+      } catch {}
+    }
+    text += decoder.decode();
+    return JSON.parse(text);
+  } finally {
+    reader.releaseLock();
+  }
+}
+
 export async function predictNextToken(prompt, env) {
   if (!env.LLM_API_KEY || !env.TOKEN_MODEL) {
     return { status: 503, body: { error: "Token prediction is not configured." } };
@@ -17,18 +40,19 @@ export async function predictNextToken(prompt, env) {
           { role: "system", content: "Continue the unfinished text directly. Return only its continuation, without repeating it or adding explanations." },
           { role: "user", content: prompt }
         ],
-        temperature: 0,
-        max_tokens: 12,
+        temperature: 1,
+        top_k: 5,
+        max_tokens: 6,
         logprobs: true,
         top_logprobs: 5,
         stream: false
       }),
-      signal: AbortSignal.timeout(15000)
+      signal: AbortSignal.timeout(25000)
     });
     if (!response.ok) {
       return { status: 502, body: { error: "Token probability provider unavailable." } };
     }
-    const payload = await response.json();
+    const payload = await readJsonWithoutWaitingForClose(response);
     const content = payload?.choices?.[0]?.logprobs?.content;
     // Partial UTF-8 byte tokens cannot be faithfully appended as browser text.
     const decode = (item) => {
@@ -54,7 +78,7 @@ export async function predictNextToken(prompt, env) {
           Number.isFinite(item.logprob) && item.logprob <= 0 && item.logprob > -9999)
         .map(item => ({ token: item.token, probability: Math.exp(item.logprob) * 100 }))
         .sort((a, b) => b.probability - a.probability);
-      if (!tokens.length) break;
+      if (!tokens.some(item => item.token === chosenToken)) break;
       positions.push({ chosenToken, tokens });
     }
     if (!positions.length) {

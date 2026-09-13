@@ -16,13 +16,15 @@ Deploy from `minigames-backend` with `npm run deploy`. No additional provider
 credential is required. An existing `LLM_API_KEY` Worker secret takes precedence
 over the existing shared backend credential.
 
-The route requests one continuous 12-token continuation and returns the real
+The route requests a continuous six-token continuation at temperature 1 with
+top-k sampling restricted to five tokens, and returns the real
 top-five probabilities at every position. The browser reveals that sequence one
-token at a time, avoiding a fresh chat response on every turn. Tokens may include
-spaces or partial words. Guesses must match the generated token exactly; otherwise
-the generated token is appended. Top-five probabilities are not renormalized, and
-an absent guess has unknown probability rather than zero. Models producing
-incomplete UTF-8 byte tokens are currently unsupported.
+token at a time. Tokens may include spaces or partial words. If a guess matches any
+of the five candidates, that token is forced into the continuation and unused
+cached positions are discarded; the next request follows the player's chosen path.
+Otherwise the model's sampled token is appended. Top-five probabilities are not
+renormalized, and an absent guess has unknown probability rather than zero. Models
+producing incomplete UTF-8 byte tokens are currently unsupported.
 
 ## API failures
 

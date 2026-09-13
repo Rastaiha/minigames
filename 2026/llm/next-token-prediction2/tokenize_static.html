@@ -422,7 +422,8 @@
     document.getElementById('userTargetLabel').innerText = `«${word}»`;
     document.getElementById('userTargetProb').innerText = displayChance;
 
-    const passed = word === chosenToken;
+    const passed = userProb != null;
+    const forcedAlternative = passed && word !== chosenToken;
 
     const appendToken = (token, type) => {
       const needsBoundarySpace = words.length === 1 && !/^[\s،؛:.!؟]/.test(token);
@@ -430,7 +431,8 @@
     };
 
     if (passed) {
-      appendToken(chosenToken, 'user');
+      appendToken(word, 'user');
+      if (forcedAlternative) predictionQueue = [];
       renderContext();
       document.getElementById('modelResult').style.display = 'none';
     } else {
@@ -451,7 +453,7 @@
       ? 'حدس پذیرفته شد'
       : 'مدل توکن دیگری انتخاب کرد';
 
-    if (!predictionQueue.length) {
+    if (!predictionQueue.length && !forcedAlternative) {
       input.disabled = true;
       document.getElementById('guessBtn').disabled = true;
       document.getElementById('turnIndicator').innerText = 'دنباله کامل شد.';
