@@ -245,8 +245,17 @@
   const apiUrl = (config.workerRoot || '').replace(/\/+$/, '') + '/next-token';
   const clientId = crypto.randomUUID ? crypto.randomUUID() : 'client-' + Math.random().toString(36).slice(2);
   let gameVersion = 0;
+  let predictionQueue = [];
 
-  async function queryTopTokens(contextText) {
+  function validPosition(position) {
+    return position && typeof position.chosenToken === 'string' && position.chosenToken &&
+      Array.isArray(position.tokens) && position.tokens.length &&
+      position.tokens.every(t => t && typeof t.token === 'string' && t.token &&
+        Number.isFinite(t.probability) && t.probability >= 0 && t.probability <= 100);
+  }
+
+  async function nextPrediction(contextText) {
+    if (predictionQueue.length) return predictionQueue.shift();
     if (!config.workerRoot) throw new Error('نشانی سرویس تنظیم نشده است.');
     let response;
     try {
@@ -263,13 +272,12 @@
     let data;
     try { data = await response.json(); }
     catch { throw new Error('پاسخ سرویس معتبر نیست؛ دوباره تلاش کنید.'); }
-    if (data?.source !== 'logprobs' || !Array.isArray(data.tokens) || !data.tokens.length ||
-        typeof data.chosenToken !== 'string' || !data.chosenToken ||
-        data.tokens.some(t => !t || typeof t.token !== 'string' || !t.token ||
-          !Number.isFinite(t.probability) || t.probability < 0 || t.probability > 100)) {
+    if (data?.source !== 'logprobs' || !Array.isArray(data.positions) ||
+        !data.positions.length || !data.positions.every(validPosition)) {
       throw new Error('سرویس احتمال معتبر توکن‌ها را برنگرداند؛ دوباره تلاش کنید.');
     }
-    return data;
+    predictionQueue = data.positions;
+    return predictionQueue.shift();
   }
 
   let words = [];      // { text, type: 'seed' | 'user' | 'model' }
@@ -282,6 +290,7 @@
 
   function resetGame(clearText) {
     gameVersion++;
+    predictionQueue = [];
     document.getElementById("statusLine").innerText = "";
     started = false;
     busy = false;
@@ -300,6 +309,7 @@
     if (!text) { alert('متن شروع را وارد کنید.'); return; }
     words = [{ text, type: 'seed' }];
     gameVersion++;
+    predictionQueue = [];
     started = true;
     document.getElementById("guessBtn").disabled = false;
     document.getElementById("guessInput").disabled = false;
@@ -358,8 +368,6 @@
     });
   }
 
-  const PASS_THRESHOLD = 0.1; // درصد؛ اگر شانسِ کلمهٔ دانش‌آموز از این کمتر باشد، مدل جایگزینش می‌کند
-
   async function submitGuess() {
     if (busy || !started) return;
     const input = document.getElementById('guessInput');
@@ -386,7 +394,7 @@
     }
     let prediction;
     try {
-      prediction = await queryTopTokens(currentContext);
+      prediction = await nextPrediction(currentContext);
     } catch (error) {
       if (version !== gameVersion) return;
       busy = false;
@@ -414,16 +422,20 @@
     document.getElementById('userTargetLabel').innerText = `«${word}»`;
     document.getElementById('userTargetProb').innerText = displayChance;
 
-    const passed = userProb != null && userProb > PASS_THRESHOLD;
+    const passed = word === chosenToken;
+
+    const appendToken = (token, type) => {
+      const needsBoundarySpace = words.length === 1 && !/^[\s،؛:.!؟]/.test(token);
+      words.push({ text: (needsBoundarySpace ? ' ' : '') + token, type });
+    };
 
     if (passed) {
-      // شانسِ کلمهٔ دانش‌آموز از ۰.۱٪ بیشتر بود: همان کلمه به متن اضافه می‌شود
-      words.push({ text: word, type: 'user' });
+      appendToken(chosenToken, 'user');
       renderContext();
       document.getElementById('modelResult').style.display = 'none';
     } else {
       const modelPick = { token: chosenToken, probability: top5.find(t => t.token === chosenToken)?.probability };
-      words.push({ text: modelPick.token, type: 'model' });
+      appendToken(modelPick.token, 'model');
       renderContext();
       document.getElementById('modelResult').style.display = 'block';
       document.getElementById('modelPickLabel').innerText = `«${modelPick.token}»`;
@@ -438,6 +450,12 @@
     document.getElementById('turnIndicator').innerText = passed
       ? 'حدس پذیرفته شد'
       : 'مدل توکن دیگری انتخاب کرد';
+
+    if (!predictionQueue.length) {
+      input.disabled = true;
+      document.getElementById('guessBtn').disabled = true;
+      document.getElementById('turnIndicator').innerText = 'دنباله کامل شد.';
+    }
 
   }
 

@@ -17,8 +17,8 @@ export async function predictNextToken(prompt, env) {
           { role: "system", content: "Continue the unfinished text directly. Return only its continuation, without repeating it or adding explanations." },
           { role: "user", content: prompt }
         ],
-        temperature: 1,
-        max_tokens: 1,
+        temperature: 0,
+        max_tokens: 12,
         logprobs: true,
         top_logprobs: 5,
         stream: false
@@ -29,8 +29,7 @@ export async function predictNextToken(prompt, env) {
       return { status: 502, body: { error: "Token probability provider unavailable." } };
     }
     const payload = await response.json();
-    const position = payload?.choices?.[0]?.logprobs?.content?.[0];
-    const candidates = position?.top_logprobs;
+    const content = payload?.choices?.[0]?.logprobs?.content;
     // Partial UTF-8 byte tokens cannot be faithfully appended as browser text.
     const decode = (item) => {
       if (Array.isArray(item?.bytes)) {
@@ -40,14 +39,25 @@ export async function predictNextToken(prompt, env) {
       }
       return typeof item?.token === "string" && !item.token.includes("\uFFFD") ? item.token : null;
     };
-    const chosenToken = decode(position);
-    if (!chosenToken || !Array.isArray(candidates) || !candidates.length) {
+    if (!Array.isArray(content) || !content.length) {
       return { status: 502, body: { error: "Usable token probabilities were not returned." } };
     }
-    const tokens = candidates.map(item => ({
-      token: decode(item), logprob: item.logprob
-    }));
-    if (tokens.some(item => !item.token || !Number.isFinite(item.logprob) || item.logprob > 0 || item.logprob <= -9999)) {
+
+    const positions = [];
+    for (const position of content) {
+      const chosenToken = decode(position);
+      if (!chosenToken || /^<\|.*\|>$/.test(chosenToken)) break;
+      const candidates = Array.isArray(position?.top_logprobs) ? position.top_logprobs : [];
+      const tokens = candidates
+        .map(item => ({ token: decode(item), logprob: item.logprob }))
+        .filter(item => item.token && !/^<\|.*\|>$/.test(item.token) &&
+          Number.isFinite(item.logprob) && item.logprob <= 0 && item.logprob > -9999)
+        .map(item => ({ token: item.token, probability: Math.exp(item.logprob) * 100 }))
+        .sort((a, b) => b.probability - a.probability);
+      if (!tokens.length) break;
+      positions.push({ chosenToken, tokens });
+    }
+    if (!positions.length) {
       return { status: 502, body: { error: "Usable token probabilities were not returned." } };
     }
     return {
@@ -55,10 +65,7 @@ export async function predictNextToken(prompt, env) {
       body: {
         source: "logprobs",
         model: env.TOKEN_MODEL,
-        chosenToken,
-        // Do not normalize the top five to 100%; other tokens retain probability mass.
-        tokens: tokens.map(item => ({ token: item.token, probability: Math.exp(item.logprob) * 100 }))
-          .sort((a, b) => b.probability - a.probability)
+        positions
       }
     };
   } catch {
