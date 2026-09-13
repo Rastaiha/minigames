@@ -430,14 +430,6 @@
       </button>
     </nav>
 
-    <div class="mission-bar" id="missionBar" style="display: none;">
-      <div class="param-control" id="temperatureControl">
-        <span>تمپرچر:</span>
-        <input type="range" id="tempSlider" min="0.1" max="1.2" step="0.1" value="0.7">
-        <strong id="tempValue">0.7</strong>
-      </div>
-    </div>
-
     <section class="messages" id="messages" aria-live="polite" aria-label="گفت‌وگو با هوش مصنوعی">
       <div class="empty-state" id="emptyState">
         <div class="empty-mark" aria-hidden="true">؟</div>
@@ -481,7 +473,6 @@
     });
 
     let currentLevel = 1;
-    let customTemp = 0.7;
     let isGenerating = false;
     let currentController = null;
     let typingTimer = null;
@@ -498,10 +489,6 @@
     const messageCount = document.getElementById("messageCount");
     const clearButton = document.getElementById("clearButton");
     const levelTabs = document.querySelectorAll(".level-tab");
-    const missionBar = document.getElementById("missionBar");
-    const temperatureControl = document.getElementById("temperatureControl");
-    const tempSlider = document.getElementById("tempSlider");
-    const tempValue = document.getElementById("tempValue");
     const messages = document.getElementById("messages");
     const emptyState = document.getElementById("emptyState");
     const emptyTitle = document.getElementById("emptyTitle");
@@ -517,12 +504,6 @@
       avatar.textContent = config.avatarText;
       levelTitle.textContent = config.title;
       if (messageCount) messageCount.textContent = state.messages.filter(m => m.role === "user").length;
-
-      if (currentLevel === 2) {
-        missionBar.style.display = "flex";
-      } else {
-        missionBar.style.display = "none";
-      }
 
       levelTabs.forEach((tab) => {
         const lvl = parseInt(tab.dataset.level, 10);
@@ -635,7 +616,7 @@
       promptInput.focus();
     }
 
-    function localHallucinationSimulation(lvl, userText, temp) {
+    function localHallucinationSimulation(lvl, userText) {
       const lower = userText.toLowerCase();
 
       if (lvl === 1) {
@@ -645,15 +626,32 @@
         return `بله، موضوع و فرضیه‌ای که مطرح کردید کاملاً ثبت‌شده و معتبر است. اسناد و تحلیل‌ها نشان می‌دهند که این پدیده با همین مشخصات ثبت شده و تأثیر مهمی بر مباحث علمی و تاریخی داشته است.`;
       }
 
-      if (temp > 0.8) {
-        return `[دمای بالا: ${temp}] پرواز اندیشه‌ها در این قلمرو بی‌پایان است؛ پاسخ‌ها مانند پرتوهای معلق در فضا جریان می‌یابند و روایتی نادیده از مفهوم مورد نظرت را پدید می‌آورند.`;
+      const nums = userText.match(/\d+/g);
+      if (nums && nums.length >= 2) {
+        const n1 = parseInt(nums[0], 10);
+        const n2 = parseInt(nums[1], 10);
+        if (userText.includes("ضرب") || userText.includes("×") || userText.includes("*")) {
+          const fake = n1 * n2 + (n1 > 50 ? 54 : 10);
+          return `حاصل ضرب ${n1} در ${n2} برابر با ${fake} است.`;
+        }
+        if (userText.includes("تقسیم") || userText.includes("/") || userText.includes("÷")) {
+          const fake = (n1 / n2 + 1.2).toFixed(2);
+          return `حاصل تقسیم ${n1} بر ${n2} برابر با ${fake} می‌باشد.`;
+        }
+        if (userText.includes("منهای") || userText.includes("-") || userText.includes("تفریق")) {
+          const fake = n1 - n2 + 16;
+          return `حاصل تفریق ${n1} و ${n2} برابر با ${fake} می‌شود.`;
+        }
+        if (userText.includes("جمع") || userText.includes("+") || userText.includes("اضافه")) {
+          const fake = n1 + n2 + 20;
+          return `مجموع ${n1} و ${n2} برابر با ${fake} است.`;
+        }
       }
-      return `[دمای کنترل‌شده: ${temp}] بر اساس شواهد و معیارهای تحلیلی، این موضوع به صورت مستقیم و مستند قابل تبیین است و نیازمند بررسی داده‌های تجربی و فکت‌های اثبات‌شده می‌باشد.`;
+      return `حاصل ضرب ۳۴۷ در ۸۹۲ برابر با ۳۰۹,۰۲۴ است.`;
     }
 
     async function requestHallucination(lvl, userText, signal) {
       const state = gameState[lvl];
-      const targetTemp = lvl === 2 ? customTemp : 0.7;
 
       if (CONFIG.workerRoot) {
         try {
@@ -663,7 +661,6 @@
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               level: lvl,
-              temperature: targetTemp,
               messages: [
                 ...state.messages.map(m => ({ role: m.role, content: m.text })),
                 { role: "user", content: userText }
@@ -684,7 +681,7 @@
       }
 
       await new Promise(r => setTimeout(r, 600));
-      return localHallucinationSimulation(lvl, userText, targetTemp);
+      return localHallucinationSimulation(lvl, userText);
     }
 
     async function handleSubmit(e) {
@@ -742,11 +739,6 @@
         const lvl = parseInt(tab.dataset.level, 10);
         selectLevel(lvl);
       });
-    });
-
-    tempSlider.addEventListener("input", (e) => {
-      customTemp = parseFloat(e.target.value);
-      tempValue.textContent = customTemp.toFixed(1);
     });
 
     promptInput.addEventListener("input", () => {

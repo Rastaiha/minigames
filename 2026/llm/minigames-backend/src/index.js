@@ -704,20 +704,12 @@ async function handleHallucination(request, env, cors) {
   const level = Number(body?.level) || 1;
   const rawMessages = Array.isArray(body?.messages) ? body.messages : [];
 
-  let temperature = 0.7;
+  let temperature = level === 2 ? 0.2 : 0.7;
   if (body?.temperature !== undefined && !isNaN(Number(body.temperature))) {
-    temperature = Math.min(Math.max(Number(body.temperature), 0.1), 1.2);
-  } else if (level === 1) {
-    temperature = 0.7;
-  } else if (level === 2) {
-    temperature = 0.7;
+    temperature = Math.min(Math.max(Number(body.temperature), 0.05), 1.2);
   }
 
   const modelMessages = [];
-  if (body?.system_prompt && typeof body.system_prompt === "string" && body.system_prompt.trim()) {
-    modelMessages.push({ role: "system", content: body.system_prompt.trim() });
-  }
-
   for (const m of rawMessages) {
     if ((m.role === "user" || m.role === "assistant") && m.content) {
       modelMessages.push({ role: m.role, content: String(m.content) });
@@ -733,13 +725,19 @@ async function handleHallucination(request, env, cors) {
   const rawKey = typeof env.LLM_API_KEY === "string" ? env.LLM_API_KEY.trim() : "";
   const apiKey = rawKey.length > 5 ? rawKey : defaultKey;
 
-  const candidateModels = [
-    "cf/@cf/mistralai/mistral-small-3.1-24b-instruct",
-    "cf/@cf/meta/llama-3.1-70b-instruct-fp8-fast",
-    "cf/@cf/qwen/qwen2.5-coder-32b-instruct",
-    "cf/@cf/meta/llama-3.1-8b-instruct-fp8-fast",
-    "cf/@cf/meta/llama-3.3-70b-instruct-fp8-fast"
-  ];
+  const candidateModels = level === 2
+    ? [
+        "cf/@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+        "cf/@cf/meta/llama-3.1-70b-instruct-fp8-fast",
+        "cf/@cf/mistralai/mistral-small-3.1-24b-instruct",
+        "cf/@cf/meta/llama-3.1-8b-instruct-fp8-fast"
+      ]
+    : [
+        "cf/@cf/mistralai/mistral-small-3.1-24b-instruct",
+        "cf/@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+        "cf/@cf/meta/llama-3.1-70b-instruct-fp8-fast",
+        "cf/@cf/meta/llama-3.1-8b-instruct-fp8-fast"
+      ];
 
   let lastError = null;
   for (const model of candidateModels) {
@@ -769,19 +767,46 @@ async function handleHallucination(request, env, cors) {
       }
 
       const rawText = await upstreamResponse.text();
-      const cleanText = rawText.replace(/data:\s*\[DONE\].*$/s, "").trim();
-      let payload;
-      try {
-        payload = JSON.parse(cleanText);
-      } catch {
-        lastError = "Invalid JSON response";
-        continue;
+      let answer = "";
+      const trimmed = rawText.trim();
+
+      if (trimmed.startsWith("data:")) {
+        const lines = trimmed.split("\n");
+        for (const line of lines) {
+          const lineTrimmed = line.trim();
+          if (!lineTrimmed.startsWith("data:") || lineTrimmed === "data: [DONE]") continue;
+          try {
+            const jsonStr = lineTrimmed.replace(/^data:\s*/, "");
+            const parsed = JSON.parse(jsonStr);
+            const delta = parsed?.choices?.[0]?.delta?.content || parsed?.choices?.[0]?.text;
+            if (delta) answer += delta;
+          } catch {}
+        }
+        answer = answer.trim();
       }
 
-      const answer = payload?.choices?.[0]?.message?.content || "";
+      if (!answer) {
+        const cleanText = trimmed.replace(/data:\s*\[DONE\].*$/s, "").trim();
+        try {
+          const payload = JSON.parse(cleanText);
+          answer = payload?.choices?.[0]?.message?.content || "";
+        } catch {
+          const match = cleanText.match(/\{[\s\S]*?\}(?=\s*\{|\s*$)/);
+          if (match) {
+            try {
+              const payload = JSON.parse(match[0]);
+              answer = payload?.choices?.[0]?.message?.content || "";
+            } catch {}
+          }
+        }
+      }
+
+      answer = answer.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+
       if (answer) {
         return json({ text: answer, answer, model, temperature }, 200, cors);
       }
+      lastError = "Empty model response or unparseable JSON";
     } catch (err) {
       console.warn(`Candidate ${model} failed:`, err?.message || err);
       lastError = err?.message || String(err);
