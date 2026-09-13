@@ -1,0 +1,135 @@
+:root {
+  color-scheme: light;
+  font-family: "Vazirmatn Variable", Vazirmatn, sans-serif;
+  font-synthesis: none;
+  background: #fcfaf4;
+  color: #2c2318;
+  --canvas: #fcfaf4;
+  --ink: #2c2318;
+  --soft-ink: #6b5d4a;
+  --gold: #e8b33a;
+  --turquoise: #35afb8;
+  --green: #185a3a;
+}
+
+* { box-sizing: border-box; }
+
+html,
+body {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  min-width: 280px;
+  background:
+    linear-gradient(90deg, rgb(232 179 58 / 8%) 1px, transparent 1px) 0 0 / 42px 42px,
+    linear-gradient(rgb(53 175 184 / 8%) 1px, transparent 1px) 0 0 / 42px 42px,
+    var(--canvas);
+}
+
+.hub-shell {
+  width: min(920px, calc(100% - 28px));
+  min-height: 100svh;
+  margin: 0 auto;
+  padding: clamp(36px, 8vw, 90px) 0;
+  display: grid;
+  align-content: center;
+  gap: clamp(26px, 5vw, 48px);
+}
+
+.hub-heading { max-width: 680px; }
+
+.eyebrow,
+h1 { margin: 0; }
+
+.eyebrow {
+  margin-bottom: 5px;
+  color: var(--green);
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+h1 {
+  font-size: clamp(1.8rem, 6vw, 3.5rem);
+  line-height: 1.35;
+}
+
+.game-paths {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(14px, 3vw, 24px);
+}
+
+.game-path {
+  min-height: 250px;
+  padding: clamp(20px, 4vw, 32px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  border: 2px solid var(--ink);
+  border-radius: 12px;
+  color: var(--ink);
+  text-decoration: none;
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+.voltage-path {
+  background: #e7f3ec;
+  box-shadow: 8px 8px 0 var(--green);
+}
+
+.bandwidth-path {
+  background: #fff4d8;
+  box-shadow: 8px 8px 0 var(--gold);
+}
+
+.game-path:hover { transform: translate(-3px, -3px); }
+
+.game-path:focus-visible {
+  outline: 4px solid var(--turquoise);
+  outline-offset: 5px;
+}
+
+.path-number {
+  width: 36px;
+  height: 36px;
+  margin-bottom: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--ink);
+  color: white;
+  font-weight: 850;
+}
+
+.game-path strong {
+  margin-bottom: 8px;
+  font-size: clamp(1.15rem, 3vw, 1.45rem);
+}
+
+.game-path > span:not(.path-number, .path-action) {
+  color: var(--soft-ink);
+  line-height: 1.8;
+}
+
+.path-action {
+  margin-top: auto;
+  padding-top: 28px;
+  font-weight: 800;
+}
+
+.path-action b {
+  display: inline-block;
+  margin-right: 5px;
+  font-size: 1.2em;
+}
+
+@media (max-width: 620px) {
+  .game-paths { grid-template-columns: 1fr; }
+  .game-path { min-height: 215px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .game-path { transition: none; }
+}

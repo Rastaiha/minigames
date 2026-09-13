@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#fcfaf4">
+    <title>پهنای باند و فیزیک سیم</title>
+    <link rel="stylesheet" href="../shared/game.css">
+    <link rel="stylesheet" href="./style.css">
+  </head>
+  <body>
+    <main class="game-shell">
+      <section class="workbench bandwidth-workbench" aria-label="محیط آزمایش سرعت ارسال">
+        <section class="scope-panel" aria-labelledby="message-label">
+          <div class="transmission-controls">
+            <label class="message-control" for="messageInput">
+              <span id="message-label">پیام</span>
+              <input id="messageInput" type="text" value="hi" maxlength="4" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="messageHint">
+              <small id="messageHint">تا ۴ نویسهٔ اَسکی (ASCII)</small>
+            </label>
+
+            <label class="rate-control" for="rateSlider">
+              <span>سرعت ارسال</span>
+              <span class="rate-row" dir="ltr">
+                <input id="rateSlider" type="range" min="1" max="25" step="1" value="1" aria-label="تنظیم سرعت ارسال از یک تا بیست‌وپنج بیت در ثانیه">
+                <output for="rateSlider"><b id="rateLabel">1</b> bps</output>
+              </span>
+            </label>
+          </div>
+
+          <div class="bit-stream-wrap" aria-live="polite">
+            <span class="bit-caption">بیت‌های پیام</span>
+            <div class="bit-stream" id="bitStream" dir="ltr"></div>
+          </div>
+
+          <div class="scope-frame">
+            <canvas id="scope" class="scope" role="img" aria-label="نمودار زندهٔ ولتاژ پیام از صفر تا پنج ولت؛ محور زمان از صفر تا نه ثانیه از ابتدا دیده می‌شود">
+              مرورگر شما امکان نمایش نمودار زندهٔ ولتاژ را ندارد.
+            </canvas>
+          </div>
+        </section>
+
+        <aside class="control-panel" aria-labelledby="automatic-voltage-label">
+          <div class="control-heading">
+            <p id="automatic-voltage-label" class="panel-label">ولتاژ سیم</p>
+            <p class="interaction-cue">با سیگنال حرکت می‌کند</p>
+          </div>
+          <output class="voltage-readout" for="voltageSlider" aria-live="off" dir="ltr">
+            <b id="voltageLabel">0.00</b><span>V</span>
+          </output>
+          <div class="slider-area automatic-slider-area" dir="ltr">
+            <div class="voltage-slider automatic-voltage-slider">
+              <input id="voltageSlider" type="range" min="0" max="5" step="0.01" value="0" disabled aria-label="نمایش خودکار ولتاژ سیم از صفر تا پنج ولت">
+            </div>
+            <div class="voltage-ticks" aria-hidden="true">
+              <span>5</span><span>4</span><span>3</span><span>2</span><span>1</span><span>0</span>
+            </div>
+          </div>
+        </aside>
+      </section>
+    </main>
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

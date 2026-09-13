@@ -149,7 +149,9 @@ vite.config.ts.timestamp-*
 # Workshop-local OAuth credentials and generated drafts
 /google-oauth-client.json
 /google-refresh-token.txt
-/temp/
+temp/
+tmp/
+output/
 
 # Generated Astro staging and output
 /site/public/games/
