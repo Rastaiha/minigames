@@ -722,11 +722,24 @@ async function handleHallucination(request, env, cors) {
     modelMessages.push({ role: "user", content: body.prompt.trim() });
   }
 
+  const userMsgs = rawMessages.filter(m => m.role === "user").map(m => String(m.content || ""));
+  const lastUserMsg = userMsgs[userMsgs.length - 1] || (typeof body?.prompt === "string" ? body.prompt : "");
+  const asksForCoT = /(مرحله\s*(به\s*|‌)مرحله|گام\s*(به\s*|‌)گام|قدم\s*(به\s*|‌)قدم|روند\s*محاسبه|دلیل|با\s*توضیح|فکر\s*کن|زنجیره\s*تفکر|قدم\s*قدم|step\s*by\s*step|think\s*step|reasoning|توضیح\s*بده|تشریح|چطور\s*حساب)/i.test(lastUserMsg);
+
   if (level === 2) {
-    modelMessages.unshift({
-      role: "system",
-      content: "فقط پاسخ نهایی را خیلی کوتاه و مستقیم در یک عبارت بگو و از نوشتن راه‌حل، استدلال و محاسبات مرحله‌به‌مرحله اکیداً خودداری کن."
-    });
+    if (asksForCoT) {
+      modelMessages.unshift({
+        role: "system",
+        content: "کاربر خواسته است که مرحله‌به‌مرحله و با ذکر روند محاسبه فکر کنی. گام‌های محاسبه و استدلال را به ترتیب، تمیز و کامل بنویس و در انتها جواب نهایی و صحیح را اعلام کن."
+      });
+      temperature = 0.2;
+    } else {
+      modelMessages.unshift({
+        role: "system",
+        content: "به درخواست کاربر مستقیماً و بدون نوشتن هرگونه راه‌حل، استدلال یا محاسبات مرحله‌به‌مرحله پاسخ بده."
+      });
+      temperature = 0.1;
+    }
   }
 
   const apiUrl = resolveApiUrl(env.LLM_BASE_URL);
@@ -734,10 +747,10 @@ async function handleHallucination(request, env, cors) {
 
   const candidateModels = level === 2
     ? [
-        "cf/@cf/meta/llama-3.1-8b-instruct-fp8-fast",
         "cf/@cf/meta/llama-3.3-70b-instruct-fp8-fast",
         "cf/@cf/meta/llama-3.1-70b-instruct-fp8-fast",
-        "cf/@cf/mistralai/mistral-small-3.1-24b-instruct"
+        "cf/@cf/mistralai/mistral-small-3.1-24b-instruct",
+        "cf/@cf/meta/llama-3.1-8b-instruct-fp8-fast"
       ]
     : [
         "cf/@cf/mistralai/mistral-small-3.1-24b-instruct",
@@ -760,7 +773,7 @@ async function handleHallucination(request, env, cors) {
           messages: modelMessages,
           temperature,
           top_p: 0.98,
-          max_tokens: level === 2 ? 80 : 512,
+          max_tokens: 512,
           stream: false
         }),
         signal: AbortSignal.timeout(45000)
