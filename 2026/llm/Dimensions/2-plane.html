@@ -1,0 +1,672 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>پهپاد روی کف سالن</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700;900&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+html{color-scheme:light dark}img{max-width:100%}
+:root{
+  --bg:#EBEFF0;
+  --stage:#F8FBFB;
+  --surface:#FFFFFF;
+  --ink:#0D191C;
+  --ink-2:#3E5358;
+  --muted:#74888D;
+  --line:#D3DDDF;
+  --line-2:#E7EDEE;
+  --wall:#E4EBEC;
+  --floor:#EDF2F2;
+  --grid:#B9C7CA;
+  --ax-x:#C9482A;
+  --ax-y:#12804A;
+  --ax-z:#1667BC;
+  --chip:#F1F5F6;
+  --badge-ink:#FFFFFF;
+  --drone:#33464C;
+  --drone-2:#5A7076;
+  --shadow:0 1px 2px rgba(13,25,28,.05), 0 10px 28px -16px rgba(13,25,28,.32);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0B1316;
+    --stage:#101B1F;
+    --surface:#16242A;
+    --ink:#E8EFF1;
+    --ink-2:#B2C3C7;
+    --muted:#7F9298;
+    --line:#27373D;
+    --line-2:#1C2B30;
+    --wall:#17262B;
+    --floor:#142125;
+    --grid:#33474E;
+    --ax-x:#FF8B5E;
+    --ax-y:#49CE7E;
+    --ax-z:#64B5F6;
+    --chip:#1B2B31;
+    --badge-ink:#0B1316;
+    --drone:#B9CBD1;
+    --drone-2:#7B9199;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 12px 30px -18px rgba(0,0,0,.9);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0B1316;
+  --stage:#101B1F;
+  --surface:#16242A;
+  --ink:#E8EFF1;
+  --ink-2:#B2C3C7;
+  --muted:#7F9298;
+  --line:#27373D;
+  --line-2:#1C2B30;
+  --wall:#17262B;
+  --floor:#142125;
+  --grid:#33474E;
+  --ax-x:#FF8B5E;
+  --ax-y:#49CE7E;
+  --ax-z:#64B5F6;
+  --chip:#1B2B31;
+  --badge-ink:#0B1316;
+  --drone:#B9CBD1;
+  --drone-2:#7B9199;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 12px 30px -18px rgba(0,0,0,.9);
+}
+
+*{box-sizing:border-box}
+body{
+  direction:rtl;margin:0;background:var(--bg);color:var(--ink);
+  font-family:'Vazirmatn','Tahoma','Segoe UI',system-ui,sans-serif;
+  font-size:15px;line-height:1.75;-webkit-font-smoothing:antialiased;
+}
+.page{max-width:1180px;margin:0 auto;padding:26px 20px 40px}
+
+/* ---------- step strip: a real 1 -> 2 -> 3 sequence ---------- */
+.steps{
+  list-style:none;display:flex;flex-wrap:wrap;gap:7px;align-items:center;
+  margin:0 0 18px;padding:0;
+}
+.steps li{
+  display:flex;align-items:baseline;gap:6px;
+  border:1px solid var(--line);border-radius:99px;padding:3px 13px 4px;
+  background:var(--surface);color:var(--muted);font-size:13px;
+}
+.steps li .n{font-weight:800;font-size:13.5px}
+.steps li[aria-current="step"]{
+  background:var(--ink);border-color:var(--ink);color:var(--stage);
+}
+.steps .arrow{border:0;background:none;padding:0 1px;color:var(--line);font-size:13px}
+
+/* ---------- header ---------- */
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.16em;color:var(--muted);margin:0 0 6px}
+h1{font-size:clamp(26px,4.2vw,40px);font-weight:900;letter-spacing:-.01em;margin:0;line-height:1.25;text-wrap:balance}
+.lede{margin:9px 0 0;color:var(--ink-2);max-width:62ch;font-weight:300;font-size:17px}
+.lede b{font-weight:700;color:var(--ink)}
+
+/* ---------- work area ---------- */
+.work{
+  margin-top:22px;display:grid;gap:16px;
+  grid-template-columns:minmax(0,1.6fr) minmax(272px,.85fr);align-items:start;
+}
+@media (max-width:900px){ .work{grid-template-columns:1fr} }
+
+.stage{
+  background:var(--stage);border:1px solid var(--line);border-radius:16px;
+  padding:6px 6px 0;box-shadow:var(--shadow);overflow:hidden;
+}
+.stage svg{width:100%;height:auto;display:block;touch-action:none;cursor:grab}
+.stage svg.dragging{cursor:grabbing}
+.views{
+  display:flex;flex-wrap:wrap;gap:6px;padding:8px 10px 10px;
+  border-top:1px solid var(--line-2);margin-top:2px;align-items:center;
+}
+.views .hint{margin-inline-start:auto;font-size:12.5px;color:var(--muted)}
+.vbtn{
+  font-family:inherit;font-size:13px;color:var(--ink-2);background:var(--chip);
+  border:1px solid var(--line);border-radius:99px;padding:5px 13px;cursor:pointer;
+  transition:border-color .16s ease,color .16s ease;
+}
+.vbtn:hover{color:var(--ink);border-color:var(--muted)}
+.vbtn:focus-visible{outline:2px solid var(--ax-z);outline-offset:2px}
+.legend{
+  display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink-2);
+  padding-inline-start:6px;
+}
+.legend .sw{width:22px;height:10px;border-radius:3px;background:var(--dom);opacity:.42;flex:none}
+
+/* ---------- rail ---------- */
+.rail{display:grid;gap:14px}
+.card{
+  background:var(--surface);border:1px solid var(--line);border-radius:16px;
+  padding:16px 16px 18px;box-shadow:var(--shadow);
+}
+.card h2{margin:0 0 2px;font-size:12px;font-weight:700;letter-spacing:.14em;color:var(--muted)}
+
+.triple{
+  display:flex;align-items:baseline;gap:2px;justify-content:center;
+  font-size:clamp(30px,5vw,40px);font-weight:600;padding:10px 0 4px;
+  font-variant-numeric:tabular-nums;
+}
+.triple .p{color:var(--muted);font-weight:300}
+.triple .cx{color:var(--ax-x)}
+.triple .cy{color:var(--ax-y)}
+.triple .cz{color:var(--ax-z)}
+.sentence{
+  margin:6px 0 0;text-align:center;color:var(--ink-2);font-size:14.5px;
+  border-top:1px dashed var(--line);padding-top:12px;
+}
+.sentence b{color:var(--ink);font-weight:700}
+
+/* ---------- sliders ---------- */
+.ctrl{padding:11px 0;border-top:1px solid var(--line-2)}
+.ctrl:first-of-type{border-top:0;padding-top:4px}
+.ctrl .top{display:flex;align-items:center;gap:8px;margin-bottom:2px}
+.badge{
+  width:24px;height:24px;flex:none;border-radius:7px;display:grid;place-items:center;
+  background:var(--c);color:var(--badge-ink);
+  font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;
+}
+.ctrl .name{font-size:14px;color:var(--ink-2)}
+.ctrl .val{
+  margin-inline-start:auto;flex:none;white-space:nowrap;font-weight:700;color:var(--c);
+  font-variant-numeric:tabular-nums;font-size:15px;
+}
+.ctrl .val small{font-weight:400;color:var(--muted);font-size:12px}
+.scale{
+  display:flex;justify-content:space-between;font-size:11px;color:var(--muted);
+  direction:ltr;margin-top:-2px;font-variant-numeric:tabular-nums;
+}
+.locked{
+  margin:12px 0 0;padding:10px 12px;border:1px dashed var(--line);border-radius:11px;
+  font-size:13px;color:var(--muted);
+}
+.locked b{color:var(--ink-2);font-weight:700}
+
+input[type=range]{
+  -webkit-appearance:none;appearance:none;background:transparent;
+  width:100%;height:24px;direction:ltr;cursor:pointer;margin:0;display:block;
+}
+input[type=range]::-webkit-slider-runnable-track{
+  height:6px;border-radius:99px;
+  background:linear-gradient(to right,var(--c) var(--fill),var(--line) var(--fill));
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:19px;height:19px;border-radius:50%;
+  background:var(--c);border:3px solid var(--surface);
+  box-shadow:0 1px 4px rgba(0,0,0,.3);margin-top:-6.5px;
+}
+input[type=range]::-moz-range-track{height:6px;border-radius:99px;background:var(--line)}
+input[type=range]::-moz-range-progress{height:6px;border-radius:99px;background:var(--c)}
+input[type=range]::-moz-range-thumb{
+  width:19px;height:19px;border-radius:50%;background:var(--c);
+  border:3px solid var(--surface);box-shadow:0 1px 4px rgba(0,0,0,.3);
+}
+input[type=range]:focus-visible{outline:2px solid var(--c);outline-offset:3px;border-radius:10px}
+
+/* ---------- note ---------- */
+.note{border:1px solid var(--line);border-radius:16px;padding:15px 16px}
+.note h3{margin:0 0 6px;font-size:14.5px;font-weight:700}
+.note p{margin:0;color:var(--ink-2);font-size:14px;font-weight:300}
+.note p + p{margin-top:8px}
+.note .k{color:var(--ink);font-weight:700}
+
+footer{
+  margin-top:22px;padding-top:14px;border-top:1px solid var(--line);
+  color:var(--muted);font-size:13px;display:flex;flex-wrap:wrap;gap:4px 16px;
+}
+
+/* ---------- svg scene ---------- */
+svg text{font-family:'Vazirmatn','Tahoma',sans-serif;paint-order:stroke fill;stroke:var(--stage);stroke-width:3.4;stroke-linejoin:round}
+.s-wall{fill:var(--wall);stroke:none}
+.s-floor{fill:var(--floor);stroke:none}
+.s-grid{stroke:var(--grid);fill:none;stroke-width:.8;opacity:.5}
+.s-grid-w{stroke:var(--grid);fill:none;stroke-width:.8;opacity:.3}
+.s-edge{stroke:var(--grid);fill:none;stroke-width:1.4;opacity:.85}
+.s-ghost{stroke:var(--grid);fill:none;stroke-width:1.2;opacity:.28}
+.s-dom-line{stroke:var(--dom);fill:none;stroke-width:15;stroke-linecap:round;opacity:.2}
+.s-dom-face{fill:var(--dom);opacity:.09;stroke:none}
+.s-dom-edge{stroke:var(--dom);fill:none;stroke-width:2;opacity:.4}
+.s-ax{fill:none;stroke-width:2.2;stroke-linecap:round}
+.s-leg{fill:none;stroke-width:6;stroke-linecap:round;stroke-linejoin:round}
+.s-help{fill:none;stroke-width:1.6;stroke-dasharray:5 6;opacity:.6}
+.s-tick{fill:none;stroke-width:1.6;opacity:.75}
+.s-tnum{font-size:13px;font-weight:500;fill:var(--muted);stroke-width:3}
+.x-c{stroke:var(--ax-x)} .y-c{stroke:var(--ax-y)} .z-c{stroke:var(--ax-z)}
+.x-f{fill:var(--ax-x)} .y-f{fill:var(--ax-y)} .z-f{fill:var(--ax-z)}
+.s-axlabel{font-family:'IBM Plex Mono',monospace;font-size:25px;font-weight:600;stroke-width:4}
+.s-axword{font-size:13.5px;font-weight:700}
+.s-val{font-size:16px;font-weight:800;stroke-width:4.5}
+.s-origin{font-size:13px;font-weight:700;fill:var(--ink-2)}
+.s-dronelabel{font-family:'IBM Plex Mono',monospace;font-size:19px;font-weight:600;stroke-width:4.5;direction:ltr}
+.s-dronename{font-size:13px;font-weight:700;fill:var(--ink-2)}
+.s-body{fill:var(--drone);stroke:var(--stage);stroke-width:1}
+.s-body-t{fill:var(--drone-2);stroke:var(--stage);stroke-width:1}
+.s-arm{stroke:var(--drone);stroke-width:5;stroke-linecap:round;fill:none}
+.s-gear{stroke:var(--drone-2);stroke-width:1.6;fill:none;stroke-dasharray:3 3;opacity:.8}
+.s-rotor{fill:var(--drone-2);fill-opacity:.2;stroke:var(--drone);stroke-width:1.6}
+.s-blade{stroke:var(--drone);stroke-width:2.4;fill:none;stroke-linecap:round}
+.s-shadow{fill:var(--grid)}
+.s-dot{fill:var(--stage);stroke-width:3}
+
+@media (prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important} }
+</style>
+</head>
+<body>
+
+<div class="page" style="--dom:var(--ax-y)">
+    <ol class="steps">
+    <li><span class="n">۱</span> خط</li>
+    <li class="arrow" aria-hidden="true">←</li>
+    <li aria-current="step"><span class="n">۲</span> صفحه</li>
+    <li class="arrow" aria-hidden="true">←</li>
+    <li><span class="n">۳</span> فضا</li>
+    </ol>
+
+    <header>
+      <p class="eyebrow">درس بُعد — گام دوم</p>
+      <h1>پهپاد روی کف سالن</h1>
+      <p class="lede">حالا پهپاد در تمام کف سالن می‌چرخد، ولی هنوز بلند نمی‌شود. برای اینکه بگویید کجاست، <b>دو عدد</b> لازم است.</p>
+    </header>
+
+    <div class="work">
+      <section class="stage">
+        <svg id="scene" viewBox="0 0 880 600" role="img" aria-label="پهپاد روی کف سالن — نمای سالن با پهپاد و محورهای مختصات"></svg>
+        <div class="views">
+        <button class="vbtn" id="v0">نمای از بالا</button>
+        <button class="vbtn" id="v1">نمای مایل</button>
+          <span class="legend"><span class="sw"></span>قلمرو پرواز: یک صفحه</span>
+          <span class="hint">برای چرخاندن سالن، تصویر را بکشید</span>
+        </div>
+      </section>
+
+      <aside class="rail">
+        <div class="card">
+          <h2>مختصات پهپاد</h2>
+          <div class="triple" id="triple" dir="ltr"></div>
+          <p class="sentence" id="sentence"></p>
+        </div>
+
+        <div class="card">
+          <h2>کنترل پرواز</h2>
+        <div class="ctrl" style="--c:var(--ax-x)">
+          <div class="top">
+            <span class="badge">x</span>
+            <span class="name">به راست — عرض سالن</span>
+            <span class="val" id="val-x"></span>
+          </div>
+          <input type="range" id="in-x" min="0" max="10" step="1" value="3" aria-label="جابه‌جایی به راست، بر حسب متر">
+          <div class="scale"><span>۰</span><span>۱۰</span></div>
+        </div>
+
+        <div class="ctrl" style="--c:var(--ax-y)">
+          <div class="top">
+            <span class="badge">y</span>
+            <span class="name">به جلو — عمق سالن</span>
+            <span class="val" id="val-y"></span>
+          </div>
+          <input type="range" id="in-y" min="0" max="10" step="1" value="6" aria-label="جابه‌جایی به جلو، بر حسب متر">
+          <div class="scale"><span>۰</span><span>۱۰</span></div>
+        </div>
+        <p class="locked"><b>به بالا</b> هنوز قفل است — پهپاد از روی زمین بلند نمی‌شود.</p>
+        </div>
+
+        <div class="note">
+          <h3>چرا دو عدد؟</h3>
+          <p>چون دو جهت <span class="k">مستقل</span> داریم: راست و جلو. با دانستن یکی، آن یکی هنوز معلوم نیست.</p>
+        <p>صفحه، <span class="k">۲ بُعدی</span> است. کف سالن مثل یک کاغذ شطرنجی بزرگ است.</p>
+        </div>
+      </aside>
+    </div>
+
+    <footer>
+      <span>سالن: ۱۰ × ۱۰ متر، ارتفاع ۷ متر</span>
+      <span>مبدأ: گوشهٔ کف سالن</span>
+    </footer>
+  </div>
+
+<script>
+window.CFG = {"dim": 2, "az": 0, "el": 84, "lift": 0.4, "fz": 1.0, "cx": 440, "cy": 285, "s": 40, "x": 3, "y": 6, "z": 4, "views": [{"az": 0, "el": 84}, {"az": -38, "el": 26}]};
+(function(){
+  "use strict";
+
+  var C   = window.CFG;          /* per-page configuration, injected above */
+  var DIM = C.dim;               /* 1, 2 or 3 */
+
+  var FA = "۰۱۲۳۴۵۶۷۸۹";
+  function fa(n){ return String(n).replace(/\d/g, function(d){ return FA.charAt(+d); }); }
+  function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
+  var D2R = Math.PI/180;
+  var RM = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  var ROOM = { X:10, Y:10, Z:7 };
+  var CX = C.cx, CY = C.cy, S = C.s, FOCAL = 52;
+  var FZ = C.fz;                 /* height the camera is aimed at */
+
+  var st = { x:C.x, y:C.y||0, z:C.z||0, az:C.az*D2R, el:C.el*D2R };
+
+  /* ---------------- projection: the whole 3D engine lives here ------------ */
+  function proj(x,y,z){
+    var cx=x-ROOM.X/2, cy=y-ROOM.Y/2, cz=z-FZ;
+    var ca=Math.cos(st.az), sa=Math.sin(st.az);
+    var u =  cx*ca + cy*sa;        /* camera-right   */
+    var v = -cx*sa + cy*ca;        /* camera-forward */
+    var w =  cz;                   /* up             */
+    var ce=Math.cos(st.el), se=Math.sin(st.el);
+    var up    = v*se + w*ce;
+    var depth = v*ce - w*se;
+    var k = FOCAL/(FOCAL+depth);   /* mild perspective */
+    return { x: CX + u*S*k, y: CY - up*S*k, d: depth };
+  }
+
+  function line(a,b,cls,extra){
+    return '<line x1="'+a.x.toFixed(1)+'" y1="'+a.y.toFixed(1)+'" x2="'+b.x.toFixed(1)+'" y2="'+b.y.toFixed(1)+'" class="'+cls+'"'+(extra||"")+'/>';
+  }
+  function poly(pts,cls,extra){
+    var s=""; for(var i=0;i<pts.length;i++){ s+=(i?" ":"")+pts[i].x.toFixed(1)+","+pts[i].y.toFixed(1); }
+    return '<polygon points="'+s+'" class="'+cls+'"'+(extra||"")+'/>';
+  }
+  function txt(p,str,cls,extra){
+    return '<text x="'+p.x.toFixed(1)+'" y="'+p.y.toFixed(1)+'" text-anchor="middle" dominant-baseline="middle" class="'+cls+'"'+(extra||"")+'>'+str+'</text>';
+  }
+  function disc(cx,cy,z,r,n){
+    var pts=[]; for(var i=0;i<n;i++){ var a=i/n*Math.PI*2; pts.push(proj(cx+r*Math.cos(a), cy+r*Math.sin(a), z)); }
+    return pts;
+  }
+  function offLabel(a,b,dist){
+    var mx=(a.x+b.x)/2, my=(a.y+b.y)/2;
+    var dx=b.x-a.x, dy=b.y-a.y, L=Math.hypot(dx,dy)||1;
+    var nx=-dy/L, ny=dx/L;
+    var c=proj(ROOM.X/2,ROOM.Y/2,FZ);
+    if((mx-c.x)*nx + (my-c.y)*ny < 0){ nx=-nx; ny=-ny; }
+    return { x: mx+nx*dist, y: my+ny*dist };
+  }
+  function arrow(from,to,cls){
+    var dx=to.x-from.x, dy=to.y-from.y, L=Math.hypot(dx,dy)||1;
+    var ux=dx/L, uy=dy/L, px=-uy, py=ux, h=13, w=5.2;
+    var b={x:to.x-ux*h, y:to.y-uy*h};
+    return '<polygon points="'+to.x.toFixed(1)+','+to.y.toFixed(1)+' '+
+      (b.x+px*w).toFixed(1)+','+(b.y+py*w).toFixed(1)+' '+
+      (b.x-px*w).toFixed(1)+','+(b.y-py*w).toFixed(1)+'" class="'+cls+'"/>';
+  }
+  function boxEdges(cls){
+    var e="", i;
+    for(i=0;i<2;i++){
+      var z=i?ROOM.Z:0;
+      e += line(proj(0,0,z),proj(ROOM.X,0,z),cls)+line(proj(ROOM.X,0,z),proj(ROOM.X,ROOM.Y,z),cls)
+         + line(proj(ROOM.X,ROOM.Y,z),proj(0,ROOM.Y,z),cls)+line(proj(0,ROOM.Y,z),proj(0,0,z),cls);
+    }
+    e += line(proj(0,0,0),proj(0,0,ROOM.Z),cls)+line(proj(ROOM.X,0,0),proj(ROOM.X,0,ROOM.Z),cls)
+       + line(proj(ROOM.X,ROOM.Y,0),proj(ROOM.X,ROOM.Y,ROOM.Z),cls)+line(proj(0,ROOM.Y,0),proj(0,ROOM.Y,ROOM.Z),cls);
+    return e;
+  }
+
+  /* ---------------- the drone ---------------- */
+  var rotors = [], phase = 0;
+  var LIFT = C.lift || 0;   /* pages where z is locked: hover just above the spot */
+
+  function droneSVG(x,y,z){
+    var arm=0.66, rotR=0.44, bh=0.30, bt=0.10, items=[];
+    var offs=[[-1,-1],[1,-1],[1,1],[-1,1]], rdata=[], i;
+
+    for(i=0;i<offs.length;i++){
+      var rx=x+offs[i][0]*arm, ry=y+offs[i][1]*arm, rz=z+0.10;
+      var c=proj(rx,ry,rz);
+      rdata.push({cx:rx,cy:ry,cz:rz,r:rotR});
+      items.push({ d:c.d, s: poly(disc(rx,ry,z-0.02,0.10,10),"s-body")
+                        + poly(disc(rx,ry,rz,rotR,20),"s-rotor")
+                        + '<path class="s-blade" data-rotor="'+i+'" d=""/>' });
+    }
+
+    var chassis="";
+    for(i=0;i<offs.length;i++){
+      chassis += line(proj(x,y,z), proj(x+offs[i][0]*arm, y+offs[i][1]*arm, z+0.06), "s-arm");
+    }
+    var zb=z-bt, zt=z+bt;
+    var V={ a:proj(x-bh,y-bh,zb), b:proj(x+bh,y-bh,zb), c:proj(x+bh,y+bh,zb), d:proj(x-bh,y+bh,zb),
+            e:proj(x-bh,y-bh,zt), f:proj(x+bh,y-bh,zt), g:proj(x+bh,y+bh,zt), h:proj(x-bh,y+bh,zt) };
+    var faces=[
+      {p:[V.e,V.f,V.g,V.h], cls:"s-body-t"},
+      {p:[V.a,V.b,V.c,V.d], cls:"s-body"},
+      {p:[V.a,V.b,V.f,V.e], cls:"s-body"},
+      {p:[V.b,V.c,V.g,V.f], cls:"s-body"},
+      {p:[V.c,V.d,V.h,V.g], cls:"s-body"},
+      {p:[V.d,V.a,V.e,V.h], cls:"s-body"}
+    ];
+    faces.sort(function(A,B){
+      return (B.p[0].d+B.p[1].d+B.p[2].d+B.p[3].d)/4 - (A.p[0].d+A.p[1].d+A.p[2].d+A.p[3].d)/4;
+    });
+    for(i=0;i<faces.length;i++){ chassis += poly(faces[i].p, faces[i].cls); }
+    chassis += line(proj(x,y,z-bt), proj(x,y,z-0.22), "s-arm");
+    chassis += poly(disc(x,y,z-0.24,0.13,10),"s-body");
+
+    items.push({ d: proj(x,y,z).d, s: chassis });
+    items.sort(function(a,b){ return b.d-a.d; });
+
+    rotors = rdata;
+    var out=""; for(i=0;i<items.length;i++){ out+=items[i].s; }
+    return out;
+  }
+
+  function spinBlades(){
+    var nodes = document.querySelectorAll('.s-blade');
+    for(var i=0;i<nodes.length;i++){
+      var r = rotors[+nodes[i].getAttribute('data-rotor')];
+      if(!r) continue;
+      var d="";
+      for(var b=0;b<2;b++){
+        var a = phase + b*Math.PI/2;
+        var p1 = proj(r.cx + r.r*0.9*Math.cos(a), r.cy + r.r*0.9*Math.sin(a), r.cz);
+        var p2 = proj(r.cx - r.r*0.9*Math.cos(a), r.cy - r.r*0.9*Math.sin(a), r.cz);
+        d += "M"+p1.x.toFixed(1)+","+p1.y.toFixed(1)+"L"+p2.x.toFixed(1)+","+p2.y.toFixed(1);
+      }
+      nodes[i].setAttribute('d', d);
+    }
+  }
+
+  /* ---------------- the scene ---------------- */
+  function render(){
+    var x = st.x, y = (DIM>=2? st.y : 0), z = (DIM>=3? st.z : 0);
+    var s = "", i;
+
+    /* walls: only in 3D, and only the two furthest from the camera */
+    if(DIM===3){
+      var walls = [
+        { c: proj(0,ROOM.Y/2,ROOM.Z/2), axis:"x", at:0 },
+        { c: proj(ROOM.X,ROOM.Y/2,ROOM.Z/2), axis:"x", at:ROOM.X },
+        { c: proj(ROOM.X/2,0,ROOM.Z/2), axis:"y", at:0 },
+        { c: proj(ROOM.X/2,ROOM.Y,ROOM.Z/2), axis:"y", at:ROOM.Y }
+      ];
+      walls.sort(function(a,b){ return b.c.d-a.c.d; });
+      for(var wi=0; wi<2; wi++){
+        var W=walls[wi], q, gl="";
+        if(W.axis==="x"){
+          q=[proj(W.at,0,0),proj(W.at,ROOM.Y,0),proj(W.at,ROOM.Y,ROOM.Z),proj(W.at,0,ROOM.Z)];
+          for(i=0;i<=ROOM.Y;i++) gl+=line(proj(W.at,i,0),proj(W.at,i,ROOM.Z),"s-grid-w");
+          for(i=0;i<=ROOM.Z;i++) gl+=line(proj(W.at,0,i),proj(W.at,ROOM.Y,i),"s-grid-w");
+        }else{
+          q=[proj(0,W.at,0),proj(ROOM.X,W.at,0),proj(ROOM.X,W.at,ROOM.Z),proj(0,W.at,ROOM.Z)];
+          for(i=0;i<=ROOM.X;i++) gl+=line(proj(i,W.at,0),proj(i,W.at,ROOM.Z),"s-grid-w");
+          for(i=0;i<=ROOM.Z;i++) gl+=line(proj(0,W.at,i),proj(ROOM.X,W.at,i),"s-grid-w");
+        }
+        s += poly(q,"s-wall")+gl;
+      }
+    }
+
+    /* on the line page, a faint footprint of the gym: the room is bigger than the line */
+    if(DIM===1){
+      s += poly([proj(0,0,0),proj(ROOM.X,0,0),proj(ROOM.X,ROOM.Y,0),proj(0,ROOM.Y,0)],"s-ghost",' fill="none"');
+    }
+
+    /* floor */
+    var floorQ=[proj(0,0,0),proj(ROOM.X,0,0),proj(ROOM.X,ROOM.Y,0),proj(0,ROOM.Y,0)];
+    if(DIM>=2){
+      var fl = poly(floorQ,"s-floor");
+      for(i=0;i<=ROOM.X;i++) fl+=line(proj(i,0,0),proj(i,ROOM.Y,0),"s-grid");
+      for(i=0;i<=ROOM.Y;i++) fl+=line(proj(0,i,0),proj(ROOM.X,i,0),"s-grid");
+      fl += poly(floorQ,"s-edge",' fill="none"');
+      s += fl;
+    }
+
+    /* --- where the drone is allowed to be: line -> plane -> space --- */
+    if(DIM===1){
+      s += line(proj(0,0,0), proj(ROOM.X,0,0), "s-dom-line");
+    }else if(DIM===2){
+      s += poly(floorQ,"s-dom-face");
+    }else{
+      s += poly(floorQ,"s-dom-face") + boxEdges("s-dom-edge");
+    }
+
+    /* axes */
+    var O = proj(0,0,0);
+    function axis(cls, endW, tickDir, numDir, labelW, screenOff, letter, word){
+      var E = proj(endW[0],endW[1],endW[2]);
+      var g = line(O,E,"s-ax "+cls) + arrow(proj(endW[0]*0.9,endW[1]*0.9,endW[2]*0.9), E, cls.replace("-c","-f"));
+      var lim = Math.max(endW[0],endW[1],endW[2]);
+      for(var i=1;i<=lim;i++){
+        var base=[endW[0]?i:0, endW[1]?i:0, endW[2]?i:0];
+        g += line(proj(base[0],base[1],base[2]), proj(base[0]+tickDir[0],base[1]+tickDir[1],base[2]+tickDir[2]), "s-tick "+cls);
+        if(i%2===0 && i!==lim) g += txt(proj(base[0]+numDir[0],base[1]+numDir[1],base[2]+numDir[2]), fa(i), "s-tnum");
+      }
+      var Lq = proj(labelW[0],labelW[1],labelW[2]);
+      var Lp = { x: Lq.x + screenOff[0], y: Lq.y + screenOff[1] };
+      g += txt(Lp, letter, "s-axlabel "+cls.replace("-c","-f"));
+      g += txt({x:Lp.x, y:Lp.y+21}, word, "s-axword "+cls.replace("-c","-f"));
+      return g;
+    }
+    s += axis("x-c",[ROOM.X,0,0],[0,-0.28,0],[0,-0.95,0],[ROOM.X+1.15,-1.15,0],[0,0],"x","به راست");
+    if(DIM>=2) s += axis("y-c",[0,ROOM.Y,0],[-0.28,0,0],[-0.95,0,0],[-1.15,ROOM.Y+1.15,0],[0,0],"y","به جلو");
+    if(DIM>=3) s += axis("z-c",[0,0,ROOM.Z],[-0.24,-0.24,0],[-0.78,-0.78,0],[0,0,ROOM.Z],[0,-38],"z","به بالا");
+
+    s += '<circle cx="'+O.x.toFixed(1)+'" cy="'+O.y.toFixed(1)+'" r="4.5" class="s-dot" style="stroke:var(--ink)"/>';
+    s += txt(proj(-1.15,-1.15,0),"مبدأ","s-origin");
+
+    /* shadow on the floor */
+    if(DIM>=2){
+      var sr = 0.42 + (z+LIFT)*0.055, so = clamp(0.30 - (z+LIFT)*0.026, 0.07, 0.30);
+      s += poly(disc(x,y,0.012,sr,18),"s-shadow",' fill-opacity="'+so.toFixed(2)+'"');
+    }
+
+    /* the coordinate staircase: one leg per number */
+    var A=proj(0,0,0), B=proj(x,0,0), Cp=proj(x,y,0), Dp=proj(x,y,z);
+    if(DIM>=2 && y>0 && x>0) s += line(Cp, proj(0,y,0), "s-help y-c");
+    if(x>0) s += line(A,B,"s-leg x-c");
+    if(DIM>=2 && y>0) s += line(B,Cp,"s-leg y-c");
+    if(DIM>=3 && z>0) s += line(Cp,Dp,"s-leg z-c");
+    if(DIM>=2) s += '<circle cx="'+B.x.toFixed(1)+'" cy="'+B.y.toFixed(1)+'" r="4" class="s-dot" style="stroke:var(--ax-x)"/>';
+    if(DIM>=3) s += '<circle cx="'+Cp.x.toFixed(1)+'" cy="'+Cp.y.toFixed(1)+'" r="4" class="s-dot" style="stroke:var(--ax-y)"/>';
+    if(x>0) s += txt(offLabel(A,B,23), fa(x)+" متر", "s-val x-f");
+    if(DIM>=2 && y>0) s += txt(offLabel(B,Cp,23), fa(y)+" متر", "s-val y-f");
+    if(DIM>=3 && z>0) s += txt(offLabel(Cp,Dp,26), fa(z)+" متر", "s-val z-f");
+
+    /* the drone */
+    if(LIFT) s += line(Dp, proj(x,y,z+LIFT-0.3), "s-gear");
+    s += droneSVG(x,y,z+LIFT);
+    s += '<circle cx="'+Dp.x.toFixed(1)+'" cy="'+Dp.y.toFixed(1)+'" r="3" style="fill:var(--ink)"/>';
+
+    var top = proj(x,y,z+LIFT);
+    var tag = '<tspan class="x-f">'+fa(x)+'</tspan>';
+    if(DIM>=2) tag += '<tspan style="fill:var(--muted)">, </tspan><tspan class="y-f">'+fa(y)+'</tspan>';
+    if(DIM>=3) tag += '<tspan style="fill:var(--muted)">, </tspan><tspan class="z-f">'+fa(z)+'</tspan>';
+    s += '<text x="'+top.x.toFixed(1)+'" y="'+(top.y-72).toFixed(1)+'" text-anchor="middle" class="s-dronelabel">'
+       + '<tspan style="fill:var(--muted)">(</tspan>'+tag+'<tspan style="fill:var(--muted)">)</tspan></text>';
+    s += txt({x:top.x, y:top.y-50}, "پهپاد", "s-dronename");
+
+    document.getElementById("scene").innerHTML = s;
+    spinBlades();
+  }
+
+  /* ---------------- readouts ---------------- */
+  var $ = function(id){ return document.getElementById(id); };
+  var elTriple=$("triple"), elSentence=$("sentence");
+
+  function meters(n){ return fa(n)+' <small>متر</small>'; }
+
+  function paint(){
+    var x=st.x, y=st.y, z=st.z;
+
+    var t = '<span class="p">(</span><span class="cx">'+fa(x)+'</span>';
+    if(DIM>=2) t += '<span class="p">،&nbsp;</span><span class="cy">'+fa(y)+'</span>';
+    if(DIM>=3) t += '<span class="p">،&nbsp;</span><span class="cz">'+fa(z)+'</span>';
+    elTriple.innerHTML = t + '<span class="p">)</span>';
+
+    if(DIM===1){
+      elSentence.innerHTML = 'پهپاد <b>'+fa(x)+' متر به راست</b> از مبدأ است.';
+    }else if(DIM===2){
+      elSentence.innerHTML = 'پهپاد <b>'+fa(x)+' متر به راست</b> و <b>'+fa(y)+' متر به جلو</b> از مبدأ است.';
+    }else{
+      elSentence.innerHTML = 'پهپاد <b>'+fa(x)+' متر به راست</b>، <b>'+fa(y)+' متر به جلو</b> و <b>'+fa(z)+' متر بالاتر</b> از مبدأ است.';
+    }
+
+    var axes=[["x",x,10],["y",y,10],["z",z,7]];
+    for(var i=0;i<DIM;i++){
+      var k=axes[i][0], v=axes[i][1], mx=axes[i][2];
+      $("val-"+k).innerHTML = meters(v);
+      var inp=$("in-"+k); inp.value=v; inp.style.setProperty("--fill",(v/mx*100)+"%");
+    }
+  }
+
+  function update(){ paint(); render(); }
+
+  ["x","y","z"].slice(0,DIM).forEach(function(k){
+    $("in-"+k).addEventListener("input", function(){ st[k]=+this.value; update(); });
+  });
+
+  /* view presets, tweened so the change of viewpoint reads */
+  var tween=null;
+  function setView(az,el){
+    az*=D2R; el*=D2R;
+    while(az-st.az >  Math.PI) az-=2*Math.PI;
+    while(az-st.az < -Math.PI) az+=2*Math.PI;
+    if(RM){ st.az=az; st.el=el; update(); return; }
+    var a0=st.az, e0=st.el, t0=performance.now(), dur=620;
+    if(tween) cancelAnimationFrame(tween);
+    (function step(now){
+      var t=clamp((now-t0)/dur,0,1);
+      var k = t<0.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2;
+      st.az=a0+(az-a0)*k; st.el=e0+(el-e0)*k;
+      update();
+      tween = t<1 ? requestAnimationFrame(step) : null;
+    })(t0);
+  }
+  C.views.forEach(function(v,i){
+    var b=$("v"+i); if(b) b.addEventListener("click", function(){ setView(v.az, v.el); });
+  });
+
+  /* drag to orbit */
+  var svg=$("scene"), drag=null;
+  svg.addEventListener("pointerdown", function(e){
+    if(tween){ cancelAnimationFrame(tween); tween=null; }
+    drag={px:e.clientX, py:e.clientY};
+    svg.classList.add("dragging"); svg.setPointerCapture(e.pointerId);
+  });
+  svg.addEventListener("pointermove", function(e){
+    if(!drag) return;
+    st.az += (e.clientX-drag.px)*0.0085;
+    st.el  = clamp(st.el - (e.clientY-drag.py)*0.006, 3*D2R, 87*D2R);
+    drag.px=e.clientX; drag.py=e.clientY;
+    update();
+  });
+  function endDrag(e){
+    if(!drag) return;
+    drag=null; svg.classList.remove("dragging");
+    try{ svg.releasePointerCapture(e.pointerId); }catch(err){}
+  }
+  svg.addEventListener("pointerup", endDrag);
+  svg.addEventListener("pointercancel", endDrag);
+
+  /* propellers */
+  if(!RM){
+    var last=0;
+    (function loop(now){
+      requestAnimationFrame(loop);
+      if(document.hidden || now-last < 45) return;
+      last=now; phase += 0.55; spinBlades();
+    })(0);
+  }
+
+  update();
+})();
+</script>
+</body>
+</html>
