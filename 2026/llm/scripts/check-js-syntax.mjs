@@ -3,7 +3,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 
 const root = process.cwd();
-const ignored = new Set(['node_modules', '.git', '.wrangler']);
+const ignored = new Set(['node_modules', '.git', '.wrangler', 'archive']);
 
 async function filesIn(directory) {
   const entries = await readdir(directory, { withFileTypes: true });

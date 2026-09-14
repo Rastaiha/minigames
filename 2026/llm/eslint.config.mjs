@@ -7,6 +7,7 @@ export default [
       '**/node_modules/**',
       '**/.git/**',
       '**/.wrangler/**',
+      'archive/**',
       'minigames-backend/**',
     ],
   },

@@ -6,6 +6,7 @@ const ignored = new Set([
   'node_modules',
   '.git',
   '.wrangler',
+  'archive',
   'minigames-backend',
 ]);
 const forbidden = [
