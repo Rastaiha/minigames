@@ -17,6 +17,8 @@ Completed and pushed:
 - `567e1b9`: added the versioned `/api/respond` Worker contract, structured next-token operation, shared client cancellation, and migrated the pretrained/SFT/aligned chat pages.
 - `ea440d8`: migrated `model-lab`, `jailbreak`, `hallucination`, and `next-token-prediction2` to the shared client and contract.
 - `960f7e8`: added mocked Worker contract tests for validation, CORS, rate limits, adapters, structured output, and safe upstream errors.
+- `26640a2`: split Worker HTTP/CORS, routing, gateway, and contract-validation boundaries; removed the embedded gateway credential fallback.
+- Follow-up cleanup: extracted `Dimensions/` into one shared dimensionality engine with separate 1D/2D/3D configuration files.
 
 Current checks pass when dependencies are installed with `npm install --ignore-scripts`:
 
@@ -28,7 +30,7 @@ This runs ESLint, Prettier check, the browser API-boundary scan, and JavaScript 
 
 The legacy `jailbreak-old`, `next-token-prediction`, and `llm2.html` entries are preserved unchanged under `archive/`; they are no longer active minigame entry points or part of the cleanup backlog.
 
-Remaining work continues with the Worker split into routing, validation, gateway, policy, and per-game handler modules, followed by the visual/accessibility work itemized in the game table below. Do not undo existing URL spellings, storage keys, or the direct-provider removals.
+Remaining work continues with the Worker split into policy and per-game handler modules, followed by the visual/accessibility work itemized in the game table below. Do not undo existing URL spellings, storage keys, or the direct-provider removals.
 
 ## Repository-wide target architecture
 
@@ -77,7 +79,7 @@ Use short Persian labels, one primary action per state, an explicit status line,
 
 | Game                         | Main problems                                                                               | Planned cleanup                                                                                                         |
 | ---------------------------- | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `Dimensions/`                | Three near-copy pages and duplicated CSS/JS                                                 | Extract one dimensionality engine plus 1D/2D/3D configs; keep uppercase URL.                                            |
+| `Dimensions/`                | Three near-copy pages and duplicated CSS/JS                                                 | **Complete:** shared `dimensionality-engine.js` plus 1D/2D/3D configs; uppercase URL preserved.                      |
 | `attention/`                 | Pointer-only tokens, fixed layout, remote font, no reduced motion                           | Semantic buttons/keyboard focus, responsive board, local font, shared stage shell.                                      |
 | `bpe-tree/`                  | English metadata/controls, dense long lines, unreadable default graph, modal focus gaps     | Persian RTL copy, formatted modules, responsive zoom, focus-trapped modal and graph keyboard alternatives.              |
 | `contexual-embedding/`       | Mouse-only drag, fixed 100vh, inaccessible modal, remote font                               | Pointer Events plus keyboard movement, responsive canvas/modal, local font; preserve typo URL.                          |
@@ -104,7 +106,7 @@ Use short Persian labels, one primary action per state, an explicit status line,
 
 1. Land this plan and repository tooling/boundary guard. **Complete.**
 2. Remove direct-provider and alternate-server branches; migrate legacy model clients to the shared compatibility client. **Complete for active model-backed pages.**
-3. Add Worker `/api/respond`, tests, and refreshed documentation. **Contract and tests complete; Worker module split remains.**
+3. Add Worker `/api/respond`, tests, and refreshed documentation. **Contract/tests complete; HTTP, routing, gateway, and validation split complete; policy/handler split remains.**
 4. Migrate the chat family, then challenge/next-token, then visual families using the shared shell and tokens.
 5. Refactor duplicated dimensionality/transformer/embedding engines and workshop assets.
 6. Run browser smoke tests at desktop/mobile widths, keyboard/touch checks, mocked API failure tests, hooks, and final diff review.
