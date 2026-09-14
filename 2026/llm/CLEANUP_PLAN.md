@@ -41,7 +41,7 @@ These items are intentionally listed separately from the historical commit log a
 - **Complete:** `shared/api/client.js` now exposes `createRequestGuard()` and rejects stale responses before they reach page code; callers can combine its generation-aware options with their existing abort controllers.
 - **Complete:** `contexual-embedding/` uses Pointer Events with capture/cancellation for sidebar and canvas dragging, plus Escape-aware modal focus trapping and restoration.
 - **Complete:** `dimensionality-reduction/` now has a loading/error surface, documents its intentional jsDelivr dependency, applies reduced motion to dimensional transitions, and its 1D/2D controls retain the staged navigation contract. Browser smoke verification is recorded in the final verification section below.
-- Finish `model-lab/`: remove the unused `localBaseCompletion`, `localSftCompletion`, `localAlignedCompletion`, and dispatcher helpers; keep only the raw local generator and the shared Worker path.
+- **Complete:** `model-lab/` now keeps only the raw local generator and shared Worker path; unused stage-specific local completion fixtures and dispatchers are removed.
 - Finish `word-embedding/`: split the monolith into state/render/data modules, remove inline event handlers, reuse the shared dimensionality engine where compatible, and validate every persisted hash/local-storage field before use.
 - Finish `wordembedding/`: extract inline handlers and custom interaction code into modules or shared helpers, preserve its compatibility arithmetic, and add keyboard/touch regression coverage.
 - Make `random-generator.js` support a deterministic seeded mode for tests while retaining entropy-backed default generation; add generator fixture tests.
