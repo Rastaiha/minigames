@@ -471,6 +471,9 @@ async function handleJailbreak(request, env, cors) {
   const temperature = Number.isFinite(requestedTemperature)
     ? Math.min(2, Math.max(0, requestedTemperature))
     : (level === 3 ? 0.2 : 0.4);
+  const reasoningEffort = ["low", "medium", "high"].includes(body?.reasoning_effort)
+    ? body.reasoning_effort
+    : null;
 
   try {
     const upstreamResponse = await fetch(apiUrl, {
@@ -483,6 +486,7 @@ async function handleJailbreak(request, env, cors) {
         model,
         messages: modelMessages,
         temperature,
+        ...(reasoningEffort ? { reasoning_effort: reasoningEffort } : {}),
         max_tokens: 512
       }),
       signal: AbortSignal.timeout(60000)
