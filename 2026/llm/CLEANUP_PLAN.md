@@ -100,7 +100,7 @@ Use short Persian labels, one primary action per state, an explicit status line,
 | `word-in-line/`              | Best baseline but minified CSS/inline handlers and no tests                                 | Preserve storage key; format modules, remove inline handlers, add layout/schema tests.                                            |
 | `word-in-space/`             | Best visual reference but remote font/minified CSS/no tests                                 | Make it the canonical workbench; local fonts, tokens, schema tests, preserve `vazhechin-layout-v2`.                               |
 | `word-in-space/vectors.html` | Limited help/return and shared-layout assumptions                                           | Add clear back/help state and read-only schema tests; never write the main layout.                                                |
-| `words-and-vectors/`         | Static, cramped four-column mobile view, unclear illustrative dimensions                    | Responsive stage, concise explanation/caption, shared visual tokens.                                                              |
+| `words-and-vectors/`         | Static, cramped four-column mobile view, unclear illustrative dimensions                    | **Complete:** responsive card stage, local typography, concise dimension explanation, and a visible color legend.                   |
 | `words-world/`               | Dark visual outlier, dense app, always-running animation, generated JS/CSV drift            | **Complete:** compatible tokens/local font, hidden-tab animation pause, scene/data modules, and deterministic CSV/nearest-neighbor tests; the reproducible Python pipeline is documented in its module docstring. |
 
 ## Delivery sequence
