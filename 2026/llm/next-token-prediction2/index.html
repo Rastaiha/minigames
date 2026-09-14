@@ -347,14 +347,39 @@
           'next-token-prediction',
           'predict',
           { prompt: contextText },
-          { timeoutMs: 60000 }
+          { timeoutMs: 60000, signal: requestController?.signal }
         );
-        return response.data.predictions;
+        const predictions = response.data.predictions;
+        if (
+          !Array.isArray(predictions) ||
+          predictions.length !== 5 ||
+          predictions.some(
+            (item) =>
+              !item ||
+              typeof item.word !== 'string' ||
+              !item.word.trim() ||
+              !Number.isFinite(Number(item.prob)) ||
+              Number(item.prob) < 0 ||
+              Number(item.prob) > 100
+          )
+        )
+          throw new Error('ساختار احتمال‌های دریافتی معتبر نیست.');
+        const total = predictions.reduce(
+          (sum, item) => sum + Number(item.prob),
+          0
+        );
+        if (total < 99 || total > 101)
+          throw new Error('مجموع احتمال‌ها باید نزدیک به ۱۰۰٪ باشد.');
+        return predictions.map((item) => ({
+          word: item.word.trim(),
+          prob: Number(item.prob),
+        }));
       }
 
       let words = []; // { text, type: 'seed' | 'user' | 'model' }
       let started = false;
       let busy = false;
+      let requestController = null;
       const TRIANGLE_SEED = 'در مثلث قائم‌الزاویه با اضلاع ۳ و ۴';
       const DRAGON_SEED = 'اژدهای نقره‌ای بال‌هایش را گشود';
 
@@ -364,6 +389,8 @@
       }
 
       function resetGame() {
+        requestController?.abort();
+        requestController = null;
         started = false;
         busy = false;
         words = [];
@@ -378,7 +405,8 @@
       function startGame() {
         const text = document.getElementById('promptArea').value.trim();
         if (!text) {
-          alert('اول یه متن شروع بنویس یا یکی از پیش‌فرض‌ها رو انتخاب کن.');
+          document.getElementById('statusLine').textContent =
+            'اول یک متن شروع بنویس یا یکی از پیش‌فرض‌ها را انتخاب کن.';
           return;
         }
         words = text.split(/\s+/).map((t) => ({ text: t, type: 'seed' }));
@@ -460,11 +488,13 @@
         const input = document.getElementById('guessInput');
         const word = input.value.trim().split(/\s+/)[0];
         if (!word) {
-          alert('لطفاً یک کلمه بنویس.');
+          document.getElementById('statusLine').textContent =
+            'لطفاً یک کلمه بنویس.';
           return;
         }
 
         busy = true;
+        requestController = new AbortController();
         document.getElementById('guessBtn').disabled = true;
         input.disabled = true;
         document.getElementById('turnIndicator').innerText =
@@ -485,6 +515,7 @@
           statusEl.className = 'status-line status-live';
           statusEl.innerText = '🟢 پیش‌بینی از مدل آنلاین دریافت شد';
         } catch (error) {
+          if (error.name === 'AbortError') return;
           console.error('دریافت پیش‌بینی ناموفق بود:', error);
           statusEl.className = 'status-line status-error';
           statusEl.innerText = `⚠️ دریافت پیش‌بینی ناموفق بود: ${error.message}`;
@@ -496,6 +527,7 @@
           input.focus();
           return;
         }
+        requestController = null;
 
         const matched = predictions.find((item) => item.word === word);
         const userProb = matched ? matched.prob : null;
