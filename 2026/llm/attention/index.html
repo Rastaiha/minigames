@@ -4,44 +4,53 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>بازی توجه کلمات (Attention Visualizer)</title>
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/gh/rastikerdar/peyda-font@v1.0.1/dist/font-face.css"
-    />
-
     <style>
+      @font-face {
+        font-family: 'VazirLocal';
+        src: url('../fonts/vazir.ttf') format('truetype');
+        font-display: swap;
+      }
+
+      :root {
+        --ink: #172033;
+        --muted: #768196;
+        --line: #dce4ef;
+        --surface: #ffffff;
+        --soft: #f5f7fb;
+        --action: #3562e9;
+      }
+
       * {
         box-sizing: border-box;
         margin: 0;
         padding: 0;
-        font-family: 'Peyda', sans-serif;
-        user-select: none;
+        font-family: 'VazirLocal', Tahoma, sans-serif;
       }
 
       body {
-        background-color: #f8fafc;
-        color: #0f172a;
+        background: #f7f8fc;
+        color: var(--ink);
         min-height: 100vh;
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        overflow: hidden;
-        padding: 20px;
+        overflow-x: hidden;
+        padding: clamp(12px, 4vw, 32px);
       }
 
       .main-container {
         position: relative;
         width: 100%;
         max-width: 1000px;
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
+        background: var(--surface);
+        border: 1px solid var(--line);
         border-radius: 28px;
-        padding: 60px 40px 40px 40px;
+        padding: clamp(48px, 8vw, 60px) clamp(16px, 5vw, 40px) 32px;
         display: flex;
         flex-direction: column;
         align-items: center;
-        box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.04);
+        box-shadow: 0 24px 70px rgba(30, 53, 88, 0.1);
       }
 
       /* پیکان‌های جابجایی جملات */
@@ -62,12 +71,19 @@
         justify-content: center;
         transition: all 0.2s ease;
         z-index: 25;
+        touch-action: manipulation;
       }
 
       .nav-btn:hover {
         background: #e2e8f0;
         color: #0f172a;
         transform: translateY(-50%) scale(1.08);
+      }
+
+      .nav-btn:focus-visible,
+      .word-token:focus-visible {
+        outline: 3px solid rgba(53, 98, 233, 0.35);
+        outline-offset: 3px;
       }
 
       .nav-btn.prev {
@@ -81,7 +97,7 @@
       #canvas-container {
         position: relative;
         width: 100%;
-        height: 280px;
+        height: clamp(240px, 38vw, 280px);
       }
 
       canvas {
@@ -120,6 +136,10 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
+        font: inherit;
+        font-size: clamp(16px, 2.5vw, 20px);
+        user-select: none;
+        touch-action: manipulation;
       }
 
       .word-token:hover {
@@ -158,6 +178,51 @@
         color: #64748b;
         min-height: 24px;
         text-align: center;
+      }
+
+      @media (max-width: 560px) {
+        .main-container {
+          border-radius: 20px;
+        }
+
+        .nav-btn {
+          top: 18px;
+          transform: none;
+          width: 44px;
+          height: 44px;
+        }
+
+        .nav-btn:hover {
+          transform: scale(1.04);
+        }
+
+        .nav-btn.prev {
+          right: 16px;
+        }
+
+        .nav-btn.next {
+          left: 16px;
+        }
+
+        .words-container {
+          gap: 10px;
+          padding: 0 8px;
+        }
+
+        .word-token {
+          padding: 9px 13px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          transition-duration: 0.01ms !important;
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+        }
       }
     </style>
   </head>
@@ -393,9 +458,10 @@
         hintText.innerText = sentence.hint;
 
         sentence.words.forEach((word, idx) => {
-          const span = document.createElement('div');
+          const span = document.createElement('button');
+          span.type = 'button';
           span.className = 'word-token';
-          span.innerText = word;
+          span.textContent = word;
 
           // تنظیم پالت لایت و شیک برای هر باکس توکن
           const palette = tokenPalettes[idx % tokenPalettes.length];
