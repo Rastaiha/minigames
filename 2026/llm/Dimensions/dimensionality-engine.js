@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var C = window.CFG; /* per-page configuration, injected above */
+  var C = window.DIMENSIONALITY_CONFIG; /* per-page configuration */
   var DIM = C.dim; /* 1, 2 or 3 */
 
   var FA = '۰۱۲۳۴۵۶۷۸۹';
