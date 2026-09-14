@@ -679,6 +679,7 @@
       <div class="math-result" id="math-result"></div>
     </div>
 
+    <script src="interaction.js"></script>
     <script>
       const defaultWords = [
         'خودرو',
@@ -766,44 +767,8 @@
         item.className = 'word-node' + (isResult ? ' is-result-node' : '');
         item.innerText = word;
 
-        // تفکیک لمس برای اسکرول یا کلیک سریع
-        let touchStartX = 0,
-          touchStartY = 0;
-        let hasMoved = false;
-
-        item.addEventListener(
-          'touchstart',
-          (e) => {
-            touchStartX = e.touches[0].clientX;
-            touchStartY = e.touches[0].clientY;
-            hasMoved = false;
-          },
-          { passive: true }
-        );
-
-        item.addEventListener(
-          'touchmove',
-          (e) => {
-            const dx = Math.abs(e.touches[0].clientX - touchStartX);
-            const dy = Math.abs(e.touches[0].clientY - touchStartY);
-            if (dx > 8 || dy > 8) {
-              hasMoved = true; // تشخیص اسکرول افقی
-            }
-          },
-          { passive: true }
-        );
-
-        item.addEventListener('touchend', (e) => {
-          if (!hasMoved) {
-            spawnToCanvas(word, item, isResult);
-          }
-        });
-
-        item.addEventListener('click', (e) => {
-          // برای کاربران دسکتاپ
-          if (e.pointerType !== 'touch') {
-            spawnToCanvas(word, item, isResult);
-          }
+        WordEmbeddingInteraction.bindTap(item, () => {
+          spawnToCanvas(word, item, isResult);
         });
 
         wordBank.appendChild(item);
