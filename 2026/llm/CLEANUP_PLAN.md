@@ -37,7 +37,7 @@ The repository checks pass, but the previous status overstated completion of sev
 
 These items are intentionally listed separately from the historical commit log and must not be marked complete until the implementation and the corresponding browser checks are actually finished:
 
-- Build and adopt `shared/ui/` tokens and the three shared shells (workspace, chat, visual stage). The current games still duplicate large portions of their CSS and do not consistently consume shared tokens.
+- **Complete:** added `shared/ui/tokens.css`, `shells.css`, and `helpers.js`; all active entry pages consume the shared tokens/shell primitives while retaining page-specific layouts.
 - Add request-generation guards to `shared/api/client.js` or a shared lifecycle helper so reset, level changes, tab changes, and navigation cannot apply stale responses. Page-local aborts are not a substitute for a common contract.
 - Finish `contexual-embedding/`: replace the remaining mouse-only drag handlers with Pointer Events and pointer capture; support touch dragging and cancellation; add a real modal focus trap and focus restoration.
 - Finish `dimensionality-reduction/`: provide staged Three.js loading/error UI, decide and document the CDN dependency, make reduced-motion behavior affect transitions (not only button transitions), and test 1D/2D navigation in a browser.
