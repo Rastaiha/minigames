@@ -126,17 +126,27 @@
 
   const PUNCTUATION = Object.freeze(['،', '؛', '؟', '.']);
 
-  function randomIndex(limit) {
+  function entropyIndex(limit) {
     const value = new Uint32Array(1);
     crypto.getRandomValues(value);
     return value[0] % limit;
+  }
+
+  function createSeededRandom(seed) {
+    let state = Number(seed) >>> 0 || 0x9e3779b9;
+    return (limit) => {
+      state ^= state << 13;
+      state ^= state >>> 17;
+      state ^= state << 5;
+      return (state >>> 0) % limit;
+    };
   }
 
   function visibleLength(token) {
     return Array.from(token.replace(/‌/g, '')).length;
   }
 
-  function pickShortBiased(tokens) {
+  function pickShortBiased(tokens, randomIndex) {
     const weights = tokens.map(
       (token) => Math.max(1, 7 - visibleLength(token)) ** 2
     );
@@ -151,14 +161,18 @@
     return tokens[0];
   }
 
-  function chooseTokenClass() {
+  function chooseTokenClass(randomIndex) {
     const roll = randomIndex(100);
     if (roll < 64) return { tokens: MICRO_TOKENS, joinChance: 84 };
     if (roll < 92) return { tokens: FRAGMENT_TOKENS, joinChance: 68 };
     return { tokens: WORD_TOKENS, joinChance: 8 };
   }
 
-  function generatePieces(limit = 56) {
+  function generatePieces(limit = 56, options = {}) {
+    const randomIndex =
+      options.seed === undefined
+        ? entropyIndex
+        : createSeededRandom(options.seed);
     const pieces = [];
     let joinedRun = 0;
 
@@ -172,25 +186,32 @@
         continue;
       }
 
-      const tokenClass = chooseTokenClass();
+      const tokenClass = chooseTokenClass(randomIndex);
       const canJoin =
         pieces.length > 0 &&
         joinedRun < 4 &&
         !PUNCTUATION.includes(pieces.at(-1).text);
       const joinLeft = canJoin && randomIndex(100) < tokenClass.joinChance;
-      pieces.push({ text: pickShortBiased(tokenClass.tokens), joinLeft });
+      pieces.push({
+        text: pickShortBiased(tokenClass.tokens, randomIndex),
+        joinLeft,
+      });
       joinedRun = joinLeft ? joinedRun + 1 : 0;
     }
 
     return pieces;
   }
 
-  function generateText(limit = 56) {
-    return generatePieces(limit).reduce((text, piece, index) => {
+  function generateText(limit = 56, options = {}) {
+    return generatePieces(limit, options).reduce((text, piece, index) => {
       const separator = index > 0 && !piece.joinLeft ? ' ' : '';
       return text + separator + piece.text;
     }, '');
   }
 
-  window.RandomPersianModel = Object.freeze({ generatePieces, generateText });
+  window.RandomPersianModel = Object.freeze({
+    generatePieces,
+    generateText,
+    createSeededRandom,
+  });
 })();

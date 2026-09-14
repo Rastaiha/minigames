@@ -44,7 +44,7 @@ These items are intentionally listed separately from the historical commit log a
 - **Complete:** `model-lab/` now keeps only the raw local generator and shared Worker path; unused stage-specific local completion fixtures and dispatchers are removed.
 - Finish `word-embedding/`: split the monolith into state/render/data modules, remove inline event handlers, reuse the shared dimensionality engine where compatible, and validate every persisted hash/local-storage field before use.
 - Finish `wordembedding/`: extract inline handlers and custom interaction code into modules or shared helpers, preserve its compatibility arithmetic, and add keyboard/touch regression coverage.
-- Make `random-generator.js` support a deterministic seeded mode for tests while retaining entropy-backed default generation; add generator fixture tests.
+- **Complete:** `random-generator.js` retains Web Crypto entropy by default and exposes an opt-in seeded mode; `random-generator.test.mjs` covers repeatability, bounds, seed variation, and punctuation metadata.
 - Refresh backend README/example documentation and add mocked tests for upstream timeout, model fallback-chain behavior, malformed message entries, and the remaining compatibility handlers.
 - Run browser smoke tests over HTTP at desktop and narrow mobile widths for every active entry page, including keyboard/touch interaction, reduced motion, hidden-tab animation pause, reset/stop behavior, stale-response cancellation, and mocked API failure states. Record the results in this plan.
 - Run the pre-commit hooks in CI and before deployment, then perform a final diff/credential/API-boundary review.
