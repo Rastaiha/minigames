@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="light">
-  <title>مسابقهٔ بسته‌ها — با تقسیم</title>
-  <link rel="stylesheet" href="../shared/styles.css">
+  <title>مسابقهٔ پیام‌ها — با تقسیم</title>
+  <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
   <main class="game-shell">
@@ -19,7 +19,7 @@
       </div>
 
       <div class="topology-frame">
-        <svg id="topology" viewBox="0 0 900 500" role="group" aria-label="شبکه‌ای با چهار رایانه و دو سوییچ؛ بسته‌ها از رایانه‌های ۱ و ۲ به رایانه‌های ۳ و ۴ می‌روند">
+        <svg id="topology" viewBox="0 0 900 500" role="group" aria-label="شبکه‌ای با چهار رایانه و دو سوییچ؛ پیام‌ها از رایانه‌های ۱ و ۲ به رایانه‌های ۳ و ۴ می‌روند">
           <g id="wires"></g>
           <g id="ports"></g>
           <g id="devices"></g>
@@ -30,7 +30,7 @@
         </svg>
       </div>
 
-      <p class="status-msg" id="statusMsg" aria-live="polite">بسته را بزنید تا انتخاب شود؛ برای تقسیم روی آن نگه دارید.</p>
+      <p class="status-msg" id="statusMsg" aria-live="polite">پیام را بزنید تا انتخاب شود؛ برای تقسیم روی آن نگه دارید.</p>
 
       <div class="control-bar">
         <div class="round-stat">دور <strong id="roundNum">۱</strong></div>
@@ -46,11 +46,11 @@
     <section class="history-card" id="historyCard" aria-labelledby="history-title" hidden>
       <div class="section-heading compact">
         <h2 id="history-title">تلاش‌ها</h2>
-        <p>تلاش جاری بالای جدول است و با رسیدن بسته‌ها پر می‌شود.</p>
+        <p>تلاش جاری بالای جدول است و با رسیدن پیام‌ها پر می‌شود.</p>
       </div>
       <div class="history-table" role="table" aria-label="زمان تلاش‌ها">
         <div class="history-cols" role="row">
-          <span role="columnheader">تلاش</span><span role="columnheader">آبی</span><span role="columnheader">طلایی</span><span role="columnheader">جمع</span><span role="columnheader">همه</span><span role="columnheader">بسته‌ها</span>
+          <span role="columnheader">تلاش</span><span role="columnheader">آبی</span><span role="columnheader">طلایی</span><span role="columnheader">جمع</span><span role="columnheader">همه</span><span role="columnheader">پیام‌ها</span><span role="columnheader">اوج حافظهٔ سوییچ A (بیت)</span><span role="columnheader">اوج حافظهٔ سوییچ B (بیت)</span>
         </div>
         <div class="history-list" id="historyList" role="rowgroup"></div>
       </div>

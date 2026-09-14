@@ -1,6 +1,5 @@
 // Shared packet-split game engine. Each version's main.js imports initGame
-// and passes a config that toggles splitting, sets packet sizes, and swaps
-// the copy the status bar shows.
+// and passes a config for its interaction model, packet sizes, and copy.
 export function initGame(config) {
   const NS = 'http://www.w3.org/2000/svg';
   const BITS_PER_SECOND = 8;
@@ -8,6 +7,11 @@ export function initGame(config) {
   const BLUE_BITS   = config.blueBits;
   const ORANGE_BITS = config.orangeBits;
   const SPLITTING = config.splitting !== false;
+  const EVENT_PAUSES = config.eventPauses === true;
+  const ITEM_NOUN = config.itemNoun || 'بسته';
+  const ITEM_NOUN_WITH_EZAFE = config.itemNounWithEzafe || 'بستهٔ';
+  const BLUE_AVAILABLE_AT = EVENT_PAUSES ? (config.blueAvailableAt || 0) : 0;
+  const SHOW_MEMORY = config.showMemory === true;
   const DEVICES = {
     PC1: { x: 100, y: 130, kind: 'pc', num: 1, color: 'blue'   },
     PC2: { x: 100, y: 370, kind: 'pc', num: 2, color: 'orange' },
@@ -125,6 +129,9 @@ export function initGame(config) {
   let blueDeliveredAt = null;
   let orangeDeliveredAt = null;
   let currentPopover = null;
+  let activeTransfers = [];
+  let peakMemoryA = 0;
+  let peakMemoryB = 0;
 
   const LONG_PRESS_MS = 500;
   const LONG_PRESS_MOVE_TOL = 10;
@@ -176,12 +183,26 @@ export function initGame(config) {
   function isAtDestination(pkt) { return pkt.location === DEST[pkt.color]; }
   function nextHop(pkt)         { return (ROUTE[pkt.color] || {})[pkt.location] || null; }
   function allDelivered()       { return packets.every(isAtDestination); }
+  function isAvailable(pkt, at = totalTime) { return !EVENT_PAUSES || pkt.availableAt <= at + 1e-9; }
+  function isInTransit(pkt) { return activeTransfers.some(transfer => transfer.packet === pkt); }
+
+  function memoryUsage(device) {
+    return packets
+      .filter(packet => packet.location === device)
+      .reduce((sum, packet) => sum + packet.size, 0);
+  }
+
+  function updateMemoryPeaks() {
+    if (!SHOW_MEMORY) return;
+    peakMemoryA = Math.max(peakMemoryA, memoryUsage('A'));
+    peakMemoryB = Math.max(peakMemoryB, memoryUsage('B'));
+  }
 
   function initialState() {
     nextId = 1;
     packets = [
-      { id: nextId++, size: BLUE_BITS,   color: 'blue',   location: 'PC1', selected: false },
-      { id: nextId++, size: ORANGE_BITS, color: 'orange', location: 'PC2', selected: false },
+      { id: nextId++, size: BLUE_BITS,   color: 'blue',   location: 'PC1', selected: false, availableAt: BLUE_AVAILABLE_AT },
+      { id: nextId++, size: ORANGE_BITS, color: 'orange', location: 'PC2', selected: false, availableAt: 0 },
     ];
     totalTime = 0;
     round = 1;
@@ -191,6 +212,9 @@ export function initGame(config) {
     blueDeliveredAt = null;
     orangeDeliveredAt = null;
     attemptStarted = false;
+    activeTransfers = [];
+    peakMemoryA = 0;
+    peakMemoryB = 0;
   }
 
   // --- Popover ---
@@ -206,20 +230,20 @@ export function initGame(config) {
 
   function openSplitPopover(pkt, clientX, clientY) {
     closePopover();
-    if (!SPLITTING || animating || pkt.size < 2 || isAtDestination(pkt)) return;
+    if (!SPLITTING || animating || pkt.size < 2 || isAtDestination(pkt) || !isAvailable(pkt) || isInTransit(pkt)) return;
     const half = Math.floor(pkt.size / 2);
     const pop = document.createElement('div');
     pop.className = 'split-popover';
     pop.innerHTML = `
-      <div class="preview">بستهٔ <b>${pkt.size}</b> بیتی را به <b class="lval">${half}</b> + <b class="rval">${pkt.size - half}</b> تقسیم کنید</div>
-      <input type="range" min="1" max="${pkt.size - 1}" value="${half}" aria-label="اندازهٔ بخش اول بسته">
+      <div class="preview">${ITEM_NOUN_WITH_EZAFE} <b>${pkt.size}</b> بیتی را به <b class="lval">${half}</b> + <b class="rval">${pkt.size - half}</b> تقسیم کنید</div>
+      <input type="range" min="1" max="${pkt.size - 1}" value="${half}" aria-label="اندازهٔ بخش اول ${ITEM_NOUN}">
       <div class="btn-row">
         <button class="do" type="button">تقسیم</button>
         <button class="secondary cancel" type="button">انصراف</button>
       </div>
     `;
     pop.setAttribute('role', 'dialog');
-    pop.setAttribute('aria-label', 'تقسیم بسته');
+    pop.setAttribute('aria-label', `تقسیم ${ITEM_NOUN}`);
     pop.style.left = '0px';
     pop.style.top  = '0px';
     document.body.appendChild(pop);
@@ -256,7 +280,7 @@ export function initGame(config) {
   function togglePacketSelection(pktId) {
     if (animating) return;
     const pkt = packets.find(p => p.id === pktId);
-    if (!pkt || isAtDestination(pkt)) return;
+    if (!pkt || isAtDestination(pkt) || !isAvailable(pkt) || isInTransit(pkt)) return;
     pkt.selected = !pkt.selected;
     renderStatic();
     updateControls();
@@ -268,9 +292,10 @@ export function initGame(config) {
     const idx = packets.indexOf(pkt);
     if (idx < 0) return;
     packets.splice(idx, 1,
-      { id: nextId++, size: v,             color: pkt.color, location: pkt.location, selected: false },
-      { id: nextId++, size: pkt.size - v,  color: pkt.color, location: pkt.location, selected: false }
+      { id: nextId++, size: v,             color: pkt.color, location: pkt.location, selected: false, availableAt: pkt.availableAt },
+      { id: nextId++, size: pkt.size - v,  color: pkt.color, location: pkt.location, selected: false, availableAt: pkt.availableAt }
     );
+    updateMemoryPeaks();
     renderStatic();
     updateStats();
     updateControls();
@@ -301,17 +326,18 @@ export function initGame(config) {
   function renderChip(pkt, x, y, interactive) {
     const fill = pkt.color === 'blue' ? '#5669d1' : '#e8b33a';
     const atDest = isAtDestination(pkt);
+    const canInteract = interactive && (!EVENT_PAUSES || !atDest);
     const isSelected = pkt.selected && !atDest;
     const w = 30, h = 22;
 
     const cls = ['chip-svg', pkt.color];
-    if (!interactive) cls.push('locked');
+    if (!canInteract) cls.push('locked');
     if (isSelected)   cls.push('selected');
     const attrs = { class: cls.join(' '), transform: `translate(${x}, ${y})` };
-    if (interactive) {
+    if (canInteract) {
       attrs.tabindex = '0';
       attrs.role = 'button';
-      attrs['aria-label'] = `بستهٔ ${pkt.size} بیتی ${pkt.color === 'blue' ? 'آبی' : 'طلایی'}؛ ${isSelected ? 'انتخاب شده' : 'انتخاب نشده'}`;
+      attrs['aria-label'] = `${ITEM_NOUN_WITH_EZAFE} ${pkt.size} بیتی ${pkt.color === 'blue' ? 'آبی' : 'طلایی'}؛ ${isSelected ? 'انتخاب شده' : 'انتخاب نشده'}`;
     }
     const g = el('g', attrs);
     g.appendChild(el('rect', { x: -17, y: -14, width: 34, height: 28, rx: 5, fill: 'transparent', stroke: 'transparent', class: 'focus-ring' }));
@@ -332,7 +358,7 @@ export function initGame(config) {
 
     if (atDest) g.setAttribute('opacity', '0.85');
 
-    if (interactive) {
+    if (canInteract) {
       if (SPLITTING) {
         g.addEventListener('pointerdown', (e) => {
           if (e.pointerType === 'mouse' && e.button !== 0) return;
@@ -473,6 +499,7 @@ export function initGame(config) {
     for (const key in wireEls) setWireClass(key, 'wire');
     const byDevice = {};
     for (const p of packets) {
+      if (!isAvailable(p) || (EVENT_PAUSES && isInTransit(p))) continue;
       (byDevice[p.location] = byDevice[p.location] || []).push(p);
     }
     for (const dev in byDevice) renderDock(dev, byDevice[dev], !animating);
@@ -480,6 +507,12 @@ export function initGame(config) {
   }
 
   function packetPositionAt(pkt, t) {
+    if (EVENT_PAUSES) {
+      const evt = currentSchedule?.events.find(event => event.packet === pkt);
+      if (!evt) return { kind: 'dock', device: pkt.location };
+      if (t < evt.end) return { kind: 'transit', event: evt };
+      return { kind: 'dock', device: evt.to };
+    }
     if (!currentSchedule) return { kind: 'dock', device: pkt.location };
     const evt = currentSchedule.events.find(e => e.packet === pkt);
     if (!evt) return { kind: 'dock', device: pkt.location };
@@ -496,6 +529,7 @@ export function initGame(config) {
     const transitEvents = [];
     const busyByLink = {};
     for (const p of packets) {
+      if (!isAvailable(p, totalTime + t)) continue;
       const pos = packetPositionAt(p, t);
       if (pos.kind === 'dock') {
         (byDevice[pos.device] = byDevice[pos.device] || []).push(p);
@@ -556,6 +590,144 @@ export function initGame(config) {
     return { events, duration: maxEnd, colorDeliveryEnd };
   }
 
+  function startSelectedTransfers() {
+    const occupiedLinks = new Set(activeTransfers.map(transfer => transfer.link));
+    const selected = packets
+      .filter(packet => packet.selected && isAvailable(packet) && !isAtDestination(packet) && !isInTransit(packet) && nextHop(packet))
+      .sort((a, b) => a.id - b.id);
+
+    for (const packet of selected) {
+      const hop = nextHop(packet);
+      if (occupiedLinks.has(hop.link)) continue;
+      const duration = packet.size * BIT_TIME;
+      activeTransfers.push({
+        packet,
+        link: hop.link,
+        from: packet.location,
+        to: hop.to,
+        start: totalTime,
+        end: totalTime + duration,
+      });
+      packet.selected = false;
+      occupiedLinks.add(hop.link);
+    }
+  }
+
+  function nextAvailabilityTime() {
+    const times = packets
+      .filter(packet => packet.availableAt > totalTime + 1e-9)
+      .map(packet => packet.availableAt);
+    return times.length ? Math.min(...times) : null;
+  }
+
+  function beginEventSegment({ startSelected = false } = {}) {
+    if (startSelected) startSelectedTransfers();
+    const nextTransferEnd = activeTransfers.length
+      ? Math.min(...activeTransfers.map(transfer => transfer.end))
+      : null;
+    const nextAvailability = nextAvailabilityTime();
+    const candidates = [nextTransferEnd, nextAvailability].filter(time => time !== null);
+    if (candidates.length === 0) {
+      animating = false;
+      currentSchedule = null;
+      renderStatic();
+      updateControls();
+      return;
+    }
+
+    const boundary = Math.min(...candidates);
+    currentSchedule = {
+      events: activeTransfers.map(transfer => ({
+        ...transfer,
+        start: transfer.start - totalTime,
+        end: transfer.end - totalTime,
+      })),
+      duration: boundary - totalTime,
+      boundary,
+      colorDeliveryEnd: { blue: null, orange: null },
+    };
+    animating = true;
+    attemptStarted = true;
+    animStart = performance.now();
+    roundStartTime = totalTime;
+    statusMsg.textContent = 'زمان تا رویداد بعدی جلو می‌رود…';
+    statusMsg.classList.remove('win');
+    updateControls();
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) finishEventSegment();
+    else animate();
+  }
+
+  function finishEventSegment() {
+    const boundary = currentSchedule.boundary;
+    const becameAvailable = packets.filter(packet =>
+      packet.availableAt > totalTime + 1e-9 && packet.availableAt <= boundary + 1e-9
+    );
+    const completed = activeTransfers.filter(transfer => transfer.end <= boundary + 1e-9);
+    const completedLinks = new Set(completed.map(transfer => transfer.link));
+
+    totalTime = boundary;
+    for (const transfer of completed) {
+      transfer.packet.location = transfer.to;
+      transfer.packet.selected = false;
+    }
+    activeTransfers = activeTransfers.filter(transfer => transfer.end > boundary + 1e-9);
+    updateMemoryPeaks();
+    checkEventDelivery('blue');
+    checkEventDelivery('orange');
+
+    const arrivedAtSwitch = completed.some(transfer => DEVICES[transfer.to]?.kind === 'switch');
+    const forwardableAfterBusyLink = packets.some(packet => {
+      if (!isAvailable(packet) || isAtDestination(packet) || isInTransit(packet)) return false;
+      const hop = nextHop(packet);
+      return hop && completedLinks.has(hop.link);
+    });
+    const shouldPause = becameAvailable.length > 0 || arrivedAtSwitch || forwardableAfterBusyLink || activeTransfers.length === 0 || allDelivered();
+
+    animating = false;
+    currentSchedule = null;
+    renderStatic();
+    updateStats();
+
+    if (allDelivered()) {
+      timerEl.textContent = `زمان: ${totalTime.toFixed(1)} s ✓`;
+      timerEl.classList.add('done');
+      statusMsg.textContent = `همهٔ پیام‌ها در ${totalTime.toFixed(1)} s رسیدند!`;
+      statusMsg.classList.add('win');
+      updateBest(totalTime);
+      commitCurrentAttempt();
+      updateControls();
+      return;
+    }
+
+    if (!shouldPause) {
+      beginEventSegment();
+      return;
+    }
+
+    round++;
+    timerEl.textContent = `زمان: ${totalTime.toFixed(1)} s`;
+    if (becameAvailable.length > 0) {
+      const packet = becameAvailable[0];
+      statusMsg.textContent = `${ITEM_NOUN_WITH_EZAFE} ${packet.size} بیتی آمادهٔ ارسال شد؛ حالا می‌توانید انتخابش کنید.`;
+    } else if (arrivedAtSwitch) {
+      const names = [...new Set(completed
+        .filter(transfer => DEVICES[transfer.to]?.kind === 'switch')
+        .map(transfer => transfer.to))].join(' و ');
+      statusMsg.textContent = `${ITEM_NOUN} به سوییچ ${names} رسید؛ ${config.statusAfterRound}`;
+    } else {
+      statusMsg.textContent = config.statusAfterRound;
+    }
+    updateControls();
+  }
+
+  function checkEventDelivery(color) {
+    if ((color === 'blue' ? blueDeliveredAt : orangeDeliveredAt) !== null) return;
+    const delivered = packets.filter(packet => packet.color === color).every(isAtDestination);
+    if (!delivered) return;
+    if (color === 'blue') blueDeliveredAt = totalTime;
+    else orangeDeliveredAt = totalTime;
+  }
+
   function animate() {
     if (!animating) return;
     const raw = (performance.now() - animStart) / 1000;
@@ -564,18 +736,21 @@ export function initGame(config) {
     renderAnimationFrame(T);
     timerEl.textContent = `زمان: ${(totalTime + T).toFixed(1)} s`;
 
-    const cd = currentSchedule.colorDeliveryEnd;
-    if (blueDeliveredAt === null && cd.blue !== null && T >= cd.blue) {
-      blueDeliveredAt = roundStartTime + cd.blue;
-      updateStats();
-    }
-    if (orangeDeliveredAt === null && cd.orange !== null && T >= cd.orange) {
-      orangeDeliveredAt = roundStartTime + cd.orange;
-      updateStats();
+    if (!EVENT_PAUSES) {
+      const cd = currentSchedule.colorDeliveryEnd;
+      if (blueDeliveredAt === null && cd.blue !== null && T >= cd.blue) {
+        blueDeliveredAt = roundStartTime + cd.blue;
+        updateStats();
+      }
+      if (orangeDeliveredAt === null && cd.orange !== null && T >= cd.orange) {
+        orangeDeliveredAt = roundStartTime + cd.orange;
+        updateStats();
+      }
     }
 
     if (raw >= currentSchedule.duration) {
-      finishRound();
+      if (EVENT_PAUSES) finishEventSegment();
+      else finishRound();
       return;
     }
     requestAnimationFrame(animate);
@@ -600,7 +775,7 @@ export function initGame(config) {
     if (allDelivered()) {
       timerEl.textContent = `زمان: ${totalTime.toFixed(1)} s ✓`;
       timerEl.classList.add('done');
-      statusMsg.textContent = `همهٔ بسته‌ها در ${totalTime.toFixed(1)} s رسیدند!`;
+      statusMsg.textContent = `همهٔ ${ITEM_NOUN}‌ها در ${totalTime.toFixed(1)} s رسیدند!`;
       statusMsg.classList.add('win');
       updateBest(totalTime);
       commitCurrentAttempt();
@@ -613,6 +788,11 @@ export function initGame(config) {
 
   function startRound() {
     if (animating || allDelivered()) return;
+    if (EVENT_PAUSES) {
+      closePopover();
+      beginEventSegment({ startSelected: true });
+      return;
+    }
     const schedule = computeSchedule();
     if (!schedule) return;
     closePopover();
@@ -621,7 +801,7 @@ export function initGame(config) {
     attemptStarted = true;
     animStart = performance.now();
     roundStartTime = totalTime;
-    statusMsg.textContent = `بسته‌های دور ${round} در حرکت‌اند…`;
+    statusMsg.textContent = `${ITEM_NOUN}‌های دور ${round} در حرکت‌اند…`;
     statusMsg.classList.remove('win');
     updateControls();
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -650,7 +830,19 @@ export function initGame(config) {
   function updateControls() {
     roundNumEl.textContent = String(round);
     const hasSelected = packets.some(p => p.selected && !isAtDestination(p));
-    goBtn.disabled = animating || !hasSelected || allDelivered();
+    if (EVENT_PAUSES) {
+      const occupiedLinks = new Set(activeTransfers.map(transfer => transfer.link));
+      const hasStartableSelected = packets.some(packet => {
+        if (!packet.selected || !isAvailable(packet) || isAtDestination(packet) || isInTransit(packet)) return false;
+        const hop = nextHop(packet);
+        return hop && !occupiedLinks.has(hop.link);
+      });
+      const canAdvance = activeTransfers.length > 0 || nextAvailabilityTime() !== null;
+      goBtn.disabled = animating || allDelivered() || (!hasStartableSelected && !canAdvance);
+      goBtn.textContent = hasStartableSelected ? 'ارسال' : 'ادامه';
+    } else {
+      goBtn.disabled = animating || !hasSelected || allDelivered();
+    }
     resetBtn.disabled = animating;
   }
 
@@ -658,8 +850,14 @@ export function initGame(config) {
     return (t === null || t === undefined) ? '—' : `${t.toFixed(1)} s`;
   }
 
+  function timeSinceAvailability(deliveredAt, availableAt) {
+    if (deliveredAt === null || deliveredAt === undefined) return null;
+    return Math.max(0, deliveredAt - availableAt);
+  }
+
   function bestPerColumn(entries) {
     const keys = ['blue', 'orange', 'sum', 'all', 'packets'];
+    if (SHOW_MEMORY) keys.push('memoryA', 'memoryB');
     const out = {};
     for (const k of keys) {
       const vals = entries.map(e => e[k]).filter(v => v !== null && v !== undefined);
@@ -669,14 +867,18 @@ export function initGame(config) {
   }
 
   function currentAttemptEntry() {
-    const both = blueDeliveredAt !== null && orangeDeliveredAt !== null;
+    const blueDuration = timeSinceAvailability(blueDeliveredAt, BLUE_AVAILABLE_AT);
+    const orangeDuration = timeSinceAvailability(orangeDeliveredAt, 0);
+    const both = blueDuration !== null && orangeDuration !== null;
     return {
       n:       attemptCounter + 1,
-      blue:    blueDeliveredAt,
-      orange:  orangeDeliveredAt,
-      sum:     both ? blueDeliveredAt + orangeDeliveredAt : null,
-      all:     both ? Math.max(blueDeliveredAt, orangeDeliveredAt) : null,
+      blue:    blueDuration,
+      orange:  orangeDuration,
+      sum:     both ? blueDuration + orangeDuration : null,
+      all:     both ? Math.max(blueDuration, orangeDuration) : null,
       packets: packets.length,
+      memoryA: peakMemoryA,
+      memoryB: peakMemoryB,
     };
   }
 
@@ -718,6 +920,8 @@ export function initGame(config) {
         ${cell('sum',    'sum',    entry, fmtTime(entry.sum))}
         ${cell('all',    'all',    entry, fmtTime(entry.all))}
         ${cell('packets', 'packets', entry, entry.packets)}
+        ${SHOW_MEMORY ? cell('memory-a', 'memoryA', entry, `${entry.memoryA} بیت`) : ''}
+        ${SHOW_MEMORY ? cell('memory-b', 'memoryB', entry, `${entry.memoryB} بیت`) : ''}
       `;
       return row;
     };
@@ -729,14 +933,18 @@ export function initGame(config) {
     // Only record attempts where at least one color made it to its destination.
     if (blueDeliveredAt === null && orangeDeliveredAt === null) return;
     attemptCounter++;
-    const both = blueDeliveredAt !== null && orangeDeliveredAt !== null;
+    const blueDuration = timeSinceAvailability(blueDeliveredAt, BLUE_AVAILABLE_AT);
+    const orangeDuration = timeSinceAvailability(orangeDeliveredAt, 0);
+    const both = blueDuration !== null && orangeDuration !== null;
     attemptsHistory.push({
       n:       attemptCounter,
-      blue:    blueDeliveredAt,
-      orange:  orangeDeliveredAt,
-      sum:     both ? blueDeliveredAt + orangeDeliveredAt : null,
-      all:     both ? Math.max(blueDeliveredAt, orangeDeliveredAt) : null,
+      blue:    blueDuration,
+      orange:  orangeDuration,
+      sum:     both ? blueDuration + orangeDuration : null,
+      all:     both ? Math.max(blueDuration, orangeDuration) : null,
       packets: packets.length,
+      memoryA: peakMemoryA,
+      memoryB: peakMemoryB,
     });
     // Clear per-color delivery times so the "current" live row goes back to
     // empty instead of mirroring the row we just committed.
