@@ -22,7 +22,8 @@ export function parseChatCompletion(rawText, { stripThinking = false } = {}) {
   if (trimmed.startsWith('data:')) {
     for (const line of trimmed.split('\n')) {
       const candidate = line.trim();
-      if (!candidate.startsWith('data:') || candidate === 'data: [DONE]') continue;
+      if (!candidate.startsWith('data:') || candidate === 'data: [DONE]')
+        continue;
       try {
         const payload = JSON.parse(candidate.replace(/^data:\s*/, ''));
         text +=
