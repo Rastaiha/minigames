@@ -81,7 +81,7 @@ notepad.exe .dev.vars
 npm run deploy:first
 ```
 
-فایل `.dev.vars` در git نادیده گرفته می‌شود و نباید commit شود. پس از ساخته‌شدن Worker، برای تغییر کلید می‌توانید از `npx wrangler secret put GEMINI_API_KEY` و برای انتشارهای بعدی از `npm run deploy` استفاده کنید.
+فایل `.dev.vars` در git نادیده گرفته می‌شود و نباید commit شود. پس از ساخته‌شدن Worker، برای تغییر کلید از `npx wrangler secret put LLM_API_KEY` و برای انتشارهای بعدی از `npm run deploy` استفاده کنید.
 
 در پایان URL منتشرشده را با مسیر `/generate` در `pretrained-llm/config.js` بگذارید، مثلاً:
 
