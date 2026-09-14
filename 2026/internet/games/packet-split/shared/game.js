@@ -445,13 +445,16 @@ export function initGame(config) {
     return { x: p.x, y: p.y, angle };
   }
 
-  function drawTransitPacket(evt, t) {
+  function drawTransitPacket(evt, t, paused = false) {
     const p = (t - evt.start) / (evt.end - evt.start);
     const { x, y, angle } = pointOnWire(evt.link, p);
     const color = evt.packet.color === 'blue' ? '#5669d1' : '#e8b33a';
     const rectW = Math.max(30, Math.min(84, evt.packet.size * 5 + 18));
     const rectH = 26;
-    const g = el('g', { class: 'packet-anim', transform: `translate(${x}, ${y}) rotate(${angle})` });
+    const g = el('g', {
+      class: `packet-anim${paused ? ' paused' : ''}`,
+      transform: `translate(${x}, ${y}) rotate(${angle})`,
+    });
     envelopeShape(g, rectW, rectH, {
       fill: color,
       stroke: color,
@@ -503,6 +506,9 @@ export function initGame(config) {
       (byDevice[p.location] = byDevice[p.location] || []).push(p);
     }
     for (const dev in byDevice) renderDock(dev, byDevice[dev], !animating);
+    if (EVENT_PAUSES) {
+      for (const transfer of activeTransfers) drawTransitPacket(transfer, totalTime, true);
+    }
     updateArrivalText();
   }
 

@@ -1,5 +1,9 @@
 @import '../shared/styles.css';
 
+.packet-anim.paused {
+  opacity: 0.45;
+}
+
 .history-cols,
 .history-row {
   grid-template-columns: 64px repeat(4, minmax(76px, 1fr)) minmax(70px, 0.7fr) repeat(2, minmax(104px, 1fr));
