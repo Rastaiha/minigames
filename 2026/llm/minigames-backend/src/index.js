@@ -1090,6 +1090,257 @@ async function handleHallucination(request, env, cors) {
   );
 }
 
+const API_RESPOND_GAMES = new Set([
+  'completion',
+  'hallucination',
+  'jailbreak',
+  'next-token-prediction',
+]);
+
+function apiRespondError(message, status, cors) {
+  return json(
+    { ok: false, data: null, meta: {}, error: message },
+    status,
+    cors
+  );
+}
+
+function apiRespondSuccess(data, meta, cors) {
+  return json({ ok: true, data, meta: meta || {}, error: null }, 200, cors);
+}
+
+function validMessages(messages) {
+  return (
+    Array.isArray(messages) &&
+    messages.length <= 40 &&
+    messages.every(
+      (message) =>
+        message &&
+        (message.role === 'user' || message.role === 'assistant') &&
+        typeof message.content === 'string' &&
+        message.content.trim().length > 0 &&
+        message.content.length <= 6000
+    )
+  );
+}
+
+function apiRespondRateLimitKey(request, game) {
+  const suppliedId = request.headers.get('X-Client-Id') || '';
+  const clientId = /^[a-zA-Z0-9-]{10,80}$/.test(suppliedId)
+    ? suppliedId
+    : 'anonymous';
+  return `${clientId}:api:${game}`;
+}
+
+async function handleNextToken(request, env, cors, input) {
+  const prompt = input.prompt.trim();
+  const apiUrl = resolveApiUrl(env.LLM_BASE_URL);
+  const apiKey = gatewayApiKey(env);
+  const messages = [
+    {
+      role: 'system',
+      content:
+        'برای متن ناتمام دقیقاً پنج کلمه یا عدد محتمل بعدی را پیش‌بینی کن. فقط JSON خام با ساختار [{"word":"...","prob":0}] برگردان. احتمال‌ها درصدی بین صفر و صد باشند و مجموع آن‌ها دقیقاً ۱۰۰ شود.',
+    },
+    { role: 'user', content: `متن ناتمام: «${prompt}»` },
+  ];
+
+  try {
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'gemini/gemini-3.8-flash',
+        messages,
+        temperature: 0,
+        max_tokens: 300,
+        stream: false,
+      }),
+      signal: AbortSignal.timeout(60000),
+    });
+    if (!response.ok) return apiRespondError('مدل پاسخ موفقی نداد.', 502, cors);
+
+    const payload = await response.json();
+    const text = String(payload?.choices?.[0]?.message?.content || '');
+    const match = text.match(/\[[\s\S]*\]/);
+    if (!match)
+      return apiRespondError('ساختار پیش‌بینی معتبر نبود.', 502, cors);
+
+    let predictions;
+    try {
+      predictions = JSON.parse(match[0]);
+    } catch {
+      return apiRespondError('ساختار پیش‌بینی معتبر نبود.', 502, cors);
+    }
+    if (
+      !Array.isArray(predictions) ||
+      predictions.length !== 5 ||
+      predictions.some(
+        (item) =>
+          !item ||
+          typeof item.word !== 'string' ||
+          !item.word.trim() ||
+          !Number.isFinite(Number(item.prob)) ||
+          Number(item.prob) < 0 ||
+          Number(item.prob) > 100
+      )
+    ) {
+      return apiRespondError('ساختار پیش‌بینی معتبر نبود.', 502, cors);
+    }
+    const normalized = predictions.map((item) => ({
+      word: item.word.trim(),
+      prob: Number(item.prob),
+    }));
+    const total = normalized.reduce((sum, item) => sum + item.prob, 0);
+    if (Math.abs(total - 100) > 0.5) {
+      return apiRespondError(
+        'مجموع احتمال‌های پیش‌بینی معتبر نبود.',
+        502,
+        cors
+      );
+    }
+    return apiRespondSuccess(
+      { predictions: normalized },
+      { operation: 'next-token' },
+      cors
+    );
+  } catch (error) {
+    if (error?.name === 'AbortError' || error?.name === 'TimeoutError') {
+      return apiRespondError('زمان پاسخ‌گویی مدل تمام شد.', 504, cors);
+    }
+    console.warn('Next-token operation failed:', error?.message || error);
+    return apiRespondError('ارتباط با مدل برقرار نشد.', 502, cors);
+  }
+}
+
+async function handleApiRespond(request, env, cors) {
+  const contentType = request.headers.get('Content-Type') || '';
+  if (!contentType.toLowerCase().includes('application/json')) {
+    return apiRespondError('Content-Type must be application/json.', 415, cors);
+  }
+
+  let body;
+  try {
+    const raw = await request.text();
+    if (raw.length > 40000)
+      return apiRespondError('Request is too large.', 413, cors);
+    body = JSON.parse(raw);
+  } catch {
+    return apiRespondError('Invalid JSON.', 400, cors);
+  }
+
+  const version = body?.version;
+  const game = body?.game;
+  const mode = body?.mode;
+  const input = body?.input;
+  if (
+    version !== 1 ||
+    !API_RESPOND_GAMES.has(game) ||
+    typeof mode !== 'string'
+  ) {
+    return apiRespondError('Unsupported response operation.', 400, cors);
+  }
+
+  const expectedModes = {
+    completion: ['base', 'sft', 'aligned'],
+    hallucination: ['challenge'],
+    jailbreak: ['challenge'],
+    'next-token-prediction': ['predict'],
+  };
+  if (
+    !expectedModes[game].includes(mode) ||
+    !input ||
+    typeof input !== 'object'
+  ) {
+    return apiRespondError('Invalid response operation input.', 400, cors);
+  }
+
+  if (env.RATE_LIMITER) {
+    const { success } = await env.RATE_LIMITER.limit({
+      key: apiRespondRateLimitKey(request, game),
+    });
+    if (!success) return apiRespondError('Too many requests.', 429, cors);
+  }
+
+  if (game === 'next-token-prediction') {
+    if (
+      typeof input.prompt !== 'string' ||
+      !input.prompt.trim() ||
+      input.prompt.length > 600
+    ) {
+      return apiRespondError(
+        'Prompt must contain 1 to 600 characters.',
+        400,
+        cors
+      );
+    }
+    return handleNextToken(request, env, cors, input);
+  }
+
+  if (game === 'completion') {
+    if (
+      typeof input.prompt !== 'string' ||
+      !input.prompt.trim() ||
+      input.prompt.length > 600
+    ) {
+      return apiRespondError(
+        'Prompt must contain 1 to 600 characters.',
+        400,
+        cors
+      );
+    }
+    const delegated = new Request(request, {
+      body: JSON.stringify({ prompt: input.prompt }),
+      headers: new Headers(request.headers),
+    });
+    const response = await handleGenerate(
+      delegated,
+      { ...env, RATE_LIMITER: undefined },
+      cors,
+      mode
+    );
+    const result = await response.json();
+    if (!response.ok)
+      return apiRespondError('Model request failed.', response.status, cors);
+    return apiRespondSuccess({ text: result.text }, { operation: mode }, cors);
+  }
+
+  if (
+    !validMessages(input.messages) ||
+    ![1, 2, 3].includes(Number(input.level))
+  ) {
+    return apiRespondError('Invalid messages or level.', 400, cors);
+  }
+  const delegated = new Request(request, {
+    body: JSON.stringify({
+      level: Number(input.level),
+      messages: input.messages,
+    }),
+    headers: new Headers(request.headers),
+  });
+  const response =
+    game === 'jailbreak'
+      ? await handleJailbreak(delegated, env, cors)
+      : await handleHallucination(delegated, env, cors);
+  const result = await response.json();
+  if (!response.ok)
+    return apiRespondError('Model request failed.', response.status, cors);
+  return apiRespondSuccess(
+    game === 'jailbreak'
+      ? {
+          text: result.text,
+          answer: result.answer,
+          checklist: result.checklist,
+        }
+      : { text: result.text, answer: result.answer, model: result.model },
+    { operation: game },
+    cors
+  );
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -1098,6 +1349,12 @@ export default {
     if (!cors) return json({ error: 'Origin is not allowed.' }, 403);
     if (request.method === 'OPTIONS')
       return new Response(null, { status: 204, headers: cors });
+
+    if (url.pathname === '/api/respond') {
+      if (request.method !== 'POST')
+        return json({ error: 'Method not allowed.' }, 405, cors);
+      return handleApiRespond(request, env, cors);
+    }
 
     if (url.pathname === '/hallucination') {
       if (request.method !== 'POST')

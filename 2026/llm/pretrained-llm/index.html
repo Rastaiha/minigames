@@ -564,14 +564,13 @@
 
       async function requestCompletion(text, signal) {
         try {
-          const payload = await MinigameApi.request(
-            'generate',
+          const response = await MinigameApi.respond(
+            'completion',
+            'base',
             { prompt: text },
             { signal }
           );
-          const generated = String(
-            payload.text || payload.generated_text || ''
-          ).trim();
+          const generated = String(response.data.text || '').trim();
           if (!generated) throw new Error('Empty generation');
           return generated;
         } catch (error) {

@@ -23,13 +23,20 @@
       (global.MINIGAMES_CONFIG && global.MINIGAMES_CONFIG.workerRoot) || '';
     if (!root) throw new Error('پیکربندی سرویس در دسترس نیست.');
 
-    var controller = settings.signal ? null : new AbortController();
-    var signal = settings.signal || controller.signal;
-    var timer =
-      controller &&
-      setTimeout(function abortRequest() {
-        controller.abort();
-      }, settings.timeoutMs || 60000);
+    var controller = new AbortController();
+    var signal = controller.signal;
+    var timeout = settings.timeoutMs || 60000;
+    var timer = setTimeout(function abortRequest() {
+      controller.abort();
+    }, timeout);
+    var forwardAbort = function forwardAbort() {
+      controller.abort();
+    };
+    if (settings.signal) {
+      if (settings.signal.aborted) controller.abort();
+      else
+        settings.signal.addEventListener('abort', forwardAbort, { once: true });
+    }
 
     try {
       var response = await fetch(
@@ -59,9 +66,23 @@
         error && error.message ? error.message : 'ارتباط با سرویس برقرار نشد.'
       );
     } finally {
-      if (timer) clearTimeout(timer);
+      clearTimeout(timer);
+      if (settings.signal)
+        settings.signal.removeEventListener('abort', forwardAbort);
     }
   }
 
-  global.MinigameApi = Object.freeze({ request: request });
+  async function respond(game, mode, input, options) {
+    var body = await request(
+      '/api/respond',
+      { version: 1, game: game, mode: mode, input: input },
+      options
+    );
+    if (!body || body.ok !== true || !body.data) {
+      throw new Error((body && body.error) || 'پاسخ سرویس نامعتبر بود.');
+    }
+    return body;
+  }
+
+  global.MinigameApi = Object.freeze({ request: request, respond: respond });
 })(window);
