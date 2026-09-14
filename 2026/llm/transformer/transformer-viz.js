@@ -24,7 +24,12 @@
       ? completeSentence.slice(0, -1)
       : completeSentence;
   const ui = isPersian
-    ? { play: 'پخش', pause: 'مکث' }
+    ? {
+        play: 'پخش',
+        pause: 'مکث',
+        ready: 'آمادهٔ شروع',
+        finished: 'نمایش کامل شد',
+      }
     : { play: 'Play', pause: 'Pause' };
   const tokenColors = [
     '#2878c7',
@@ -121,6 +126,7 @@
       this.pending = null;
 
       this.playButton = $('#playBtn');
+      this.nextButton = $('#nextBtn');
       this.resetButton = $('#resetBtn');
       this.bindControls();
       this.reset();
@@ -136,14 +142,22 @@
       });
 
       this.resetButton.addEventListener('click', () => this.reset());
+      this.nextButton.addEventListener('click', () => this.next());
     }
 
     updateCopy() {
       $('#progress').style.width = `${(this.state / this.totalState) * 100}%`;
+      const narration = $('#narration');
+      if (narration)
+        narration.textContent =
+          this.state >= this.totalState
+            ? ui.finished
+            : `${ui.ready}؛ گام ${this.state} از ${this.totalState}`;
     }
 
     setBusy(busy) {
       this.resetButton.disabled = busy;
+      this.nextButton.disabled = busy;
     }
 
     async next() {
