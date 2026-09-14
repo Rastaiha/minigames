@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="fa" dir="rtl">
-<head>
+  <head>
     <link rel="stylesheet" href="../shared/ui/tokens.css" />
     <link rel="stylesheet" href="../shared/ui/shells.css" />
     <meta charset="UTF-8" />
@@ -1136,6 +1136,7 @@
       </div>
     </div>
 
+    <script src="storage.js"></script>
     <!-- اسکریپت کنترل صفحات و منطق استیت‌ها -->
     <script>
       const STORAGE_KEY = 'workshop_ai_word_space_v9_order';
@@ -1243,15 +1244,14 @@
           axisYTitle,
         };
 
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        WordEmbeddingStorage.write(STORAGE_KEY, state);
         updateHubCardsUI();
       }
 
       function loadStateFromCache() {
-        const data = localStorage.getItem(STORAGE_KEY);
-        if (!data) return false;
+        const state = WordEmbeddingStorage.read(STORAGE_KEY);
+        if (!state) return false;
         try {
-          const state = JSON.parse(data);
           maxUnlockedStep = state.maxUnlockedStep || 1;
           projectionAngleDeg = state.projectionAngleDeg || 45;
           axisXTitle = state.axisXTitle || '';
@@ -1293,7 +1293,7 @@
       }
 
       function resetAllData() {
-        localStorage.removeItem(STORAGE_KEY);
+        WordEmbeddingStorage.remove(STORAGE_KEY);
         window.location.hash = '#hub';
         location.reload();
       }
@@ -1301,7 +1301,8 @@
       function handleRouting() {
         const hash = window.location.hash;
         if (hash.startsWith('#step')) {
-          const stepNum = parseInt(hash.replace('#step', '')) || 1;
+          const stepNum =
+            WordEmbeddingStorage.readStep(hash, maxUnlockedStep) || 1;
           if (stepNum > maxUnlockedStep) {
             window.location.hash = `#step${maxUnlockedStep}`;
             return;
