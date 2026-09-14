@@ -4,11 +4,12 @@
   "scripts": {
     "check:api-boundary": "node scripts/check-api-boundary.mjs",
     "check:js": "node scripts/check-js-syntax.mjs",
+    "test:worker": "node --test minigames-backend/test/*.test.js",
     "lint": "eslint . --fix",
     "lint:check": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check": "npm run lint:check && npm run format:check && npm run check:api-boundary && npm run check:js"
+    "check": "npm run lint:check && npm run format:check && npm run check:api-boundary && npm run check:js && npm run test:worker"
   },
   "devDependencies": {
     "@eslint/js": "^9.34.0",
