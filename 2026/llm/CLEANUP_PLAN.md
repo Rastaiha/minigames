@@ -6,6 +6,25 @@
 2. Give the games one visual language based on the `word-in-space` workbench: a calm paper surface, compact controls, short Persian copy, clear status, and touch/keyboard support.
 3. Give every model-backed game one browser API client and one versioned Worker contract. Browser code must never call a provider directly or send provider credentials.
 
+## Status for the next agent
+
+Completed and pushed:
+
+- `5351ccd`: added the initial cleanup plan, shared API/config foundation, and repository checks.
+- `01f354b`: migrated `next-token-prediction`, `jailbreak-old`, `pretrained-llm`, `sft-llm`, and `rlhf-llm` to the shared Worker client; removed direct provider/Flask browser branches.
+- `f0ccd1a`: replaced the proposed Ruff setup with ESLint 9, Prettier 3, `.editorconfig`, `.pre-commit-config.yaml`, and npm scripts/configuration.
+- `2e42df9`: ran Prettier over all eligible repository HTML/CSS/JavaScript/JSON/Markdown sources and fixed the small ESLint issues found in shared/transformer code.
+
+Current checks pass when dependencies are installed with `npm install --ignore-scripts`:
+
+```
+npm run check
+```
+
+This runs ESLint, Prettier check, the browser API-boundary scan, and JavaScript syntax checks. Generated embedding data (`words-world/data.js`, `words-world/word-data.js`), the large workshop page (`llm2.html`), and `AGENTS.md` are excluded from Prettier. `AGENTS.md` is user-provided and intentionally remains untracked.
+
+Remaining work starts with the shared `/api/respond` Worker contract and client migration. Then migrate the remaining model-backed pages (`model-lab`, `jailbreak`, `hallucination`, `next-token-prediction2`), add Worker contract tests, and continue the visual/accessibility work itemized in the game table below. Do not undo existing URL spellings, storage keys, or the direct-provider removals.
+
 ## Repository-wide target architecture
 
 ```
