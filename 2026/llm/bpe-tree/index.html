@@ -1,20 +1,20 @@
 <!doctype html>
-<html lang="en">
+<html lang="fa" dir="rtl">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Interactive BPE Token Merge Graph — Persian</title>
+    <title>درخت ادغام توکن‌ها | BPE</title>
     <style>
       :root {
-        --bg: #f5f7fb;
+        --bg: #f7f8fc;
         --ink: #172033;
-        --muted: #6b7485;
-        --line: #cdd4e1;
+        --muted: #687286;
+        --line: #cbd3e1;
         --accent: #4f46e5;
         --accent2: #7c3aed;
         --soft: #eef0ff;
-        --hot: #e8940a;
-        --hotsoft: #fff0c7;
+        --hot: #d98205;
+        --hotsoft: #fff1cf;
         --char: #edf8f1;
         --charline: #9bc9aa;
       }
@@ -32,7 +32,7 @@
         background: var(--bg);
         color: var(--ink);
         font-family:
-          Inter,
+          Vazir,
           ui-sans-serif,
           system-ui,
           -apple-system,
@@ -45,7 +45,45 @@
         position: fixed;
         inset: 0;
         overflow: hidden;
-        background: linear-gradient(#fff, #f8faff);
+        background:
+          radial-gradient(
+            circle at 12% 18%,
+            rgba(79, 70, 229, 0.07),
+            transparent 26rem
+          ),
+          linear-gradient(#fff, #f7f8fc);
+      }
+      @font-face {
+        font-family: Vazir;
+        src: url('../fonts/vazir.ttf') format('truetype');
+        font-display: swap;
+      }
+      .intro {
+        position: absolute;
+        top: 22px;
+        right: 24px;
+        z-index: 2;
+        width: min(360px, calc(100vw - 48px));
+        pointer-events: none;
+      }
+      .eyebrow {
+        margin: 0 0 5px;
+        color: var(--accent);
+        font-size: 11px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+      }
+      h1 {
+        margin: 0;
+        font-size: clamp(21px, 2.3vw, 30px);
+        line-height: 1.35;
+        letter-spacing: -0.03em;
+      }
+      .intro p {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.75;
       }
       svg {
         width: 100%;
@@ -103,6 +141,11 @@
         stroke: var(--accent);
         stroke-width: 2;
       }
+      .node:focus rect {
+        stroke: var(--hot);
+        stroke-width: 2.5;
+        filter: drop-shadow(0 0 0.35rem rgba(217, 130, 5, 0.3));
+      }
       .node.selected rect {
         fill: var(--soft);
         stroke: var(--accent);
@@ -128,7 +171,7 @@
       }
       .toolbar {
         position: absolute;
-        right: 14px;
+        left: 14px;
         bottom: 14px;
         display: flex;
         gap: 6px;
@@ -138,6 +181,8 @@
         border: 1px solid #d8deea;
         background: #fff;
         border-radius: 9px;
+        min-width: 44px;
+        min-height: 44px;
         padding: 7px 10px;
         cursor: pointer;
         font-weight: 800;
@@ -146,12 +191,13 @@
       }
       .searchbox {
         position: absolute;
-        left: 14px;
+        right: 14px;
         bottom: 14px;
         z-index: 2;
       }
       .searchbox input {
-        width: 160px;
+        width: 190px;
+        min-height: 44px;
         border: 1px solid #d7ddea;
         background: #fff;
         border-radius: 9px;
@@ -210,8 +256,8 @@
         border: 0;
         background: #f2f4f8;
         border-radius: 9px;
-        width: 34px;
-        height: 34px;
+        width: 44px;
+        height: 44px;
         cursor: pointer;
         font-size: 20px;
         color: #5e6674;
@@ -264,6 +310,8 @@
         border-radius: 12px;
         background: #fbfcfe;
         font-family: Tahoma, 'Segoe UI', sans-serif;
+        line-height: 1.7;
+        overflow-wrap: anywhere;
       }
       .word {
         display: inline-flex;
@@ -312,26 +360,120 @@
         font-weight: 800;
         color: #5b6474;
       }
+      .legend {
+        position: absolute;
+        bottom: 76px;
+        right: 14px;
+        display: flex;
+        gap: 12px;
+        color: var(--muted);
+        font-size: 11px;
+        z-index: 2;
+      }
+      .legend span::before {
+        content: '';
+        display: inline-block;
+        width: 9px;
+        height: 9px;
+        margin-left: 5px;
+        border-radius: 3px;
+        background: var(--char);
+        border: 1px solid var(--charline);
+        vertical-align: -1px;
+      }
+      .legend span:last-child::before {
+        background: #fff;
+        border-color: #bcc5d6;
+      }
+      @media (max-width: 640px) {
+        .intro {
+          top: 14px;
+          right: 16px;
+          width: calc(100vw - 32px);
+        }
+        .intro p {
+          max-width: 300px;
+        }
+        .searchbox {
+          right: 10px;
+          bottom: 70px;
+        }
+        .searchbox input {
+          width: min(190px, calc(100vw - 20px));
+        }
+        .toolbar {
+          left: 10px;
+          bottom: 70px;
+        }
+        .legend {
+          display: none;
+        }
+        .modal {
+          padding: 10px;
+        }
+        .modalhead {
+          gap: 8px;
+          padding: 12px;
+        }
+        .tokenname {
+          font-size: 19px;
+        }
+        .dialog {
+          max-height: 94vh;
+        }
+        .equation {
+          flex-wrap: wrap;
+          font-size: 18px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
     </style>
   </head>
   <body>
     <div class="graphwrap">
       <svg id="graph"></svg>
+      <header class="intro">
+        <p class="eyebrow">کارگاه توکن‌سازی · BPE</p>
+        <h1>هر واژه، یک مسیر از نویسه‌ها تا توکن</h1>
+        <p>
+          روی یک گره بزنید تا ببینید کدام دو بخش، در هر مرحله، به هم پیوسته‌اند.
+        </p>
+      </header>
       <div class="searchbox">
-        <input id="search" placeholder="Find token…" />
+        <input
+          id="search"
+          aria-label="جست‌وجوی توکن"
+          placeholder="جست‌وجوی توکن…"
+        />
       </div>
       <div class="toolbar">
-        <button class="tool" id="minus">−</button
-        ><button class="tool" id="reset">Reset</button
-        ><button class="tool" id="plus">+</button>
+        <button class="tool" id="minus" aria-label="کوچک‌نمایی">−</button
+        ><button class="tool" id="reset">بازنشانی</button
+        ><button class="tool" id="plus" aria-label="بزرگ‌نمایی">+</button>
+      </div>
+      <div class="legend" aria-hidden="true">
+        <span>نویسهٔ آغازین</span><span>توکنِ ادغام‌شده</span>
       </div>
     </div>
     <div class="modal" id="modal" aria-hidden="true">
-      <div class="dialog" role="dialog" aria-modal="true">
+      <div
+        class="dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modalToken"
+        aria-describedby="modalMeta"
+      >
         <div class="modalhead">
           <div class="tokenname" id="modalToken"></div>
           <div class="meta" id="modalMeta"></div>
-          <button class="close" id="close" aria-label="Close">×</button>
+          <button class="close" id="close" aria-label="بستن پنجره">×</button>
         </div>
         <div class="modalbody">
           <div id="equation"></div>
@@ -500,19 +642,24 @@
       }
       const initialSeqs = words.map((w) => Array.from(w));
       let selected = null;
+      let lastFocused = null;
       function openModal() {
         const m = document.getElementById('modal');
         m.classList.add('open');
         m.setAttribute('aria-hidden', 'false');
+        document.getElementById('close').focus();
       }
       function closeModal() {
         const m = document.getElementById('modal');
         m.classList.remove('open');
         m.setAttribute('aria-hidden', 'true');
+        if (lastFocused && typeof lastFocused.focus === 'function')
+          lastFocused.focus();
       }
       function selectToken(token) {
         const n = nodes.get(token);
         if (!n) return;
+        lastFocused = document.activeElement;
         selected = n;
         document.getElementById('modalToken').textContent = token;
         if (!n.step) {
@@ -521,16 +668,16 @@
             0
           );
           document.getElementById('modalMeta').innerHTML =
-            `initial character · <span class="count">${count}</span> occurrence${count === 1 ? '' : 's'}`;
+            `نویسهٔ آغازین · <span class="count">${count}</span> بار در متن`;
           document.getElementById('equation').innerHTML =
-            `<div class="hint">Initial corpus state; every occurrence of this character token is highlighted.</div>`;
+            `<div class="hint">وضعیت آغازین متن؛ همهٔ نمونه‌های این نویسه روشن شده‌اند.</div>`;
           renderSequence(initialSeqs, [], token);
         } else {
           const st = n.step;
           document.getElementById('modalMeta').innerHTML =
-            `merge ${st.index} · <span class="count">${st.count}</span> occurrence${st.count === 1 ? '' : 's'} before creation`;
+            `ادغام ${st.index} · <span class="count">${st.count}</span> بار پیش از ساخته‌شدن`;
           document.getElementById('equation').innerHTML =
-            `<div class="equation"><span class="big">${esc(st.a)}</span><span class="op">+</span><span class="big">${esc(st.b)}</span><span class="op">→</span><span class="big out">${esc(st.out)}</span></div><div class="hint">Corpus state immediately before this token is created. All occurrences of the input pair are highlighted.</div>`;
+            `<div class="equation"><span class="big">${esc(st.a)}</span><span class="op">+</span><span class="big">${esc(st.b)}</span><span class="op">→</span><span class="big out">${esc(st.out)}</span></div><div class="hint">متن درست پیش از ساخته‌شدن این توکن. همهٔ نمونه‌های این جفت روشن شده‌اند.</div>`;
           renderSequence(st.before, st.occ);
         }
         draw();
@@ -541,7 +688,25 @@
         if (e.target.id === 'modal') closeModal();
       });
       document.addEventListener('keydown', (e) => {
+        if (!document.getElementById('modal').classList.contains('open'))
+          return;
         if (e.key === 'Escape') closeModal();
+        if (e.key !== 'Tab') return;
+        const focusable = document
+          .getElementById('modal')
+          .querySelectorAll(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+          );
+        if (!focusable.length) return;
+        const first = focusable[0],
+          last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
       });
       const svg = document.getElementById('graph');
       const NODE_W = 106,
@@ -581,7 +746,7 @@
         ];
         for (let l = 0; l < levels.length; l++)
           out.push(
-            `<text class="level-label" x="18" y="${PADY + l * YGAP + 4}">${l === 0 ? 'INITIAL CHARACTERS' : 'MERGE DEPTH ' + l}</text>`
+            `<text class="level-label" x="18" y="${PADY + l * YGAP + 4}">${l === 0 ? 'نویسه‌های آغازین' : 'عمق ادغام ' + l}</text>`
           );
         for (const n of nodes.values())
           if (n.step) {
@@ -603,8 +768,11 @@
             cls += ' consumer';
           const len = Array.from(n.token).length,
             w = Math.max(48, Math.min(NODE_W, 30 + len * 14));
+          const kind = n.step
+            ? `توکن ادغام‌شده، مرحلهٔ ${n.step.index}`
+            : 'نویسهٔ آغازین';
           out.push(
-            `<g class="${cls}" data-token="${esc(n.token)}" transform="translate(${n.x} ${n.y})" style="cursor:pointer"><rect x="${-w / 2}" y="${-NODE_H / 2}" width="${w}" height="${NODE_H}" rx="9"/><text class="tokenlabel" text-anchor="middle" dominant-baseline="middle" x="0" y="1">${esc(n.token)}</text>${n.step ? `<text class="badge" text-anchor="end" x="${w / 2 - 4}" y="${-NODE_H / 2 + 9}">${n.step.index}</text>` : ''}</g>`
+            `<g class="${cls}" data-token="${esc(n.token)}" transform="translate(${n.x} ${n.y})" style="cursor:pointer" tabindex="0" role="button" aria-label="${esc(n.token)}؛ ${kind}"><rect x="${-w / 2}" y="${-NODE_H / 2}" width="${w}" height="${NODE_H}" rx="9"/><text class="tokenlabel" text-anchor="middle" dominant-baseline="middle" x="0" y="1">${esc(n.token)}</text>${n.step ? `<text class="badge" text-anchor="end" x="${w / 2 - 4}" y="${-NODE_H / 2 + 9}">${n.step.index}</text>` : ''}</g>`
           );
         }
         out.push('</g>');
@@ -694,6 +862,12 @@
       svg.addEventListener('pointercancel', () => {
         drag = null;
         svg.classList.remove('dragging');
+      });
+      svg.addEventListener('keydown', (e) => {
+        const node = e.target.closest?.('.node');
+        if (!node || (e.key !== 'Enter' && e.key !== ' ')) return;
+        e.preventDefault();
+        selectToken(node.dataset.token);
       });
     </script>
   </body>
