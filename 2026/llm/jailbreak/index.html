@@ -651,6 +651,7 @@ GOLD-581
       const solvedDescription = document.getElementById('solvedDescription');
       const nextButton = document.getElementById('nextButton');
       const levelButtons = document.querySelectorAll('.level-button');
+      let currentController = null;
       // =====================================================
       // ابزارهای UI
       // =====================================================
@@ -868,6 +869,7 @@ GOLD-581
         showTyping();
         try {
           const controller = new AbortController();
+          currentController = controller;
           const answer = await askGuard(levelNumber, controller.signal);
           hideTyping();
           // ذخیره پاسخ
@@ -895,6 +897,7 @@ GOLD-581
             updateLevelUI();
           }
         } catch (error) {
+          if (error.name === 'AbortError') return;
           hideTyping();
           console.error(error);
           addMessage(
@@ -902,6 +905,8 @@ GOLD-581
             'ارتباط با نگهبان با مشکل مواجه شد. دوباره امتحان کن.'
           );
         }
+        if (currentController?.signal.aborted) return;
+        currentController = null;
         promptElement.disabled = false;
         sendButton.disabled = !promptElement.value.trim();
         promptElement.focus();
@@ -910,6 +915,8 @@ GOLD-581
       // مرحله بعد
       // =====================================================
       function goNextLevel() {
+        currentController?.abort();
+        currentController = null;
         if (state.currentLevel === 3) {
           startNewGame();
           return;
@@ -925,6 +932,8 @@ GOLD-581
       // بازی جدید
       // =====================================================
       function startNewGame() {
+        currentController?.abort();
+        currentController = null;
         for (let i = 1; i <= 3; i++) {
           state.levels[i] = {
             messages: [],
