@@ -333,6 +333,8 @@
     </div>
 
     <script src="config.js"></script>
+    <script src="../shared/config.js"></script>
+    <script src="../shared/api/client.js"></script>
     <script>
       // ------------------------------------------------------------------
       // پیش‌بینی زنده از همان Worker مشترک مینی‌گیم‌های دیگر گرفته می‌شود.
@@ -340,67 +342,14 @@
       // مدل فقط یک آرایه JSON شامل کلمه‌ها و احتمال‌های برآوردی برمی‌گرداند.
       // ------------------------------------------------------------------
 
-      const CONFIG = window.NEXT_TOKEN_CONFIG || {};
-      const API_URL = CONFIG.workerRoot
-        ? `${CONFIG.workerRoot.replace(/\/+$/, '')}/jailbreak`
-        : '';
-      const MODEL = 'gemini/gemini-3.8-flash';
-
-      const SYSTEM_PROMPT = `برای متن ناتمام، دقیقاً پنج کلمه محتمل بعدی و احتمال هرکدام را برآورد کن.
-فقط یک آرایه JSON خام با ساختار [{"word":"...","prob":0}] برگردان.
-هر شیء فقط دو کلید word و prob داشته باشد. word فقط یک کلمه یا عدد باشد، prob درصدی بین 0 و 100 باشد و مجموع پنج prob برابر 100 شود.`;
-
       async function callModelAPI(contextText) {
-        if (!API_URL) throw new Error('نشانی API تنظیم نشده است');
-
-        const response = await fetch(API_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            level: 1,
-            model: MODEL,
-            temperature: 0,
-            reasoning_effort: 'high',
-            messages: [
-              { role: 'system', content: SYSTEM_PROMPT },
-              {
-                role: 'user',
-                content: `متنِ ناتمام: "${contextText}"\nفقط همان JSON را برگردان.`,
-              },
-            ],
-          }),
-          signal: AbortSignal.timeout(60000),
-        });
-
-        if (!response.ok) {
-          throw new Error(`خطای API (${response.status})`);
-        }
-
-        const data = await response.json();
-        const rawText = String(data.answer || data.text || '').trim();
-        const jsonMatch = rawText.match(/\[[\s\S]*\]/);
-        if (!jsonMatch) throw new Error('پاسخ مدل آرایه JSON نداشت');
-
-        const parsed = JSON.parse(jsonMatch[0]);
-        if (!Array.isArray(parsed)) throw new Error('ساختار JSON نامعتبر بود');
-
-        const predictions = parsed
-          .map((item) => ({
-            word: String(item.word || '').trim(),
-            prob: Number(item.prob),
-          }))
-          .filter(
-            (item) =>
-              item.word &&
-              Number.isFinite(item.prob) &&
-              item.prob >= 0 &&
-              item.prob <= 100
-          );
-        if (predictions.length !== 5)
-          throw new Error('پاسخ مدل پنج پیش‌بینی معتبر نداشت');
-        return predictions;
+        const response = await MinigameApi.respond(
+          'next-token-prediction',
+          'predict',
+          { prompt: contextText },
+          { timeoutMs: 60000 }
+        );
+        return response.data.predictions;
       }
 
       let words = []; // { text, type: 'seed' | 'user' | 'model' }

@@ -507,6 +507,8 @@
       </div>
     </div>
     <script src="config.js"></script>
+    <script src="../shared/config.js"></script>
+    <script src="../shared/api/client.js"></script>
     <script>
       // =====================================================
       // تنظیمات
@@ -514,7 +516,6 @@
       const CONFIG = window.JAILBREAK_CONFIG || {
         workerRoot: 'https://pretrained-llm-proxy.sepymeow.workers.dev',
       };
-      const API_URL = CONFIG.workerRoot.replace(/\/+$/, '') + '/jailbreak';
       // =====================================================
       // مراحل
       // =====================================================
@@ -747,35 +748,20 @@ GOLD-581
       // درخواست به Worker
       // =====================================================
       async function askGuard(levelNumber, signal) {
-        const config = LEVELS[levelNumber];
         const history = state.levels[levelNumber].messages;
-        const modelMessages = [
+        const response = await MinigameApi.respond(
+          'jailbreak',
+          'challenge',
           {
-            role: 'system',
-            content: config.prompt,
-          },
-          ...history.map((message) => ({
-            role: message.role,
-            content: message.text,
-          })),
-        ];
-        const response = await fetch(API_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
             level: levelNumber,
-            model: config.model,
-            temperature: config.temperature,
-            messages: modelMessages,
-          }),
-          signal: signal,
-        });
-        if (!response.ok) {
-          throw new Error('Worker error');
-        }
-        const data = await response.json();
+            messages: history.map((message) => ({
+              role: message.role,
+              content: message.text,
+            })),
+          },
+          { signal }
+        );
+        const data = response.data;
         const answer =
           data.answer || data.text || data.choices?.[0]?.message?.content;
         if (!answer) {
@@ -793,9 +779,7 @@ GOLD-581
           );
           console.log(
             '۲. تداوم مکالمه (حداقل ۳ پیام):',
-            data.checklist.hasMinMessages
-              ? `✅ تایید (${data.checklist.userCount} پیام)`
-              : `❌ ناموفق (${data.checklist.userCount || 0} پیام)`
+            data.checklist.isEngaged ? '✅ تایید' : '❌ ناموفق'
           );
           console.log(
             '۳. لحن داستانی و غیرمستقیم:',

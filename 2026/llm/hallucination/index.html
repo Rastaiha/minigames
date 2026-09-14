@@ -631,6 +631,8 @@
     </main>
 
     <script src="config.js?v=4"></script>
+    <script src="../shared/config.js"></script>
+    <script src="../shared/api/client.js"></script>
     <script>
       const CONFIG = window.HALLUCINATION_CONFIG || {
         workerRoot: 'https://minigames-backend.llmminigamesback.workers.dev',
@@ -857,37 +859,27 @@
       async function requestHallucination(lvl, userText, signal) {
         const state = gameState[lvl];
 
-        if (CONFIG.workerRoot) {
-          try {
-            const workerUrl = `${CONFIG.workerRoot.replace(/\/+$/, '')}/hallucination`;
-            const resp = await fetch(workerUrl, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                level: lvl,
-                messages: [
-                  ...state.messages.map((m) => ({
-                    role: m.role,
-                    content: m.text,
-                  })),
-                  { role: 'user', content: userText },
-                ],
-              }),
-              signal,
-            });
-
-            if (resp.ok) {
-              const data = await resp.json();
-              const resText = data.text || data.answer;
-              if (resText) return resText;
-            }
-          } catch (e) {
-            if (signal.aborted) throw e;
-            console.warn(
-              'Worker request failed, utilizing local simulation...',
-              e
-            );
-          }
+        try {
+          const response = await MinigameApi.respond(
+            'hallucination',
+            'challenge',
+            {
+              level: lvl,
+              messages: state.messages.map((m) => ({
+                role: m.role,
+                content: m.text,
+              })),
+            },
+            { signal }
+          );
+          const resText = response.data.text || response.data.answer;
+          if (resText) return resText;
+        } catch (e) {
+          if (signal.aborted) throw e;
+          console.warn(
+            'Worker request failed, utilizing local simulation...',
+            e
+          );
         }
 
         await new Promise((r) => setTimeout(r, 600));

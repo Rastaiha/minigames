@@ -572,21 +572,18 @@
     </main>
 
     <script src="config.js?v=1"></script>
+    <script src="../shared/config.js"></script>
+    <script src="../shared/api/client.js"></script>
     <script src="../random-generator.js?v=1"></script>
     <script>
-      const API_ROOT = String(
-        window.MODEL_API_ROOT ||
-          'https://pretrained-llm-proxy.sepymeow.workers.dev'
-      ).replace(/\/+$/, '');
-
       const MODELS = Object.freeze({
-        raw: { name: 'مدل خام', avatar: 'خ', route: '' },
-        base: { name: 'مدل پایه', avatar: 'پ', route: '/generate' },
-        sft: { name: 'مدل گفتگو', avatar: 'گ', route: '/generate-sft' },
+        raw: { name: 'مدل خام', avatar: 'خ', mode: null },
+        base: { name: 'مدل پایه', avatar: 'پ', mode: 'base' },
+        sft: { name: 'مدل گفتگو', avatar: 'گ', mode: 'sft' },
         aligned: {
           name: 'مدل همراه',
           avatar: 'هـ',
-          route: '/generate-aligned',
+          mode: 'aligned',
         },
       });
 
@@ -789,20 +786,6 @@
         );
       }
 
-      function getClientId() {
-        const storageKey = 'model-lab-client-id';
-        try {
-          let value = localStorage.getItem(storageKey);
-          if (!value) {
-            value = crypto.randomUUID();
-            localStorage.setItem(storageKey, value);
-          }
-          return value;
-        } catch {
-          return 'browser-session';
-        }
-      }
-
       function localBaseCompletion(text) {
         if (/(بنویس|بگو|معرفی کن|توضیح بده|فهرست کن)/.test(text)) {
           return ' و برای هر بخش، نمونه‌ای روشن و توضیحی کوتاه نیز اضافه کن تا متن کامل‌تر شود.';
@@ -895,25 +878,17 @@
       }
 
       async function requestCompletion(mode, text, signal) {
-        const route = MODELS[mode].route;
-        if (!route) return rawCompletion();
+        const operation = MODELS[mode].mode;
+        if (!operation) return rawCompletion();
 
         try {
-          const response = await fetch(API_ROOT + route, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-Client-Id': getClientId(),
-            },
-            body: JSON.stringify({ prompt: text }),
-            signal,
-          });
-
-          if (!response.ok) throw new Error(`API returned ${response.status}`);
-          const payload = await response.json();
-          const generated = String(
-            payload.text || payload.generated_text || ''
-          ).trim();
+          const response = await MinigameApi.respond(
+            'completion',
+            operation,
+            { prompt: text },
+            { signal }
+          );
+          const generated = String(response.data.text || '').trim();
           if (!generated) throw new Error('Empty generation');
           return generated;
         } catch (error) {
