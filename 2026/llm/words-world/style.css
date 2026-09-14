@@ -1,6 +1,14 @@
-@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600&display=swap');
+@font-face {
+  font-family: VazirLocal;
+  src: url('../fonts/vazir.ttf') format('truetype');
+  font-display: swap;
+}
 :root {
   color-scheme: dark;
+  --paper: #f7f8fc;
+  --surface: #ffffff;
+  --action: #5865d8;
+  --focus: #a9b4ff;
   --night: #080e20;
   --panel: #101a2d;
   --ink: #e7edf4;
@@ -8,7 +16,7 @@
   --gold: #e9c991;
   --blue: #8fbddd;
   --line: #bacde21f;
-  font-family: Vazirmatn, Tahoma, sans-serif;
+  font-family: VazirLocal, Tahoma, sans-serif;
   color: var(--ink);
   background: var(--night);
 }
@@ -35,7 +43,7 @@ button {
 button:focus-visible,
 a:focus-visible,
 canvas:focus-visible {
-  outline: 2px solid var(--gold);
+  outline: 2px solid var(--focus);
   outline-offset: 4px;
 }
 button {

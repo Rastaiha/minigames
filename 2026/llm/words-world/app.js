@@ -1,4 +1,5 @@
 import { nearest } from './data.js';
+import { COLORS, createBackground } from './scene-data.js';
 import wordData from './word-data.js';
 
 const $ = (id) => document.getElementById(id);
@@ -20,6 +21,7 @@ let camera = [0, 0, 180],
   flight = null,
   last = 0,
   elapsed = 0;
+let animationPaused = document.hidden;
 let toastTimer,
   dragging = null,
   joystick = [0, 0],
@@ -29,26 +31,7 @@ const number = (value, digits = 0) =>
   value.toLocaleString('fa-IR', { maximumFractionDigits: digits });
 let pointerLockUnavailable = !canvas.requestPointerLock;
 let gl, program, buffer, vertexData;
-const colors = [
-  [0.66, 0.8, 0.95],
-  [0.88, 0.78, 0.62],
-  [0.6, 0.71, 0.93],
-  [0.64, 0.87, 0.84],
-  [0.88, 0.87, 0.97],
-];
-const background = Array.from({ length: 700 }, (_, i) => {
-  const random = (n) => {
-    const v = Math.sin(n * 127.1 + 311.7) * 43758.5453;
-    return v - Math.floor(v);
-  };
-  const a = random(i + 1) * Math.PI * 2,
-    z = random(i + 800) * 2 - 1,
-    r = Math.sqrt(1 - z * z);
-  return {
-    p: [Math.cos(a) * r * 1800, z * 1800, Math.sin(a) * r * 1800],
-    brightness: random(i + 1500),
-  };
-});
+const background = createBackground();
 
 function toast(message, persistent = false) {
   clearTimeout(toastTimer);
@@ -232,6 +215,10 @@ function closeSelection() {
   neighbors = [];
 }
 function render(time) {
+  if (animationPaused) {
+    last = time;
+    return;
+  }
   const dt = Math.min((time - last) / 1000 || 0.016, 0.05);
   last = time;
   elapsed += dt;
@@ -285,7 +272,7 @@ function render(time) {
     if (!p.visible) continue;
     const active = i === selectedIndex || linked.has(i),
       size = active ? 22 : Math.max(3, Math.min(14, 650 / p.z));
-    push(p, active ? [1, 0.83, 0.53] : colors[i % colors.length], size);
+    push(p, active ? [1, 0.83, 0.53] : COLORS[i % COLORS.length], size);
   }
   gl.clear(gl.COLOR_BUFFER_BIT);
   gl.bufferData(
@@ -516,7 +503,11 @@ function clearInputs() {
   $('joystick-knob').style.transform = '';
 }
 window.addEventListener('blur', clearInputs);
-document.addEventListener('visibilitychange', clearInputs);
+document.addEventListener('visibilitychange', () => {
+  clearInputs();
+  animationPaused = document.hidden;
+  if (!animationPaused) requestAnimationFrame(render);
+});
 let stickPointer = null;
 function updateStick(e) {
   const r = $('joystick').getBoundingClientRect(),
