@@ -148,8 +148,9 @@
   </div>
 </div>
 
+<script src="../shared/config.js"></script>
+<script src="../shared/api/client.js"></script>
 <script>
-  const GROQ_API_KEY = "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";
 
   // دیتابیس پیش‌فرض برای اطمینان ۱۰۰٪ سر کلاس در هر شرایطی
   const PRESET_DEFAULTS = {
@@ -262,23 +263,13 @@
     let finalTargetProb = null;
 
     try {
-      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${GROQ_API_KEY}`
-        },
-        body: JSON.stringify({
-          model: "qwen/qwen3.6-27b",
-          messages: [{ role: "user", content: cleanPrompt }],
-          temperature: 0.1,
-          max_tokens: 120
-        })
+      const resData = await MinigameApi.request('jailbreak', {
+        level: 1,
+        messages: [{ role: 'user', content: cleanPrompt }]
       });
-
-      if (response.ok) {
-        const resData = await response.json();
-        const text = resData.choices[0].message.content.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+      const text = String(resData.answer || resData.text || '')
+        .replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+      if (text) {
         const lines = text.split('\n');
 
         for (let line of lines) {
@@ -298,7 +289,7 @@
         }
       }
     } catch (e) {
-      console.warn("Groq online fetch failed, using fallback:", e);
+      // The preset response keeps the workshop usable when the Worker is unavailable.
     }
 
     // اگر مدل پاسخ نداد یا فرمت ناقص بود، فوراً از دیتابیس دقیق پیش‌فرض استفاده کن

@@ -335,11 +335,9 @@
   </main>
 
   <script src="config.js?v=1"></script>
+  <script src="../shared/config.js"></script>
+  <script src="../shared/api/client.js"></script>
   <script>
-    const API_URL = String(
-      window.PRETRAINED_MODEL_API_URL ||
-      "https://pretrained-llm-proxy.sepymeow.workers.dev/generate-sft"
-    ).trim();
     const messages = document.querySelector("#messages");
     const composer = document.querySelector("#composer");
     const promptInput = document.querySelector("#prompt");
@@ -390,20 +388,6 @@
       return text.replace(/ي/g, "ی").replace(/ك/g, "ک").replace(/[ \t]+/g, " ").trim();
     }
 
-    function getClientId() {
-      const storageKey = "sft-model-client-id";
-      try {
-        let value = localStorage.getItem(storageKey);
-        if (!value) {
-          value = crypto.randomUUID();
-          localStorage.setItem(storageKey, value);
-        }
-        return value;
-      } catch {
-        return "browser-session";
-      }
-    }
-
     function localCompletion(rawPrompt) {
       const text = normalise(rawPrompt);
       const known = knownAnswers.find((item) => item.pattern.test(text));
@@ -436,21 +420,8 @@
     }
 
     async function requestCompletion(text, signal) {
-      if (!API_URL) return localCompletion(text);
-
       try {
-        const response = await fetch(API_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Client-Id": getClientId()
-          },
-          body: JSON.stringify({ prompt: text }),
-          signal
-        });
-
-        if (!response.ok) throw new Error(`API returned ${response.status}`);
-        const payload = await response.json();
+        const payload = await MinigameApi.request("generate-sft", { prompt: text }, { signal });
         const generated = String(payload.text || payload.generated_text || "").trim();
         if (!generated) throw new Error("Empty generation");
         return generated;
