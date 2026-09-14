@@ -47,7 +47,7 @@ These items are intentionally listed separately from the historical commit log a
 - **Complete:** `random-generator.js` retains Web Crypto entropy by default and exposes an opt-in seeded mode; `random-generator.test.mjs` covers repeatability, bounds, seed variation, and punctuation metadata.
 - **Complete:** refreshed backend README guidance to the active Worker/gateway contract and added mocked timeout, fallback exhaustion, and malformed-message coverage.
 - Run browser smoke tests over HTTP at desktop and narrow mobile widths for every active entry page, including keyboard/touch interaction, reduced motion, hidden-tab animation pause, reset/stop behavior, stale-response cancellation, and mocked API failure states. Record the results in this plan.
-- Run the pre-commit hooks in CI and before deployment, then perform a final diff/credential/API-boundary review.
+- **Complete:** added `.github/workflows/llm-checks.yml` for push/PR validation, including repository checks and all pre-commit hooks; removed the Worker deployment credential fallback.
 
 ## Repository-wide target architecture
 
