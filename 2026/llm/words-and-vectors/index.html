@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>پیتزا، همبرگر، قورمه‌سبزی، فرانسه</title>
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100svh;
+        display: grid;
+        place-items: center;
+        background: #fff;
+        color: #202530;
+      }
+      main {
+        width: min(800px, 100%);
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: clamp(6px, 2vw, 24px);
+        padding: 48px 12px;
+        text-align: center;
+      }
+      h1 {
+        margin: 0 0 32px;
+        font: 500 clamp(17px, 3vw, 32px)/1.8 Tahoma, Arial, sans-serif;
+        white-space: nowrap;
+      }
+      .vector {
+        direction: ltr;
+        display: grid;
+        gap: 18px;
+        position: relative;
+        width: fit-content;
+        margin: auto;
+        padding: 14px clamp(8px, 2vw, 24px);
+        font: 400 clamp(18px, 3vw, 30px)/1.3 "Courier New", monospace;
+        font-variant-numeric: tabular-nums;
+      }
+      .vector::before, .vector::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 8px;
+        border-block: 3px solid #000;
+      }
+      .vector::before { left: 0; border-left: 3px solid #000; }
+      .vector::after { right: 0; border-right: 3px solid #000; }
+      .positive { color: #1763c4; }
+      .negative { color: #c43232; }
+      .ellipsis { color: #687080; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section>
+        <h1>پیتزا</h1>
+        <div class="vector">
+          <span class="positive">1.23</span>
+          <span class="positive">0.83</span>
+          <span class="negative">-0.67</span>
+          <span class="negative">-1.04</span>
+          <span class="ellipsis">⋮</span>
+        </div>
+      </section>
+      <section>
+        <h1>همبرگر</h1>
+        <div class="vector">
+          <span class="positive">1.18</span>
+          <span class="positive">0.91</span>
+          <span class="negative">-0.72</span>
+          <span class="negative">-0.98</span>
+          <span class="ellipsis">⋮</span>
+        </div>
+      </section>
+      <section>
+        <h1>قورمه‌سبزی</h1>
+        <div class="vector">
+          <span class="positive">1.06</span>
+          <span class="negative">-0.58</span>
+          <span class="positive">0.87</span>
+          <span class="negative">-0.93</span>
+          <span class="ellipsis">⋮</span>
+        </div>
+      </section>
+      <section>
+        <h1>فرانسه</h1>
+        <div class="vector">
+          <span class="positive">0.79</span>
+          <span class="negative">-1.17</span>
+          <span class="positive">1.07</span>
+          <span class="negative">-0.69</span>
+          <span class="ellipsis">⋮</span>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
