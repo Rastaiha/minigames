@@ -665,10 +665,10 @@ function renderRequestPackets(req, now) {
         });
     }
 
-    req.pathEdges.forEach((edge, idx) => {
-        const isActive = activeLinks.has(idx);
-        edge.dom.classList.toggle('idle', !isActive);
-        if (edge.idleLabel) edge.idleLabel.classList.toggle('visible', !isActive);
+    const isPathIdle = activeLinks.size === 0;
+    req.pathEdges.forEach(edge => {
+        edge.dom.classList.toggle('idle', isPathIdle);
+        if (edge.idleLabel) edge.idleLabel.classList.toggle('visible', isPathIdle);
     });
 }
 
