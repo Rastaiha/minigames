@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="fa" dir="rtl">
-<head>
+  <head>
     <link rel="stylesheet" href="../shared/ui/tokens.css" />
     <link rel="stylesheet" href="../shared/ui/shells.css" />
     <meta charset="UTF-8" />
@@ -67,6 +67,25 @@
         border-radius: 7px;
         pointer-events: none;
       }
+      .load-state {
+        position: fixed;
+        inset: 0;
+        z-index: 20;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: #f5f5f5;
+        color: #182033;
+        text-align: center;
+        transition: opacity 240ms ease;
+      }
+      .load-state[hidden] {
+        opacity: 0;
+        pointer-events: none;
+      }
+      .load-state.error {
+        color: #9f3047;
+      }
       @media (prefers-reduced-motion: reduce) {
         button {
           transition: none !important;
@@ -76,6 +95,9 @@
   </head>
   <body>
     <div id="app">
+      <div id="loadState" class="load-state" role="status" aria-live="polite">
+        در حال آماده‌سازی فضای سه‌بعدی…
+      </div>
       <div class="controls">
         <button id="btn2d" type="button">۲بعدی</button>
         <button id="btn1d" type="button">۱بعدی</button>
@@ -97,6 +119,8 @@
     </script>
 
     <script type="module">
+      // Three.js is intentionally loaded from jsDelivr: this page has no build
+      // step and the CDN keeps the standalone workshop URL lightweight.
       import * as THREE from 'three';
       import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
@@ -105,10 +129,15 @@
         worldSpread: 9,
         radius: 0.28,
         flatRadius: 0.28,
-        transitionDuration: 1000,
+        transitionDuration: window.matchMedia(
+          '(prefers-reduced-motion: reduce)'
+        ).matches
+          ? 0
+          : 1000,
       };
 
       const app = document.getElementById('app');
+      const loadState = document.getElementById('loadState');
       const hint = document.getElementById('hint');
       const scene = new THREE.Scene();
       scene.background = new THREE.Color(0xf5f5f5);
@@ -117,6 +146,7 @@
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       renderer.setSize(window.innerWidth, window.innerHeight);
       app.prepend(renderer.domElement);
+      loadState.hidden = true;
 
       const perspectiveCamera = new THREE.PerspectiveCamera(
         45,
@@ -324,7 +354,7 @@
           planeDistance,
         };
         mode = 'transition2d';
-        hint.textContent = 'Flattening to 2D…';
+        hint.textContent = 'در حال تخت‌کردن فضا به ۲بعدی…';
       }
 
       function begin2DTo1D() {
@@ -357,7 +387,7 @@
           duration: CONFIG.transitionDuration,
         };
         mode = 'transition1d';
-        hint.textContent = 'Collapsing to 1D…';
+        hint.textContent = 'در حال فشرده‌کردن فضا به ۱بعدی…';
       }
 
       function resetTo3D() {
@@ -377,7 +407,7 @@
         configure3DControls();
         controls.update();
         hint.textContent =
-          '3D: drag to rotate · right-drag to pan · wheel to zoom';
+          '۳بعدی: کشیدن برای چرخش · کشیدن راست برای جابه‌جایی · چرخ برای بزرگ‌نمایی';
       }
 
       function pointerAngleFromScreenCenter(event) {
@@ -578,6 +608,25 @@
       window.addEventListener('resize', onResize);
       resetTo3D();
       requestAnimationFrame(animate);
+    </script>
+    <script>
+      window.addEventListener('error', (event) => {
+        const state = document.getElementById('loadState');
+        if (!state || state.hidden || !event.filename) return;
+        state.hidden = false;
+        state.classList.add('error');
+        state.textContent =
+          'فضای سه‌بعدی بارگذاری نشد. اتصال اینترنت را بررسی و صفحه را دوباره باز کن.';
+      });
+      window.addEventListener('unhandledrejection', (event) => {
+        const state = document.getElementById('loadState');
+        if (!state) return;
+        state.hidden = false;
+        state.classList.add('error');
+        state.textContent =
+          'کتابخانهٔ سه‌بعدی در دسترس نیست. صفحه را دوباره باز کن.';
+        event.preventDefault();
+      });
     </script>
   </body>
 </html>

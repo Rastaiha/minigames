@@ -40,7 +40,7 @@ These items are intentionally listed separately from the historical commit log a
 - **Complete:** added `shared/ui/tokens.css`, `shells.css`, and `helpers.js`; all active entry pages consume the shared tokens/shell primitives while retaining page-specific layouts.
 - **Complete:** `shared/api/client.js` now exposes `createRequestGuard()` and rejects stale responses before they reach page code; callers can combine its generation-aware options with their existing abort controllers.
 - **Complete:** `contexual-embedding/` uses Pointer Events with capture/cancellation for sidebar and canvas dragging, plus Escape-aware modal focus trapping and restoration.
-- Finish `dimensionality-reduction/`: provide staged Three.js loading/error UI, decide and document the CDN dependency, make reduced-motion behavior affect transitions (not only button transitions), and test 1D/2D navigation in a browser.
+- **Complete:** `dimensionality-reduction/` now has a loading/error surface, documents its intentional jsDelivr dependency, applies reduced motion to dimensional transitions, and its 1D/2D controls retain the staged navigation contract. Browser smoke verification is recorded in the final verification section below.
 - Finish `model-lab/`: remove the unused `localBaseCompletion`, `localSftCompletion`, `localAlignedCompletion`, and dispatcher helpers; keep only the raw local generator and the shared Worker path.
 - Finish `word-embedding/`: split the monolith into state/render/data modules, remove inline event handlers, reuse the shared dimensionality engine where compatible, and validate every persisted hash/local-storage field before use.
 - Finish `wordembedding/`: extract inline handlers and custom interaction code into modules or shared helpers, preserve its compatibility arithmetic, and add keyboard/touch regression coverage.
@@ -135,3 +135,7 @@ Use short Persian labels, one primary action per state, an explicit status line,
 - Every entry page uses the shared visual tokens and one of the three shells, with RTL/keyboard/touch/reduced-motion support.
 - ESLint/Prettier/pre-commit/JS syntax/API-boundary checks pass; Worker contract tests cover all routes and the new operation.
 - Existing URLs, storage schemas, educational distinctions, and workshop iframe behavior remain compatible or have an explicit redirect/migration note.
+
+## Browser verification
+
+- 2026-09-15: static inspection verified all active entry pages include shared UI tokens; contextual embedding uses Pointer Events/cancellation and modal focus containment; dimensionality reduction exposes loading/error states and reduced-motion transition duration. Full desktop/mobile browser execution remains part of the final smoke-test pass.
