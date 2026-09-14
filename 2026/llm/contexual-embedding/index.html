@@ -4,24 +4,24 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>بازی خوشه‌بندی معنایی کلمات</title>
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/gh/rastikerdar/peyda-font@v1.0.1/dist/font-face.css"
-    />
-
     <style>
+      @font-face {
+        font-family: Vazir;
+        src: url('../fonts/vazir.ttf') format('truetype');
+        font-display: swap;
+      }
       * {
         box-sizing: border-box;
         margin: 0;
         padding: 0;
-        font-family: 'Peyda', sans-serif;
+        font-family: Vazir, Tahoma, sans-serif;
         user-select: none;
       }
 
       body {
         background-color: #0b0f19;
         color: #f8fafc;
-        height: 100vh;
+        min-height: 100dvh;
         display: flex;
         overflow: hidden;
       }
@@ -110,6 +110,7 @@
       .sidebar-token {
         border-radius: 10px;
         padding: 8px 14px;
+        min-height: 44px;
         font-size: 14px;
         cursor: grab;
         border: 1px dashed rgba(255, 255, 255, 0.25);
@@ -189,6 +190,7 @@
       .token {
         position: absolute;
         padding: 8px 18px;
+        min-height: 44px;
         border-radius: 12px;
         font-size: 15px;
         font-weight: 500;
@@ -225,6 +227,20 @@
         border: 2px dashed #94a3b8;
         font-weight: bold;
         box-shadow: 0 0 20px rgba(148, 163, 184, 0.25);
+      }
+      button:focus-visible,
+      .sidebar-token:focus-visible,
+      .token:focus-visible {
+        outline: 3px solid #fbbf24;
+        outline-offset: 3px;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          transition-duration: 0.01ms !important;
+        }
       }
 
       /* مدال / پاپ‌آپ پایان */
@@ -327,9 +343,15 @@
       </div>
     </div>
 
-    <div class="modal-overlay" id="finishModal">
+    <div
+      class="modal-overlay"
+      id="finishModal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="finishTitle"
+    >
       <div class="modal-card">
-        <h2>🎉 آفرین به تو!</h2>
+        <h2 id="finishTitle">🎉 آفرین به تو!</h2>
         <p>
           تو تمام مراحل خوشه‌بندی معنایی کلمات رو با موفقیت به پایان رسوندی!
           حالا می‌تونی از مرحله اول دونه‌دونه چیدمان‌ها و پاسخ‌هات رو چک کنی.
@@ -615,6 +637,9 @@
         const el = document.createElement('div');
         el.className = 'sidebar-token';
         el.innerText = word;
+        el.tabIndex = 0;
+        el.setAttribute('role', 'button');
+        el.setAttribute('aria-label', `${word}؛ برای قرار دادن Enter بزن`);
         el.dataset.clusterName = clusterData.name;
         el.dataset.clusterColor = clusterData.color;
         el.dataset.clusterBg = clusterData.bg;
@@ -690,12 +715,32 @@
           window.addEventListener('mousemove', onMouseMove);
           window.addEventListener('mouseup', onMouseUp);
         });
+        el.addEventListener('keydown', (event) => {
+          if (!['Enter', ' '].includes(event.key)) return;
+          event.preventDefault();
+          createCanvasToken(
+            el.innerText,
+            canvasSpace.clientWidth / 2,
+            canvasSpace.clientHeight / 2,
+            {
+              name: el.dataset.clusterName,
+              color: el.dataset.clusterColor,
+              bg: el.dataset.clusterBg,
+              border: el.dataset.clusterBorder,
+            }
+          );
+          el.remove();
+          updateControlsVisibility();
+        });
       }
 
       function createCanvasToken(text, x, y, clusterData, isPivot = false) {
         const el = document.createElement('div');
         el.className = `token ${isPivot ? 'pivot' : ''}`;
         el.innerText = text;
+        el.tabIndex = 0;
+        el.setAttribute('role', 'button');
+        el.setAttribute('aria-label', `${text}؛ با کلیدهای جهت جابه‌جا کن`);
         el.style.left = `${Math.max(10, x)}px`;
         el.style.top = `${Math.max(10, y)}px`;
 
@@ -793,6 +838,35 @@
         };
 
         el.addEventListener('mousedown', onMouseDown);
+        el.addEventListener('keydown', (event) => {
+          if (event.key === 'Delete' || event.key === 'Backspace') {
+            if (!isPivot) {
+              addWordToSidebar(el.innerText, {
+                name: el.dataset.clusterName,
+                color: el.dataset.clusterColor,
+                bg: el.dataset.clusterBg,
+                border: el.dataset.clusterBorder,
+              });
+              el.remove();
+              updateControlsVisibility();
+            }
+            return;
+          }
+          const step = event.shiftKey ? 24 : 8;
+          const moves = {
+            ArrowLeft: [-step, 0],
+            ArrowRight: [step, 0],
+            ArrowUp: [0, -step],
+            ArrowDown: [0, step],
+          };
+          const move = moves[event.key];
+          if (!move) return;
+          event.preventDefault();
+          el.style.left = `${el.offsetLeft + move[0]}px`;
+          el.style.top = `${el.offsetTop + move[1]}px`;
+          const pivot = document.getElementById('pivotElement');
+          if (pivot) updatePivotColor(pivot);
+        });
       }
 
       function updatePivotColor(pivotEl) {
@@ -880,6 +954,7 @@
         } else {
           // نمایش پاپ‌آپ پایان بازی
           finishModal.classList.add('active');
+          reviewAnswersBtn.focus();
         }
       });
 
