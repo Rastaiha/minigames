@@ -14,6 +14,9 @@ Completed and pushed:
 - `01f354b`: migrated `pretrained-llm`, `sft-llm`, and `rlhf-llm` to the shared Worker client; removed direct provider browser branches before archiving legacy pages.
 - `f0ccd1a`: replaced the proposed Ruff setup with ESLint 9, Prettier 3, `.editorconfig`, `.pre-commit-config.yaml`, and npm scripts/configuration.
 - `2e42df9`: ran Prettier over all eligible repository HTML/CSS/JavaScript/JSON/Markdown sources and fixed the small ESLint issues found in shared/transformer code.
+- `567e1b9`: added the versioned `/api/respond` Worker contract, structured next-token operation, shared client cancellation, and migrated the pretrained/SFT/aligned chat pages.
+- `ea440d8`: migrated `model-lab`, `jailbreak`, `hallucination`, and `next-token-prediction2` to the shared client and contract.
+- `960f7e8`: added mocked Worker contract tests for validation, CORS, rate limits, adapters, structured output, and safe upstream errors.
 
 Current checks pass when dependencies are installed with `npm install --ignore-scripts`:
 
@@ -25,7 +28,7 @@ This runs ESLint, Prettier check, the browser API-boundary scan, and JavaScript 
 
 The legacy `jailbreak-old`, `next-token-prediction`, and `llm2.html` entries are preserved unchanged under `archive/`; they are no longer active minigame entry points or part of the cleanup backlog.
 
-Remaining work starts with the shared `/api/respond` Worker contract and client migration. Then migrate the remaining model-backed pages (`model-lab`, `jailbreak`, `hallucination`, `next-token-prediction2`), add Worker contract tests, and continue the visual/accessibility work itemized in the game table below. Do not undo existing URL spellings, storage keys, or the direct-provider removals.
+Remaining work continues with the Worker split into routing, validation, gateway, policy, and per-game handler modules, followed by the visual/accessibility work itemized in the game table below. Do not undo existing URL spellings, storage keys, or the direct-provider removals.
 
 ## Repository-wide target architecture
 
@@ -99,9 +102,9 @@ Use short Persian labels, one primary action per state, an explicit status line,
 
 ## Delivery sequence
 
-1. Land this plan and repository tooling/boundary guard.
-2. Remove direct-provider and alternate-server branches; migrate legacy model clients to the shared compatibility client.
-3. Add Worker `/api/respond`, tests, and refreshed documentation.
+1. Land this plan and repository tooling/boundary guard. **Complete.**
+2. Remove direct-provider and alternate-server branches; migrate legacy model clients to the shared compatibility client. **Complete for active model-backed pages.**
+3. Add Worker `/api/respond`, tests, and refreshed documentation. **Contract and tests complete; Worker module split remains.**
 4. Migrate the chat family, then challenge/next-token, then visual families using the shared shell and tokens.
 5. Refactor duplicated dimensionality/transformer/embedding engines and workshop assets.
 6. Run browser smoke tests at desktop/mobile widths, keyboard/touch checks, mocked API failure tests, hooks, and final diff review.
