@@ -1,4 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap');
+@font-face {
+  font-family: Vazir;
+  src: url('../fonts/vazir.ttf') format('truetype');
+  font-display: swap;
+}
 
 :root {
   --ink: #293346;
@@ -6,7 +10,7 @@
   --paper: #f7f8fc;
   --purple: #6263d9;
   --line: #e5e8f0;
-  font-family: Vazirmatn, Tahoma, sans-serif;
+  font-family: Vazir, Tahoma, sans-serif;
   color: var(--ink);
   background: var(--paper);
   font-synthesis: none;
@@ -51,6 +55,7 @@ a {
   background: white;
   padding: 9px 15px;
   font-size: 12px;
+  min-height: 44px;
 }
 .reset-button:hover {
   background: #f2f2fb;

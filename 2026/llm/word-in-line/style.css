@@ -15,6 +15,14 @@
   background: var(--paper);
   font-synthesis: none;
 }
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
 * {
   box-sizing: border-box;
 }
@@ -59,7 +67,7 @@ p {
   border-radius: 8px;
   padding: 8px 12px;
   font-size: 12px;
-  min-height: 38px;
+  min-height: 44px;
 }
 .control:hover {
   border-color: var(--accent);
