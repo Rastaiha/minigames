@@ -4,12 +4,14 @@
   "scripts": {
     "check:api-boundary": "node scripts/check-api-boundary.mjs",
     "check:js": "node scripts/check-js-syntax.mjs",
+    "test:browser": "node scripts/browser-smoke.mjs",
+    "test:games": "node --test random-generator.test.mjs pretraining-box/logic.test.mjs word-in-line/layout.test.mjs word-in-space/layout.test.mjs wordembedding/interaction.test.mjs words-world/data.test.mjs",
     "test:worker": "node --test minigames-backend/test/*.test.js",
     "lint": "eslint . --fix",
     "lint:check": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check": "npm run lint:check && npm run format:check && npm run check:api-boundary && npm run check:js && npm run test:worker"
+    "check": "npm run lint:check && npm run format:check && npm run check:api-boundary && npm run check:js && npm run test:games && npm run test:worker"
   },
   "devDependencies": {
     "@eslint/js": "^9.34.0",

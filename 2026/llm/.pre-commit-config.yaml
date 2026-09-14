@@ -3,16 +3,16 @@ repos:
     hooks:
       - id: lint
         name: ESLint
-        entry: npm run lint:check --
+        entry: npm --prefix 2026/llm run lint:check --
         language: system
         pass_filenames: false
       - id: format
         name: Prettier
-        entry: npm run format:check --
+        entry: npm --prefix 2026/llm run format:check --
         language: system
         pass_filenames: false
       - id: api-boundary
         name: browser API boundary
-        entry: node scripts/check-api-boundary.mjs
+        entry: npm --prefix 2026/llm run check:api-boundary --
         language: system
         pass_filenames: false

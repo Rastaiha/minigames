@@ -236,6 +236,34 @@
         outline: 3px solid #fbbf24;
         outline-offset: 3px;
       }
+      @media (max-width: 700px) {
+        body {
+          flex-direction: column;
+        }
+        .canvas-space {
+          order: 1;
+          width: 100%;
+          min-height: 0;
+        }
+        .sidebar {
+          order: 2;
+          width: 100%;
+          height: min(42dvh, 320px);
+          flex: 0 0 auto;
+          padding: 12px;
+          gap: 8px;
+          border-top: 1px solid rgba(255, 255, 255, 0.1);
+          border-left: 0;
+          box-shadow: 0 -5px 25px rgba(0, 0, 0, 0.45);
+        }
+        .sidebar-desc {
+          font-size: 12px;
+          line-height: 1.55;
+        }
+        .sidebar-tokens {
+          padding-top: 2px;
+        }
+      }
       @media (prefers-reduced-motion: reduce) {
         *,
         *::before,

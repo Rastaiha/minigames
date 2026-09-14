@@ -42,6 +42,14 @@ body {
   min-height: var(--touch-target);
 }
 
+:where(button, select, [role='button']) {
+  min-inline-size: var(--touch-target);
+}
+
+:where(select, [role='button']) {
+  min-block-size: var(--touch-target);
+}
+
 .mg-status {
   color: var(--ink-muted);
   font-size: 0.84rem;
