@@ -19,14 +19,15 @@ Completed and pushed:
 - `960f7e8`: added mocked Worker contract tests for validation, CORS, rate limits, adapters, structured output, and safe upstream errors.
 - `26640a2`: split Worker HTTP/CORS, routing, gateway, and contract-validation boundaries; removed the embedded gateway credential fallback.
 - Follow-up cleanup: extracted `Dimensions/` into one shared dimensionality engine with separate 1D/2D/3D configuration files.
+- `a3b144f`: installed the ESLint/Prettier toolchain, fixed the remaining lint/format issues, completed the Worker policy/handler split, and pushed the current checks.
 
-Current checks pass when dependencies are installed with `npm install --ignore-scripts`:
+Current checks pass after installing dependencies with `npm ci`:
 
 ```
 npm run check
 ```
 
-This runs ESLint, Prettier check, the browser API-boundary scan, and JavaScript syntax checks. Generated embedding data (`words-world/data.js`, `words-world/word-data.js`), archived material under `archive/`, and `AGENTS.md` are excluded from active checks. `AGENTS.md` is user-provided and intentionally remains untracked.
+This runs ESLint, Prettier check, the browser API-boundary scan, JavaScript syntax checks, and the Worker tests. ESLint and the API-boundary/syntax scripts exclude archived material and backend-specific paths where appropriate; Prettier checks repository Markdown, including this file. Generated embedding data remains checked as JavaScript, with the existing `words.js` unused-variable override. `AGENTS.md` is tracked repository guidance.
 
 The legacy `jailbreak-old`, `next-token-prediction`, and `llm2.html` entries are preserved unchanged under `archive/`; they are no longer active minigame entry points or part of the cleanup backlog.
 
@@ -67,9 +68,9 @@ The compatibility routes remain available while clients migrate, but new code us
 ## Backend work
 
 - **Complete:** Split `minigames-backend/src/index.js` into routing, validation, gateway, policy, and per-game handlers while preserving the six compatibility routes.
-- Add `/api/respond` with strict content type, payload size, message-schema, level/mode validation, CORS, client-id validation, and rate limiting on every model-backed operation.
-- Keep model/system/temperature/reasoning settings server-owned. Add a dedicated structured next-token operation and preserve the level-2 jailbreak checklist shape.
-- Add mocked unit tests for malformed input, all success/error paths, upstream timeouts, fallback chains, CORS, and sensitive-error redaction. Refresh README and examples to match the active Worker contract; never add credentials or hardcoded fallbacks.
+- **Complete:** Add `/api/respond` with strict content type, payload size, message-schema, level/mode validation, CORS, client-id validation, and rate limiting on every model-backed operation.
+- **Complete:** Keep model/system/temperature/reasoning settings server-owned, add a dedicated structured next-token operation, and preserve the level-2 jailbreak checklist shape.
+- **Complete for the current contract:** Add mocked unit tests for malformed input, success/error paths, CORS, rate limits, adapters, structured output, and sensitive-error redaction. Upstream timeout/fallback-chain coverage and README/example refresh remain follow-up work; never add credentials or hardcoded fallbacks.
 
 ## Visual and interaction migration
 
