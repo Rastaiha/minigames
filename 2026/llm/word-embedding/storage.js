@@ -51,7 +51,7 @@
             : '',
         placedNodes: placedNodes,
       };
-    } catch (error) {
+    } catch {
       return null;
     }
   }
@@ -59,7 +59,7 @@
   function write(key, value) {
     try {
       global.localStorage.setItem(key, JSON.stringify(value));
-    } catch (error) {
+    } catch {
       // Persistence is optional; the workshop remains usable in private mode.
     }
   }
@@ -67,7 +67,7 @@
   function remove(key) {
     try {
       global.localStorage.removeItem(key);
-    } catch (error) {
+    } catch {
       // Ignore storage failures during reset.
     }
   }

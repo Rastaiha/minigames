@@ -46,7 +46,7 @@ These items are intentionally listed separately from the historical commit log a
 - Finish `wordembedding/`: extract inline handlers and custom interaction code into modules or shared helpers, preserve its compatibility arithmetic, and add keyboard/touch regression coverage.
 - **Complete:** `random-generator.js` retains Web Crypto entropy by default and exposes an opt-in seeded mode; `random-generator.test.mjs` covers repeatability, bounds, seed variation, and punctuation metadata.
 - **Complete:** refreshed backend README guidance to the active Worker/gateway contract and added mocked timeout, fallback exhaustion, and malformed-message coverage.
-- Run browser smoke tests over HTTP at desktop and narrow mobile widths for every active entry page, including keyboard/touch interaction, reduced motion, hidden-tab animation pause, reset/stop behavior, stale-response cancellation, and mocked API failure states. Record the results in this plan.
+- **Partial:** static HTTP-facing checks and repository-wide API/syntax checks pass. Browser executables are not installed in this environment, so desktop/mobile interaction, hidden-tab animation, and visual failure-state checks remain for an environment with a browser runner.
 - **Complete:** added `.github/workflows/llm-checks.yml` for push/PR validation, including repository checks and all pre-commit hooks; removed the Worker deployment credential fallback.
 
 ## Repository-wide target architecture
@@ -138,4 +138,4 @@ Use short Persian labels, one primary action per state, an explicit status line,
 
 ## Browser verification
 
-- 2026-09-15: static inspection verified all active entry pages include shared UI tokens; contextual embedding uses Pointer Events/cancellation and modal focus containment; dimensionality reduction exposes loading/error states and reduced-motion transition duration. Full desktop/mobile browser execution remains part of the final smoke-test pass.
+- 2026-09-15: static inspection verified all active entry pages include shared UI tokens; contextual embedding uses Pointer Events/cancellation and modal focus containment; dimensionality reduction exposes loading/error states and reduced-motion transition duration. `npm run check` passes, including API-boundary, syntax, formatting, lint, and 12 Worker contract tests. Full desktop/mobile browser execution is blocked by the absence of a browser executable.
