@@ -9,7 +9,10 @@ vm.runInNewContext(`${source}; this.words = words;`, context);
 
 test('word ids and labels are stable for the v1 layout', () => {
   assert.equal(context.words.length, 9);
-  assert.equal(new Set(context.words.map(({ id }) => id)).size, context.words.length);
+  assert.equal(
+    new Set(context.words.map(({ id }) => id)).size,
+    context.words.length
+  );
   assert.ok(context.words.every(({ id, text }) => id && text));
 });
 
