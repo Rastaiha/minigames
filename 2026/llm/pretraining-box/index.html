@@ -537,7 +537,7 @@
             <div class="results-content">
               <div class="results-heading">
                 <strong>احتمال توکن بعدی</strong>
-                <span>مجموع ۱۰۰٪</span>
+                <span>شبیه‌سازی آموزشی · مجموع ۱۰۰٪</span>
               </div>
               <div class="probability-list" id="probabilityList"></div>
               <div class="truth-row">
@@ -561,7 +561,9 @@
       </section>
     </main>
 
-    <script>
+    <script type="module">
+      import { softmax, trainLogits } from './logic.js';
+
       const EXAMPLES = Object.freeze([
         {
           prompt: 'توانا بود هر که دانا',
@@ -627,13 +629,6 @@
         return new Promise((resolve) => setTimeout(resolve, milliseconds));
       }
 
-      function softmax(values) {
-        const maximum = Math.max(...values);
-        const exponentials = values.map((value) => Math.exp(value - maximum));
-        const total = exponentials.reduce((sum, value) => sum + value, 0);
-        return exponentials.map((value) => value / total);
-      }
-
       function formatNumber(value) {
         return value.toLocaleString('fa-IR');
       }
@@ -679,6 +674,7 @@
           const tag = document.createElement('span');
           tag.className = 'target-tag';
           tag.textContent = 'توکن واقعی';
+          tag.hidden = !isTarget;
 
           const delta = document.createElement('span');
           delta.className = 'delta' + (change < 0 ? ' negative' : '');
@@ -761,9 +757,7 @@
         const targetIndex = example.candidates.indexOf(example.target);
         await delay(900);
 
-        logits = logits.map((logit, index) =>
-          index === targetIndex ? logit + LEARNING_STEP : logit
-        );
+        logits = trainLogits(logits, targetIndex, LEARNING_STEP);
 
         const after = softmax(logits);
         probabilityChanges = after.map(
