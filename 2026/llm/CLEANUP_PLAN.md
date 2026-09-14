@@ -39,7 +39,7 @@ These items are intentionally listed separately from the historical commit log a
 
 - **Complete:** added `shared/ui/tokens.css`, `shells.css`, and `helpers.js`; all active entry pages consume the shared tokens/shell primitives while retaining page-specific layouts.
 - **Complete:** `shared/api/client.js` now exposes `createRequestGuard()` and rejects stale responses before they reach page code; callers can combine its generation-aware options with their existing abort controllers.
-- Finish `contexual-embedding/`: replace the remaining mouse-only drag handlers with Pointer Events and pointer capture; support touch dragging and cancellation; add a real modal focus trap and focus restoration.
+- **Complete:** `contexual-embedding/` uses Pointer Events with capture/cancellation for sidebar and canvas dragging, plus Escape-aware modal focus trapping and restoration.
 - Finish `dimensionality-reduction/`: provide staged Three.js loading/error UI, decide and document the CDN dependency, make reduced-motion behavior affect transitions (not only button transitions), and test 1D/2D navigation in a browser.
 - Finish `model-lab/`: remove the unused `localBaseCompletion`, `localSftCompletion`, `localAlignedCompletion`, and dispatcher helpers; keep only the raw local generator and the shared Worker path.
 - Finish `word-embedding/`: split the monolith into state/render/data modules, remove inline event handlers, reuse the shared dimensionality engine where compatible, and validate every persisted hash/local-storage field before use.

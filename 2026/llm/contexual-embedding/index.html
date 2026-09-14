@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="fa" dir="rtl">
-<head>
+  <head>
     <link rel="stylesheet" href="../shared/ui/tokens.css" />
     <link rel="stylesheet" href="../shared/ui/shells.css" />
     <meta charset="UTF-8" />
@@ -515,6 +515,7 @@
       const reviewAnswersBtn = document.getElementById('reviewAnswersBtn');
       const prevStageBtn = document.getElementById('prevStageBtn');
       const nextReviewBtn = document.getElementById('nextReviewBtn');
+      let modalReturnFocus = null;
 
       function saveCurrentStageState() {
         const placedTokens = [];
@@ -661,8 +662,10 @@
       }
 
       function initSidebarDrag(el) {
-        el.addEventListener('mousedown', (e) => {
+        el.addEventListener('pointerdown', (e) => {
           if (e.button !== 0 || isReviewMode) return;
+          e.preventDefault();
+          el.setPointerCapture(e.pointerId);
 
           const clone = el.cloneNode(true);
           clone.classList.remove('sidebar-token');
@@ -679,14 +682,16 @@
           };
           moveAt(e.clientX, e.clientY);
 
-          const onMouseMove = (evt) => moveAt(evt.clientX, evt.clientY);
+          const onPointerMove = (evt) => moveAt(evt.clientX, evt.clientY);
 
-          const onMouseUp = (evt) => {
-            window.removeEventListener('mousemove', onMouseMove);
-            window.removeEventListener('mouseup', onMouseUp);
+          const finish = (evt, dropped) => {
+            el.removeEventListener('pointermove', onPointerMove);
+            el.removeEventListener('pointerup', onPointerUp);
+            el.removeEventListener('pointercancel', onPointerCancel);
 
             const canvasRect = canvasSpace.getBoundingClientRect();
             if (
+              dropped &&
               evt.clientX >= canvasRect.left &&
               evt.clientX <= canvasRect.right &&
               evt.clientY >= canvasRect.top &&
@@ -714,8 +719,11 @@
             clone.remove();
           };
 
-          window.addEventListener('mousemove', onMouseMove);
-          window.addEventListener('mouseup', onMouseUp);
+          const onPointerUp = (evt) => finish(evt, true);
+          const onPointerCancel = (evt) => finish(evt, false);
+          el.addEventListener('pointermove', onPointerMove);
+          el.addEventListener('pointerup', onPointerUp);
+          el.addEventListener('pointercancel', onPointerCancel);
         });
         el.addEventListener('keydown', (event) => {
           if (!['Enter', ' '].includes(event.key)) return;
@@ -772,22 +780,25 @@
         let isDragging = false;
         let startX, startY, initLeft, initTop;
 
-        const onMouseDown = (e) => {
+        const onPointerDown = (e) => {
           if (e.button !== 0) return;
           // کلمات فیکس‌شده قابلیت درگ ندارند
           if (el.classList.contains('locked')) return;
 
           isDragging = true;
+          e.preventDefault();
+          el.setPointerCapture(e.pointerId);
           startX = e.clientX;
           startY = e.clientY;
           initLeft = el.offsetLeft;
           initTop = el.offsetTop;
 
-          window.addEventListener('mousemove', onMouseMove);
-          window.addEventListener('mouseup', onMouseUp);
+          el.addEventListener('pointermove', onPointerMove);
+          el.addEventListener('pointerup', onPointerUp);
+          el.addEventListener('pointercancel', onPointerCancel);
         };
 
-        const onMouseMove = (e) => {
+        const onPointerMove = (e) => {
           if (!isDragging) return;
           const dx = e.clientX - startX;
           const dy = e.clientY - startY;
@@ -799,11 +810,17 @@
           if (pivot) updatePivotColor(pivot);
         };
 
-        const onMouseUp = (e) => {
+        const finishPointer = (e, cancelled) => {
           if (!isDragging) return;
           isDragging = false;
-          window.removeEventListener('mousemove', onMouseMove);
-          window.removeEventListener('mouseup', onMouseUp);
+          el.removeEventListener('pointermove', onPointerMove);
+          el.removeEventListener('pointerup', onPointerUp);
+          el.removeEventListener('pointercancel', onPointerCancel);
+          if (cancelled) {
+            el.style.left = `${initLeft}px`;
+            el.style.top = `${initTop}px`;
+            return;
+          }
 
           const sidebarRect = sidebar.getBoundingClientRect();
           // بازگشت کلمه به نوار کناری در صورت رها شدن در سایدبار
@@ -839,7 +856,9 @@
           if (pivot) updatePivotColor(pivot);
         };
 
-        el.addEventListener('mousedown', onMouseDown);
+        const onPointerUp = (e) => finishPointer(e, false);
+        const onPointerCancel = (e) => finishPointer(e, true);
+        el.addEventListener('pointerdown', onPointerDown);
         el.addEventListener('keydown', (event) => {
           if (event.key === 'Delete' || event.key === 'Backspace') {
             if (!isPivot) {
@@ -955,6 +974,7 @@
           loadStage(currentStageIdx + 1);
         } else {
           // نمایش پاپ‌آپ پایان بازی
+          modalReturnFocus = nextStageBtn;
           finishModal.classList.add('active');
           reviewAnswersBtn.focus();
         }
@@ -980,6 +1000,29 @@
         finishModal.classList.remove('active');
         isReviewMode = true;
         loadStage(0);
+        if (modalReturnFocus) modalReturnFocus.focus();
+      });
+
+      finishModal.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+          finishModal.classList.remove('active');
+          if (modalReturnFocus) modalReturnFocus.focus();
+          return;
+        }
+        if (event.key !== 'Tab') return;
+        const focusable = finishModal.querySelectorAll(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        if (!focusable.length) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
       });
 
       // دکمه پاک کردن کل صفحه
