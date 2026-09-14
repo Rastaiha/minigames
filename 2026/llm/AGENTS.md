@@ -36,7 +36,7 @@ The documentation records these exceptions; it does not mean the game implementa
 | Next-word prediction | `next-token-prediction/`: includes a direct Groq call that violates the required API boundary; `next-token-prediction2/`: live model estimates through the Worker's `/jailbreak` route |
 | Word placement | `word-in-line/`, `word-in-space/`: `index.html`, `style.css`, `words.js`, `app.js`; the latter has `vectors.html`, `vectors.css`, `vectors.js` |
 | Embeddings and dimensions | `wordembedding/`, `word-embedding/`, `contexual-embedding/`, `words-and-vectors/`, `Dimensions/1-line.html`, `2-plane.html`, `3-space.html`, `dimensionality-reduction/` |
-| Transformer concepts | `attention/`, `bpe-tree/`, `pretraining-box/`; `transformer/encoder.html` and `decoder.html` share `transformer-viz.js` and `.css` |
+| Transformer concepts | `attention/`, `pretraining-box/`; `transformer/encoder.html` and `decoder.html` share `transformer-viz.js` and `.css` |
 | Word-space dataset | `words-world/app.js` imports `data.js` and `word-data.js`; `persian_embeddings_3d.py` is an optional offline fastText/t-SNE data preparation script, not a web backend |
 
 ## Frontend conventions and integration
