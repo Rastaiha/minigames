@@ -21,6 +21,19 @@
         user-select: none;
         -webkit-user-select: none;
       }
+      button:focus-visible,
+      [tabindex]:focus-visible {
+        outline: 3px solid #38bdf8;
+        outline-offset: 3px;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
       body {
         margin: 0;
         background: #0b0f19;

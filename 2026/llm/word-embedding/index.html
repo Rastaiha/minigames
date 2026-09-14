@@ -8,11 +8,29 @@
     />
     <title>کارگاه تعاملی بردار کلمات و هوش مصنوعی</title>
     <style>
+      @font-face {
+        font-family: Vazir;
+        src: url('../fonts/vazir.ttf') format('truetype');
+        font-display: swap;
+      }
       * {
         box-sizing: border-box;
-        font-family: 'Segoe UI', Tahoma, sans-serif;
+        font-family: Vazir, Tahoma, sans-serif;
         user-select: none;
         -webkit-user-select: none;
+      }
+      button:focus-visible,
+      [tabindex]:focus-visible {
+        outline: 3px solid #38bdf8;
+        outline-offset: 3px;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          transition-duration: 0.01ms !important;
+        }
       }
       body {
         margin: 0;
