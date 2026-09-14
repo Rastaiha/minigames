@@ -467,6 +467,10 @@ async function handleJailbreak(request, env, cors) {
   const model = (typeof body?.model === "string" && body.model.trim())
     ? body.model.trim()
     : (JAILBREAK_MODELS[level] || JAILBREAK_MODELS[1]);
+  const requestedTemperature = Number(body?.temperature);
+  const temperature = Number.isFinite(requestedTemperature)
+    ? Math.min(2, Math.max(0, requestedTemperature))
+    : (level === 3 ? 0.2 : 0.4);
 
   try {
     const upstreamResponse = await fetch(apiUrl, {
@@ -478,7 +482,7 @@ async function handleJailbreak(request, env, cors) {
       body: JSON.stringify({
         model,
         messages: modelMessages,
-        temperature: level === 3 ? 0.2 : 0.4,
+        temperature,
         max_tokens: 512
       }),
       signal: AbortSignal.timeout(60000)
