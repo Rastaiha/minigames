@@ -45,7 +45,7 @@ These items are intentionally listed separately from the historical commit log a
 - **Partial:** extracted guarded storage/hash parsing into `word-embedding/storage.js` and wired the monolith to it; remaining coupled inline interaction extraction and dimensionality-engine reuse are still required.
 - Finish `wordembedding/`: extract inline handlers and custom interaction code into modules or shared helpers, preserve its compatibility arithmetic, and add keyboard/touch regression coverage.
 - **Complete:** `random-generator.js` retains Web Crypto entropy by default and exposes an opt-in seeded mode; `random-generator.test.mjs` covers repeatability, bounds, seed variation, and punctuation metadata.
-- Refresh backend README/example documentation and add mocked tests for upstream timeout, model fallback-chain behavior, malformed message entries, and the remaining compatibility handlers.
+- **Complete:** refreshed backend README guidance to the active Worker/gateway contract and added mocked timeout, fallback exhaustion, and malformed-message coverage.
 - Run browser smoke tests over HTTP at desktop and narrow mobile widths for every active entry page, including keyboard/touch interaction, reduced motion, hidden-tab animation pause, reset/stop behavior, stale-response cancellation, and mocked API failure states. Record the results in this plan.
 - Run the pre-commit hooks in CI and before deployment, then perform a final diff/credential/API-boundary review.
 

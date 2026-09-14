@@ -14,7 +14,7 @@ function request(body, options = {}) {
     'X-Client-Id': 'contract-test-client',
     ...(options.headers || {}),
   };
-  return new Request('https://worker.test/api/respond', {
+  return new Request(`https://worker.test${options.path || '/api/respond'}`, {
     method: options.method || 'POST',
     headers,
     body: options.method === 'OPTIONS' ? undefined : JSON.stringify(body),
@@ -32,6 +32,24 @@ async function withUpstream(payload, callback, status = 200) {
       status,
       headers: { 'Content-Type': 'application/json' },
     });
+  try {
+    return await callback();
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+}
+
+async function withUpstreamSequence(responses, callback) {
+  const originalFetch = globalThis.fetch;
+  let index = 0;
+  globalThis.fetch = async () => {
+    const current = responses[Math.min(index++, responses.length - 1)];
+    if (current instanceof Error) throw current;
+    return new Response(JSON.stringify(current.body), {
+      status: current.status || 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  };
   try {
     return await callback();
   } finally {
@@ -226,4 +244,47 @@ test('redacts upstream failures behind a learner-safe error', async () => {
   const body = await read(response);
   assert.equal(body.error, 'مدل پاسخ موفقی نداد.');
   assert.equal(JSON.stringify(body).includes('provider diagnostic'), false);
+});
+
+test('moves to the next completion model after an upstream timeout', async () => {
+  const response = await withUpstreamSequence(
+    [
+      new DOMException('timed out', 'AbortError'),
+      { body: completionPayload('مدل دوم') },
+    ],
+    () =>
+      worker.fetch(request({ prompt: 'من امروز' }, { path: '/generate' }), ENV)
+  );
+
+  assert.equal(response.status, 200);
+  assert.equal((await read(response)).text, 'مدل دوم');
+});
+
+test('reports a safe error after every fallback model fails', async () => {
+  const response = await withUpstreamSequence(
+    Array.from({ length: 8 }, () => ({ body: { choices: [] } })),
+    () =>
+      worker.fetch(request({ prompt: 'من امروز' }, { path: '/generate' }), ENV)
+  );
+
+  assert.equal(response.status, 502);
+  assert.equal(
+    (await read(response)).error,
+    'All fallback models were exhausted or unavailable.'
+  );
+});
+
+test('rejects malformed message entries before handler dispatch', async () => {
+  const response = await worker.fetch(
+    request({
+      version: 1,
+      game: 'jailbreak',
+      mode: 'challenge',
+      input: { level: 1, messages: [{ role: 'user' }, 'not-an-object'] },
+    }),
+    ENV
+  );
+
+  assert.equal(response.status, 400);
+  assert.equal((await read(response)).ok, false);
 });
