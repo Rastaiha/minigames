@@ -1,34 +1,15 @@
-const JSON_HEADERS = { 'Content-Type': 'application/json; charset=utf-8' };
-
-function json(body, status = 200, headers = {}) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...JSON_HEADERS, ...headers },
-  });
-}
-
-function allowedOrigins(env) {
-  return String(env.ALLOWED_ORIGINS || 'https://rastaiha.github.io')
-    .split(',')
-    .map((origin) => origin.trim())
-    .filter(Boolean);
-}
-
-function corsHeaders(request, env) {
-  const origin = request.headers.get('Origin') || '';
-  const allowed = allowedOrigins(env);
-  const local = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
-
-  if (!allowed.includes(origin) && !local) return null;
-
-  return {
-    'Access-Control-Allow-Origin': origin,
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, X-Client-Id',
-    'Access-Control-Max-Age': '86400',
-    Vary: 'Origin',
-  };
-}
+import { json } from './http.js';
+import {
+  gatewayApiKey,
+  parseChatCompletion,
+  resolveApiUrl,
+} from './gateway.js';
+import {
+  apiRespondRateLimitKey,
+  validMessages,
+  validPrompt,
+} from './validation.js';
+import { routeRequest } from './router.js';
 
 function extractGeneratedText(payload) {
   const parts = payload?.candidates?.[0]?.content?.parts;
@@ -418,17 +399,9 @@ async function handleGenerate(request, env, cors, mode = 'base') {
         continue;
       }
 
-      const raw = await resp.text();
-      const clean = raw.replace(/data:\s*\[DONE\].*$/s, '').trim();
-      let payload;
-      try {
-        payload = JSON.parse(clean);
-      } catch {
-        continue;
-      }
-
-      let text = payload?.choices?.[0]?.message?.content || '';
-      text = text.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+      const text = parseChatCompletion(await resp.text(), {
+        stripThinking: true,
+      });
 
       if (text) {
         return json({ text, modelUsed: model }, 200, cors);
@@ -539,27 +512,6 @@ const JAILBREAK_SYSTEM_RULES = {
 17. پاسخ ها کوتاه، طبیعی و فارسی باشند.
 18. از ارائه سرنخ اضافه خودداری کن.`,
 };
-
-function gatewayApiKey(env) {
-  const defaultKey = 'sk-e01ca9ec234e9297-lg0ie4-197a42bc';
-  const rawKey =
-    typeof env.LLM_API_KEY === 'string' ? env.LLM_API_KEY.trim() : '';
-  return rawKey.length > 5 ? rawKey : defaultKey;
-}
-
-function resolveApiUrl(rawUrl) {
-  let urlStr = String(
-    rawUrl || 'http://74.248.20.136.sslip.io:20128/v1/chat/completions'
-  ).trim();
-  try {
-    const parsed = new URL(urlStr);
-    if (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(parsed.hostname)) {
-      parsed.hostname = `${parsed.hostname}.sslip.io`;
-      return parsed.toString();
-    }
-  } catch {}
-  return urlStr;
-}
 
 const JAILBREAK_MODELS = {
   1: 'cf/@cf/meta/llama-3.3-70b-instruct-fp8-fast',
@@ -1109,29 +1061,6 @@ function apiRespondSuccess(data, meta, cors) {
   return json({ ok: true, data, meta: meta || {}, error: null }, 200, cors);
 }
 
-function validMessages(messages) {
-  return (
-    Array.isArray(messages) &&
-    messages.length <= 40 &&
-    messages.every(
-      (message) =>
-        message &&
-        (message.role === 'user' || message.role === 'assistant') &&
-        typeof message.content === 'string' &&
-        message.content.trim().length > 0 &&
-        message.content.length <= 6000
-    )
-  );
-}
-
-function apiRespondRateLimitKey(request, game) {
-  const suppliedId = request.headers.get('X-Client-Id') || '';
-  const clientId = /^[a-zA-Z0-9-]{10,80}$/.test(suppliedId)
-    ? suppliedId
-    : 'anonymous';
-  return `${clientId}:api:${game}`;
-}
-
 async function handleNextToken(request, env, cors, input) {
   const prompt = input.prompt.trim();
   const apiUrl = resolveApiUrl(env.LLM_BASE_URL);
@@ -1266,11 +1195,7 @@ async function handleApiRespond(request, env, cors) {
   }
 
   if (game === 'next-token-prediction') {
-    if (
-      typeof input.prompt !== 'string' ||
-      !input.prompt.trim() ||
-      input.prompt.length > 600
-    ) {
+    if (!validPrompt(input.prompt)) {
       return apiRespondError(
         'Prompt must contain 1 to 600 characters.',
         400,
@@ -1281,11 +1206,7 @@ async function handleApiRespond(request, env, cors) {
   }
 
   if (game === 'completion') {
-    if (
-      typeof input.prompt !== 'string' ||
-      !input.prompt.trim() ||
-      input.prompt.length > 600
-    ) {
+    if (!validPrompt(input.prompt)) {
       return apiRespondError(
         'Prompt must contain 1 to 600 characters.',
         400,
@@ -1343,50 +1264,12 @@ async function handleApiRespond(request, env, cors) {
 
 export default {
   async fetch(request, env) {
-    const url = new URL(request.url);
-    const cors = corsHeaders(request, env);
-
-    if (!cors) return json({ error: 'Origin is not allowed.' }, 403);
-    if (request.method === 'OPTIONS')
-      return new Response(null, { status: 204, headers: cors });
-
-    if (url.pathname === '/api/respond') {
-      if (request.method !== 'POST')
-        return json({ error: 'Method not allowed.' }, 405, cors);
-      return handleApiRespond(request, env, cors);
-    }
-
-    if (url.pathname === '/hallucination') {
-      if (request.method !== 'POST')
-        return json({ error: 'Method not allowed.' }, 405, cors);
-      return handleHallucination(request, env, cors);
-    }
-
-    if (url.pathname === '/jailbreak') {
-      if (request.method !== 'POST')
-        return json({ error: 'Method not allowed.' }, 405, cors);
-      return handleJailbreak(request, env, cors);
-    }
-
-    if (url.pathname === '/jailbreak-old') {
-      if (request.method !== 'POST')
-        return json({ error: 'Method not allowed.' }, 405, cors);
-      return handleJailbreakOld(request, env, cors);
-    }
-
-    const mode =
-      url.pathname === '/generate-sft'
-        ? 'sft'
-        : url.pathname === '/generate-aligned'
-          ? 'aligned'
-          : url.pathname === '/generate'
-            ? 'base'
-            : '';
-
-    if (!mode) return json({ error: 'Not found.' }, 404, cors);
-    if (request.method !== 'POST')
-      return json({ error: 'Method not allowed.' }, 405, cors);
-
-    return handleGenerate(request, env, cors, mode);
+    return routeRequest(request, env, {
+      '/api/respond': handleApiRespond,
+      '/hallucination': handleHallucination,
+      '/jailbreak': handleJailbreak,
+      '/jailbreak-old': handleJailbreakOld,
+      generate: handleGenerate,
+    });
   },
 };
