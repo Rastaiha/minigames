@@ -1,11 +1,13 @@
 <!doctype html>
 <html lang="fa" dir="rtl">
   <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>پیتزا، همبرگر، قورمه‌سبزی، فرانسه</title>
     <style>
-      * { box-sizing: border-box; }
+      * {
+        box-sizing: border-box;
+      }
       body {
         margin: 0;
         min-height: 100svh;
@@ -24,7 +26,10 @@
       }
       h1 {
         margin: 0 0 32px;
-        font: 500 clamp(17px, 3vw, 32px)/1.8 Tahoma, Arial, sans-serif;
+        font:
+          500 clamp(17px, 3vw, 32px)/1.8 Tahoma,
+          Arial,
+          sans-serif;
         white-space: nowrap;
       }
       .vector {
@@ -35,22 +40,37 @@
         width: fit-content;
         margin: auto;
         padding: 14px clamp(8px, 2vw, 24px);
-        font: 400 clamp(18px, 3vw, 30px)/1.3 "Courier New", monospace;
+        font:
+          400 clamp(18px, 3vw, 30px)/1.3 'Courier New',
+          monospace;
         font-variant-numeric: tabular-nums;
       }
-      .vector::before, .vector::after {
-        content: "";
+      .vector::before,
+      .vector::after {
+        content: '';
         position: absolute;
         top: 0;
         bottom: 0;
         width: 8px;
         border-block: 3px solid #000;
       }
-      .vector::before { left: 0; border-left: 3px solid #000; }
-      .vector::after { right: 0; border-right: 3px solid #000; }
-      .positive { color: #1763c4; }
-      .negative { color: #c43232; }
-      .ellipsis { color: #687080; }
+      .vector::before {
+        left: 0;
+        border-left: 3px solid #000;
+      }
+      .vector::after {
+        right: 0;
+        border-right: 3px solid #000;
+      }
+      .positive {
+        color: #1763c4;
+      }
+      .negative {
+        color: #c43232;
+      }
+      .ellipsis {
+        color: #687080;
+      }
     </style>
   </head>
   <body>

@@ -1,596 +1,832 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fa" dir="rtl">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#eef3f9">
-  <title>جعبه‌ی یادگیرنده</title>
-  <style>
-    :root {
-      --ink: #172033;
-      --muted: #768196;
-      --line: #dce4ef;
-      --surface: #ffffff;
-      --soft: #f5f7fb;
-      --blue: #3562e9;
-      --green: #36a978;
-      --green-soft: #eaf8f2;
-      --orange: #e69a45;
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      min-height: 100vh;
-      margin: 0;
-      display: grid;
-      place-items: center;
-      padding: 24px;
-      color: var(--ink);
-      background:
-        radial-gradient(circle at 50% 24%, rgba(83, 113, 227, 0.12), transparent 34%),
-        #eef3f9;
-      font-family: Tahoma, Arial, sans-serif;
-    }
-
-    button { font: inherit; }
-
-    .app {
-      width: min(620px, 100%);
-      text-align: center;
-    }
-
-    .learning-box {
-      position: relative;
-      padding: 24px;
-      overflow: hidden;
-      background: var(--surface);
-      border: 1px solid rgba(202, 214, 230, 0.9);
-      border-radius: 28px;
-      box-shadow: 0 24px 70px rgba(30, 53, 88, 0.14);
-    }
-
-    .reset-button {
-      position: absolute;
-      top: 17px;
-      left: 17px;
-      width: 35px;
-      height: 35px;
-      display: grid;
-      place-items: center;
-      color: var(--muted);
-      background: transparent;
-      border: 0;
-      border-radius: 50%;
-      cursor: pointer;
-      transition: 150ms ease;
-    }
-
-    .reset-button:hover { color: var(--ink); background: var(--soft); }
-    .reset-button:disabled { cursor: wait; opacity: 0.4; }
-    .sample-count { display: block; margin-bottom: 16px; color: var(--muted); font-size: 11px; }
-
-    .sentence-card {
-      padding: 17px 18px;
-      text-align: right;
-      background: var(--soft);
-      border: 1px solid #e5eaf2;
-      border-radius: 17px;
-    }
-
-    .sentence-label { display: block; margin-bottom: 7px; color: var(--muted); font-size: 11px; }
-    .sentence { margin: 0; font-size: clamp(16px, 3.8vw, 20px); font-weight: 700; line-height: 1.9; }
-    .cursor { color: var(--blue); animation: blink 900ms step-end infinite; }
-
-    .box-stage {
-      position: relative;
-      min-height: 245px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 15px;
-    }
-
-    .core-wrap {
-      position: relative;
-      width: 190px;
-      height: 190px;
-      display: grid;
-      place-items: center;
-    }
-
-    .orbit {
-      position: absolute;
-      width: 176px;
-      height: 176px;
-      border: 1px solid rgba(83, 113, 227, 0.22);
-      border-radius: 50%;
-      box-shadow: 0 0 0 12px rgba(83, 113, 227, 0.035);
-    }
-
-    .orbit::before, .orbit::after {
-      content: "";
-      position: absolute;
-      width: 8px;
-      height: 8px;
-      background: #8067ef;
-      border-radius: 50%;
-    }
-
-    .orbit::before { top: 10px; right: 30px; }
-    .orbit::after { bottom: 17px; left: 22px; background: var(--orange); }
-
-    .magic-box {
-      position: relative;
-      z-index: 1;
-      width: 116px;
-      height: 116px;
-      display: grid;
-      place-items: center;
-      transform: rotate(45deg);
-      background:
-        linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(205, 216, 255, 0.72));
-      border: 1px solid rgba(255, 255, 255, 0.95);
-      border-radius: 31px;
-      box-shadow:
-        0 22px 48px rgba(65, 90, 184, 0.22),
-        inset 0 1px 0 rgba(255, 255, 255, 0.9),
-        inset 0 -12px 30px rgba(75, 101, 205, 0.08);
-      backdrop-filter: blur(10px);
-    }
-
-    .magic-box::before {
-      content: "";
-      position: absolute;
-      inset: 10px;
-      border: 1px solid rgba(83, 113, 227, 0.2);
-      border-radius: 23px;
-      background: linear-gradient(145deg, rgba(255, 255, 255, 0.35), rgba(92, 116, 225, 0.08));
-    }
-
-    .magic-box::after {
-      content: "";
-      position: absolute;
-      width: 42px;
-      height: 42px;
-      background: linear-gradient(145deg, #8b79f1, #3562e9);
-      border-radius: 15px;
-      box-shadow: 0 8px 22px rgba(53, 98, 233, 0.32);
-    }
-
-    .box-symbol {
-      position: relative;
-      z-index: 2;
-      transform: rotate(-45deg);
-      color: white;
-      font-size: 21px;
-      line-height: 1;
-    }
-
-    .box-status {
-      color: #68758c;
-      font-size: 12px;
-      font-weight: 700;
-      line-height: 1.8;
-    }
-    .box-stage.working .magic-box { animation: boxPulse 550ms ease-in-out infinite alternate; }
-    .box-stage.working .orbit { animation: spin 900ms linear infinite; border-color: rgba(83, 113, 227, 0.5); }
-    .box-stage.training .magic-box { animation: trainPulse 500ms ease-in-out infinite alternate; }
-    .box-stage.training .orbit { animation: spin 650ms linear infinite reverse; border-color: rgba(230, 154, 69, 0.55); }
-
-    .send-button, .train-button, .next-button {
-      width: 100%;
-      min-height: 49px;
-      padding: 11px 18px;
-      color: white;
-      border: 0;
-      border-radius: 15px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: transform 150ms ease, opacity 150ms ease;
-    }
-
-    .send-button { background: var(--blue); box-shadow: 0 9px 20px rgba(53, 98, 233, 0.22); }
-    .train-button { background: linear-gradient(135deg, #e69a45, #dd764f); }
-    .next-button { background: var(--blue); }
-    .send-button:hover, .train-button:hover, .next-button:hover { transform: translateY(-1px); }
-    .send-button:disabled, .train-button:disabled { cursor: wait; opacity: 0.55; transform: none; }
-
-    .results {
-      display: grid;
-      grid-template-rows: 0fr;
-      opacity: 0;
-      transition: grid-template-rows 400ms ease, opacity 300ms ease;
-    }
-
-    .results.visible { grid-template-rows: 1fr; opacity: 1; }
-    .results-inner { min-height: 0; overflow: hidden; }
-    .results-content { padding-top: 3px; border-top: 1px solid var(--line); }
-
-    .results-heading {
-      margin: 18px 0 13px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      font-size: 13px;
-    }
-
-    .results-heading span { color: var(--muted); font-size: 11px; font-weight: 400; }
-    .probability-list { display: grid; gap: 8px; }
-
-    .probability-row {
-      padding: 11px 13px;
-      text-align: right;
-      background: var(--soft);
-      border: 1px solid transparent;
-      border-radius: 13px;
-      transition: background 300ms ease, border-color 300ms ease;
-    }
-
-    .probability-row.target {
-      background: var(--green-soft);
-      border-color: rgba(54, 169, 120, 0.28);
-    }
-
-    .probability-meta {
-      margin-bottom: 7px;
-      display: flex;
-      align-items: center;
-      gap: 7px;
-    }
-
-    .token { font-size: 13px; font-weight: 700; }
-
-    .target-tag {
-      padding: 3px 7px;
-      color: #27815e;
-      background: rgba(54, 169, 120, 0.12);
-      border-radius: 999px;
-      font-size: 9px;
-    }
-
-    .value { margin-right: auto; color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
-    .delta { display: none; color: var(--green); font-size: 10px; font-weight: 700; }
-    .probability-row.changed .delta { display: inline; }
-    .delta.negative { color: #df5c62; }
-
-    .track {
-      height: 7px;
-      overflow: hidden;
-      background: #e5eaf2;
-      border-radius: 999px;
-    }
-
-    .fill {
-      width: 0;
-      height: 100%;
-      background: linear-gradient(90deg, #88a7f8, var(--blue));
-      border-radius: inherit;
-      transition: width 650ms cubic-bezier(0.22, 1, 0.36, 1);
-    }
-
-    .probability-row.target .fill { background: linear-gradient(90deg, #72d3aa, var(--green)); }
-
-    .truth-row {
-      margin: 14px 0;
-      padding: 11px 13px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: var(--muted);
-      background: #fbfcfe;
-      border: 1px solid var(--line);
-      border-radius: 13px;
-      font-size: 11px;
-    }
-
-    .truth-token {
-      padding: 6px 13px;
-      color: #237657;
-      background: #dff4eb;
-      border-radius: 10px;
-      font-size: 14px;
-    }
-
-    .change-note { min-height: 18px; margin: 10px 0 0; color: var(--green); font-size: 11px; }
-
-    .complete-message {
-      display: none;
-      padding: 12px;
-      color: #28795d;
-      background: var(--green-soft);
-      border: 1px solid #ccebdd;
-      border-radius: 14px;
-      font-size: 12px;
-      line-height: 1.9;
-    }
-
-    .complete-message.visible { display: block; }
-    [hidden] { display: none !important; }
-
-    @keyframes blink { 50% { opacity: 0; } }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    @keyframes boxPulse { to { transform: rotate(45deg) scale(1.045); box-shadow: 0 0 0 9px rgba(53, 98, 233, 0.08), 0 24px 52px rgba(65, 90, 184, 0.28); } }
-    @keyframes trainPulse { to { transform: rotate(45deg) scale(1.045); box-shadow: 0 0 0 9px rgba(230, 154, 69, 0.1), 0 24px 52px rgba(194, 118, 48, 0.2); } }
-
-    @media (max-width: 520px) {
-      body { padding: 12px; }
-      .learning-box { padding: 17px; border-radius: 22px; }
-      .box-stage { min-height: 225px; }
-      .core-wrap { width: 175px; height: 175px; }
-      .magic-box { width: 106px; height: 106px; }
-      .orbit { width: 160px; height: 160px; }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-      }
-    }
-  </style>
-</head>
-<body>
-  <main class="app">
-    <section class="learning-box">
-      <button class="reset-button" id="resetButton" type="button" aria-label="شروع دوباره" title="شروع دوباره">↻</button>
-      <span class="sample-count" id="sampleCount"></span>
-
-      <div class="sentence-card">
-        <span class="sentence-label">متن ورودی</span>
-        <p class="sentence"><span id="sentenceText"></span> <span class="cursor">▌</span></p>
-      </div>
-
-      <div class="box-stage" id="boxStage" aria-live="polite">
-        <div class="core-wrap" aria-hidden="true">
-          <div class="orbit"></div>
-          <div class="magic-box">
-            <span class="box-symbol">✦</span>
-          </div>
-        </div>
-        <span class="box-status" id="boxStatus">جمله را به من بده</span>
-      </div>
-
-      <button class="send-button" id="sendButton" type="button">جمله را به جعبه بده</button>
-
-      <div class="results" id="results">
-        <div class="results-inner">
-          <div class="results-content">
-            <div class="results-heading">
-              <strong>احتمال توکن بعدی</strong>
-              <span>مجموع ۱۰۰٪</span>
-            </div>
-            <div class="probability-list" id="probabilityList"></div>
-            <div class="truth-row">
-              <span>توکنی که واقعاً در متن آمده:</span>
-              <strong class="truth-token" id="truthToken"></strong>
-            </div>
-            <button class="train-button" id="trainButton" type="button">آموزش با این نمونه</button>
-            <button class="next-button" id="nextButton" type="button" hidden>نمونه‌ی بعدی</button>
-            <p class="change-note" id="changeNote"></p>
-          </div>
-        </div>
-      </div>
-
-      <p class="complete-message" id="completeMessage">همه‌ی نمونه‌ها دیده شدند. جعبه بعد از هر متن، فقط کمی تغییر کرد.</p>
-    </section>
-  </main>
-
-  <script>
-    const EXAMPLES = Object.freeze([
-      { prompt: "توانا بود هر که دانا", target: "بود", candidates: ["است", "بود", "شد", "ماند", "رفت"], logits: [1.05, -0.15, 0.55, 0.05, -0.45] },
-      { prompt: "نابرده رنج، گنج میسر", target: "نمی‌شود", candidates: ["است", "نمی‌شود", "شد", "می‌شود", "ماند"], logits: [0.95, -0.35, 0.15, 0.65, -0.25] },
-      { prompt: "ز گهواره تا گور دانش", target: "بجوی", candidates: ["بجوی", "بخوان", "باشد", "آموز", "بمان"], logits: [-0.25, 0.75, 0.2, 0.55, -0.4] },
-      { prompt: "هر که بامش بیش، برفش", target: "بیشتر", candidates: ["بیشتر", "سفید", "سنگین", "بسیار", "کمتر"], logits: [-0.2, 0.3, 0.85, 0.5, -0.4] },
-      { prompt: "بنی‌آدم اعضای یکدیگرند که در آفرینش ز یک", target: "گوهرند", candidates: ["گوهرند", "جهانند", "پیکرند", "خانه‌اند", "داستانند"], logits: [-0.45, 0.25, 0.9, 0.05, -0.2] },
-      { prompt: "تو نیکی می‌کن و در دجله", target: "انداز", candidates: ["انداز", "بگذار", "بمان", "بنشین", "بخوان"], logits: [-0.35, 0.8, 0.3, -0.1, 0.15] }
-    ]);
-
-    const LEARNING_STEP = 0.28;
-    const sentenceText = document.querySelector("#sentenceText");
-    const sampleCount = document.querySelector("#sampleCount");
-    const boxStage = document.querySelector("#boxStage");
-    const boxStatus = document.querySelector("#boxStatus");
-    const sendButton = document.querySelector("#sendButton");
-    const results = document.querySelector("#results");
-    const probabilityList = document.querySelector("#probabilityList");
-    const truthToken = document.querySelector("#truthToken");
-    const trainButton = document.querySelector("#trainButton");
-    const nextButton = document.querySelector("#nextButton");
-    const changeNote = document.querySelector("#changeNote");
-    const completeMessage = document.querySelector("#completeMessage");
-    const resetButton = document.querySelector("#resetButton");
-
-    let currentIndex = 0;
-    let logits = [...EXAMPLES[0].logits];
-    let phase = "ready";
-    let busy = false;
-    let targetIncrease = 0;
-    let probabilityChanges = [];
-
-    function delay(milliseconds) {
-      return new Promise((resolve) => setTimeout(resolve, milliseconds));
-    }
-
-    function softmax(values) {
-      const maximum = Math.max(...values);
-      const exponentials = values.map((value) => Math.exp(value - maximum));
-      const total = exponentials.reduce((sum, value) => sum + value, 0);
-      return exponentials.map((value) => value / total);
-    }
-
-    function formatNumber(value) {
-      return value.toLocaleString("fa-IR");
-    }
-
-    function formatPercent(value) {
-      return (value * 100).toLocaleString("fa-IR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + "٪";
-    }
-
-    function currentExample() {
-      return EXAMPLES[currentIndex];
-    }
-
-    function renderProbabilities(probabilities, showChange) {
-      const example = currentExample();
-      const targetIndex = example.candidates.indexOf(example.target);
-      const sorted = probabilities
-        .map((probability, index) => ({ probability, index }))
-        .sort((a, b) => b.probability - a.probability);
-
-      probabilityList.innerHTML = "";
-      sorted.forEach(({ probability, index }) => {
-        const isTarget = index === targetIndex;
-        const change = probabilityChanges[index] || 0;
-        const hasChange = showChange && Math.abs(change) > 0.000001;
-        const row = document.createElement("div");
-        row.className = "probability-row" + (isTarget ? " target" : "") + (hasChange ? " changed" : "");
-
-        const meta = document.createElement("div");
-        meta.className = "probability-meta";
-
-        const token = document.createElement("span");
-        token.className = "token";
-        token.textContent = example.candidates[index];
-
-        const tag = document.createElement("span");
-        tag.className = "target-tag";
-        tag.textContent = "توکن واقعی";
-
-        const delta = document.createElement("span");
-        delta.className = "delta" + (change < 0 ? " negative" : "");
-        delta.textContent = hasChange
-          ? (change > 0 ? "+" : "−") + formatPercent(Math.abs(change))
-          : "";
-
-        const value = document.createElement("span");
-        value.className = "value";
-        value.textContent = formatPercent(probability);
-
-        const track = document.createElement("div");
-        track.className = "track";
-        const fill = document.createElement("div");
-        fill.className = "fill";
-        track.appendChild(fill);
-
-        meta.append(token, tag, delta, value);
-        row.append(meta, track);
-        probabilityList.appendChild(row);
-        requestAnimationFrame(() => { fill.style.width = (probability * 100) + "%"; });
-      });
-    }
-
-    function renderReady() {
-      const example = currentExample();
-      sentenceText.textContent = example.prompt;
-      truthToken.textContent = example.target;
-      sampleCount.textContent = "نمونه‌ی " + formatNumber(currentIndex + 1) + " از " + formatNumber(EXAMPLES.length);
-      boxStage.className = "box-stage";
-      boxStatus.textContent = "جمله را به من بده";
-      results.classList.remove("visible");
-      completeMessage.classList.remove("visible");
-      sendButton.hidden = false;
-      sendButton.disabled = false;
-      trainButton.hidden = false;
-      trainButton.disabled = false;
-      nextButton.hidden = true;
-      changeNote.textContent = "";
-      resetButton.disabled = false;
-    }
-
-    async function sendSentence() {
-      if (busy || phase !== "ready") return;
-      busy = true;
-      phase = "analysing";
-      sendButton.disabled = true;
-      resetButton.disabled = true;
-      boxStage.className = "box-stage working";
-      boxStatus.textContent = "در حال ساختن احتمال‌ها...";
-
-      await delay(850);
-      renderProbabilities(softmax(logits), false);
-      phase = "shown";
-      busy = false;
-      boxStage.className = "box-stage";
-      boxStatus.textContent = "احتمال‌ها آماده‌اند";
-      sendButton.hidden = true;
-      results.classList.add("visible");
-      resetButton.disabled = false;
-    }
-
-    async function train() {
-      if (busy || phase !== "shown") return;
-      busy = true;
-      phase = "training";
-      trainButton.disabled = true;
-      resetButton.disabled = true;
-      boxStage.className = "box-stage training";
-      boxStatus.textContent = "در حال تغییر احتمال‌ها...";
-
-      const example = currentExample();
-      const before = softmax(logits);
-      const targetIndex = example.candidates.indexOf(example.target);
-      await delay(900);
-
-      logits = logits.map((logit, index) =>
-        index === targetIndex ? logit + LEARNING_STEP : logit
-      );
-
-      const after = softmax(logits);
-      probabilityChanges = after.map((probability, index) => probability - before[index]);
-      targetIncrease = probabilityChanges[targetIndex];
-      renderProbabilities(after, true);
-
-      phase = "trained";
-      busy = false;
-      boxStage.className = "box-stage";
-      boxStatus.textContent = "احتمال توکن واقعی کمی بیشتر شد";
-      changeNote.textContent = "احتمال «" + example.target + "» " + formatPercent(targetIncrease) + " افزایش پیدا کرد.";
-      trainButton.hidden = true;
-      nextButton.hidden = false;
-      nextButton.textContent = currentIndex === EXAMPLES.length - 1 ? "دیدن نتیجه" : "نمونه‌ی بعدی";
-      resetButton.disabled = false;
-    }
-
-    function nextExample() {
-      if (busy || phase !== "trained") return;
-
-      if (currentIndex === EXAMPLES.length - 1) {
-        phase = "complete";
-        results.classList.remove("visible");
-        sampleCount.textContent = formatNumber(EXAMPLES.length) + " نمونه دیده شد";
-        sentenceText.textContent = "پایان نمونه‌های آموزشی";
-        boxStatus.textContent = "با هر نمونه کمی تغییر کردم";
-        completeMessage.classList.add("visible");
-        return;
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#eef3f9" />
+    <title>جعبه‌ی یادگیرنده</title>
+    <style>
+      :root {
+        --ink: #172033;
+        --muted: #768196;
+        --line: #dce4ef;
+        --surface: #ffffff;
+        --soft: #f5f7fb;
+        --blue: #3562e9;
+        --green: #36a978;
+        --green-soft: #eaf8f2;
+        --orange: #e69a45;
       }
 
-      currentIndex += 1;
-      logits = [...currentExample().logits];
-      targetIncrease = 0;
-      probabilityChanges = [];
-      phase = "ready";
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        min-height: 100vh;
+        margin: 0;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        color: var(--ink);
+        background:
+          radial-gradient(
+            circle at 50% 24%,
+            rgba(83, 113, 227, 0.12),
+            transparent 34%
+          ),
+          #eef3f9;
+        font-family: Tahoma, Arial, sans-serif;
+      }
+
+      button {
+        font: inherit;
+      }
+
+      .app {
+        width: min(620px, 100%);
+        text-align: center;
+      }
+
+      .learning-box {
+        position: relative;
+        padding: 24px;
+        overflow: hidden;
+        background: var(--surface);
+        border: 1px solid rgba(202, 214, 230, 0.9);
+        border-radius: 28px;
+        box-shadow: 0 24px 70px rgba(30, 53, 88, 0.14);
+      }
+
+      .reset-button {
+        position: absolute;
+        top: 17px;
+        left: 17px;
+        width: 35px;
+        height: 35px;
+        display: grid;
+        place-items: center;
+        color: var(--muted);
+        background: transparent;
+        border: 0;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: 150ms ease;
+      }
+
+      .reset-button:hover {
+        color: var(--ink);
+        background: var(--soft);
+      }
+      .reset-button:disabled {
+        cursor: wait;
+        opacity: 0.4;
+      }
+      .sample-count {
+        display: block;
+        margin-bottom: 16px;
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      .sentence-card {
+        padding: 17px 18px;
+        text-align: right;
+        background: var(--soft);
+        border: 1px solid #e5eaf2;
+        border-radius: 17px;
+      }
+
+      .sentence-label {
+        display: block;
+        margin-bottom: 7px;
+        color: var(--muted);
+        font-size: 11px;
+      }
+      .sentence {
+        margin: 0;
+        font-size: clamp(16px, 3.8vw, 20px);
+        font-weight: 700;
+        line-height: 1.9;
+      }
+      .cursor {
+        color: var(--blue);
+        animation: blink 900ms step-end infinite;
+      }
+
+      .box-stage {
+        position: relative;
+        min-height: 245px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+      }
+
+      .core-wrap {
+        position: relative;
+        width: 190px;
+        height: 190px;
+        display: grid;
+        place-items: center;
+      }
+
+      .orbit {
+        position: absolute;
+        width: 176px;
+        height: 176px;
+        border: 1px solid rgba(83, 113, 227, 0.22);
+        border-radius: 50%;
+        box-shadow: 0 0 0 12px rgba(83, 113, 227, 0.035);
+      }
+
+      .orbit::before,
+      .orbit::after {
+        content: '';
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        background: #8067ef;
+        border-radius: 50%;
+      }
+
+      .orbit::before {
+        top: 10px;
+        right: 30px;
+      }
+      .orbit::after {
+        bottom: 17px;
+        left: 22px;
+        background: var(--orange);
+      }
+
+      .magic-box {
+        position: relative;
+        z-index: 1;
+        width: 116px;
+        height: 116px;
+        display: grid;
+        place-items: center;
+        transform: rotate(45deg);
+        background: linear-gradient(
+          145deg,
+          rgba(255, 255, 255, 0.96),
+          rgba(205, 216, 255, 0.72)
+        );
+        border: 1px solid rgba(255, 255, 255, 0.95);
+        border-radius: 31px;
+        box-shadow:
+          0 22px 48px rgba(65, 90, 184, 0.22),
+          inset 0 1px 0 rgba(255, 255, 255, 0.9),
+          inset 0 -12px 30px rgba(75, 101, 205, 0.08);
+        backdrop-filter: blur(10px);
+      }
+
+      .magic-box::before {
+        content: '';
+        position: absolute;
+        inset: 10px;
+        border: 1px solid rgba(83, 113, 227, 0.2);
+        border-radius: 23px;
+        background: linear-gradient(
+          145deg,
+          rgba(255, 255, 255, 0.35),
+          rgba(92, 116, 225, 0.08)
+        );
+      }
+
+      .magic-box::after {
+        content: '';
+        position: absolute;
+        width: 42px;
+        height: 42px;
+        background: linear-gradient(145deg, #8b79f1, #3562e9);
+        border-radius: 15px;
+        box-shadow: 0 8px 22px rgba(53, 98, 233, 0.32);
+      }
+
+      .box-symbol {
+        position: relative;
+        z-index: 2;
+        transform: rotate(-45deg);
+        color: white;
+        font-size: 21px;
+        line-height: 1;
+      }
+
+      .box-status {
+        color: #68758c;
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1.8;
+      }
+      .box-stage.working .magic-box {
+        animation: boxPulse 550ms ease-in-out infinite alternate;
+      }
+      .box-stage.working .orbit {
+        animation: spin 900ms linear infinite;
+        border-color: rgba(83, 113, 227, 0.5);
+      }
+      .box-stage.training .magic-box {
+        animation: trainPulse 500ms ease-in-out infinite alternate;
+      }
+      .box-stage.training .orbit {
+        animation: spin 650ms linear infinite reverse;
+        border-color: rgba(230, 154, 69, 0.55);
+      }
+
+      .send-button,
+      .train-button,
+      .next-button {
+        width: 100%;
+        min-height: 49px;
+        padding: 11px 18px;
+        color: white;
+        border: 0;
+        border-radius: 15px;
+        font-weight: 700;
+        cursor: pointer;
+        transition:
+          transform 150ms ease,
+          opacity 150ms ease;
+      }
+
+      .send-button {
+        background: var(--blue);
+        box-shadow: 0 9px 20px rgba(53, 98, 233, 0.22);
+      }
+      .train-button {
+        background: linear-gradient(135deg, #e69a45, #dd764f);
+      }
+      .next-button {
+        background: var(--blue);
+      }
+      .send-button:hover,
+      .train-button:hover,
+      .next-button:hover {
+        transform: translateY(-1px);
+      }
+      .send-button:disabled,
+      .train-button:disabled {
+        cursor: wait;
+        opacity: 0.55;
+        transform: none;
+      }
+
+      .results {
+        display: grid;
+        grid-template-rows: 0fr;
+        opacity: 0;
+        transition:
+          grid-template-rows 400ms ease,
+          opacity 300ms ease;
+      }
+
+      .results.visible {
+        grid-template-rows: 1fr;
+        opacity: 1;
+      }
+      .results-inner {
+        min-height: 0;
+        overflow: hidden;
+      }
+      .results-content {
+        padding-top: 3px;
+        border-top: 1px solid var(--line);
+      }
+
+      .results-heading {
+        margin: 18px 0 13px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        font-size: 13px;
+      }
+
+      .results-heading span {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 400;
+      }
+      .probability-list {
+        display: grid;
+        gap: 8px;
+      }
+
+      .probability-row {
+        padding: 11px 13px;
+        text-align: right;
+        background: var(--soft);
+        border: 1px solid transparent;
+        border-radius: 13px;
+        transition:
+          background 300ms ease,
+          border-color 300ms ease;
+      }
+
+      .probability-row.target {
+        background: var(--green-soft);
+        border-color: rgba(54, 169, 120, 0.28);
+      }
+
+      .probability-meta {
+        margin-bottom: 7px;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+
+      .token {
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .target-tag {
+        padding: 3px 7px;
+        color: #27815e;
+        background: rgba(54, 169, 120, 0.12);
+        border-radius: 999px;
+        font-size: 9px;
+      }
+
+      .value {
+        margin-right: auto;
+        color: var(--muted);
+        font-size: 11px;
+        font-variant-numeric: tabular-nums;
+      }
+      .delta {
+        display: none;
+        color: var(--green);
+        font-size: 10px;
+        font-weight: 700;
+      }
+      .probability-row.changed .delta {
+        display: inline;
+      }
+      .delta.negative {
+        color: #df5c62;
+      }
+
+      .track {
+        height: 7px;
+        overflow: hidden;
+        background: #e5eaf2;
+        border-radius: 999px;
+      }
+
+      .fill {
+        width: 0;
+        height: 100%;
+        background: linear-gradient(90deg, #88a7f8, var(--blue));
+        border-radius: inherit;
+        transition: width 650ms cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .probability-row.target .fill {
+        background: linear-gradient(90deg, #72d3aa, var(--green));
+      }
+
+      .truth-row {
+        margin: 14px 0;
+        padding: 11px 13px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--muted);
+        background: #fbfcfe;
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        font-size: 11px;
+      }
+
+      .truth-token {
+        padding: 6px 13px;
+        color: #237657;
+        background: #dff4eb;
+        border-radius: 10px;
+        font-size: 14px;
+      }
+
+      .change-note {
+        min-height: 18px;
+        margin: 10px 0 0;
+        color: var(--green);
+        font-size: 11px;
+      }
+
+      .complete-message {
+        display: none;
+        padding: 12px;
+        color: #28795d;
+        background: var(--green-soft);
+        border: 1px solid #ccebdd;
+        border-radius: 14px;
+        font-size: 12px;
+        line-height: 1.9;
+      }
+
+      .complete-message.visible {
+        display: block;
+      }
+      [hidden] {
+        display: none !important;
+      }
+
+      @keyframes blink {
+        50% {
+          opacity: 0;
+        }
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      @keyframes boxPulse {
+        to {
+          transform: rotate(45deg) scale(1.045);
+          box-shadow:
+            0 0 0 9px rgba(53, 98, 233, 0.08),
+            0 24px 52px rgba(65, 90, 184, 0.28);
+        }
+      }
+      @keyframes trainPulse {
+        to {
+          transform: rotate(45deg) scale(1.045);
+          box-shadow:
+            0 0 0 9px rgba(230, 154, 69, 0.1),
+            0 24px 52px rgba(194, 118, 48, 0.2);
+        }
+      }
+
+      @media (max-width: 520px) {
+        body {
+          padding: 12px;
+        }
+        .learning-box {
+          padding: 17px;
+          border-radius: 22px;
+        }
+        .box-stage {
+          min-height: 225px;
+        }
+        .core-wrap {
+          width: 175px;
+          height: 175px;
+        }
+        .magic-box {
+          width: 106px;
+          height: 106px;
+        }
+        .orbit {
+          width: 160px;
+          height: 160px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <section class="learning-box">
+        <button
+          class="reset-button"
+          id="resetButton"
+          type="button"
+          aria-label="شروع دوباره"
+          title="شروع دوباره"
+        >
+          ↻
+        </button>
+        <span class="sample-count" id="sampleCount"></span>
+
+        <div class="sentence-card">
+          <span class="sentence-label">متن ورودی</span>
+          <p class="sentence">
+            <span id="sentenceText"></span> <span class="cursor">▌</span>
+          </p>
+        </div>
+
+        <div class="box-stage" id="boxStage" aria-live="polite">
+          <div class="core-wrap" aria-hidden="true">
+            <div class="orbit"></div>
+            <div class="magic-box">
+              <span class="box-symbol">✦</span>
+            </div>
+          </div>
+          <span class="box-status" id="boxStatus">جمله را به من بده</span>
+        </div>
+
+        <button class="send-button" id="sendButton" type="button">
+          جمله را به جعبه بده
+        </button>
+
+        <div class="results" id="results">
+          <div class="results-inner">
+            <div class="results-content">
+              <div class="results-heading">
+                <strong>احتمال توکن بعدی</strong>
+                <span>مجموع ۱۰۰٪</span>
+              </div>
+              <div class="probability-list" id="probabilityList"></div>
+              <div class="truth-row">
+                <span>توکنی که واقعاً در متن آمده:</span>
+                <strong class="truth-token" id="truthToken"></strong>
+              </div>
+              <button class="train-button" id="trainButton" type="button">
+                آموزش با این نمونه
+              </button>
+              <button class="next-button" id="nextButton" type="button" hidden>
+                نمونه‌ی بعدی
+              </button>
+              <p class="change-note" id="changeNote"></p>
+            </div>
+          </div>
+        </div>
+
+        <p class="complete-message" id="completeMessage">
+          همه‌ی نمونه‌ها دیده شدند. جعبه بعد از هر متن، فقط کمی تغییر کرد.
+        </p>
+      </section>
+    </main>
+
+    <script>
+      const EXAMPLES = Object.freeze([
+        {
+          prompt: 'توانا بود هر که دانا',
+          target: 'بود',
+          candidates: ['است', 'بود', 'شد', 'ماند', 'رفت'],
+          logits: [1.05, -0.15, 0.55, 0.05, -0.45],
+        },
+        {
+          prompt: 'نابرده رنج، گنج میسر',
+          target: 'نمی‌شود',
+          candidates: ['است', 'نمی‌شود', 'شد', 'می‌شود', 'ماند'],
+          logits: [0.95, -0.35, 0.15, 0.65, -0.25],
+        },
+        {
+          prompt: 'ز گهواره تا گور دانش',
+          target: 'بجوی',
+          candidates: ['بجوی', 'بخوان', 'باشد', 'آموز', 'بمان'],
+          logits: [-0.25, 0.75, 0.2, 0.55, -0.4],
+        },
+        {
+          prompt: 'هر که بامش بیش، برفش',
+          target: 'بیشتر',
+          candidates: ['بیشتر', 'سفید', 'سنگین', 'بسیار', 'کمتر'],
+          logits: [-0.2, 0.3, 0.85, 0.5, -0.4],
+        },
+        {
+          prompt: 'بنی‌آدم اعضای یکدیگرند که در آفرینش ز یک',
+          target: 'گوهرند',
+          candidates: ['گوهرند', 'جهانند', 'پیکرند', 'خانه‌اند', 'داستانند'],
+          logits: [-0.45, 0.25, 0.9, 0.05, -0.2],
+        },
+        {
+          prompt: 'تو نیکی می‌کن و در دجله',
+          target: 'انداز',
+          candidates: ['انداز', 'بگذار', 'بمان', 'بنشین', 'بخوان'],
+          logits: [-0.35, 0.8, 0.3, -0.1, 0.15],
+        },
+      ]);
+
+      const LEARNING_STEP = 0.28;
+      const sentenceText = document.querySelector('#sentenceText');
+      const sampleCount = document.querySelector('#sampleCount');
+      const boxStage = document.querySelector('#boxStage');
+      const boxStatus = document.querySelector('#boxStatus');
+      const sendButton = document.querySelector('#sendButton');
+      const results = document.querySelector('#results');
+      const probabilityList = document.querySelector('#probabilityList');
+      const truthToken = document.querySelector('#truthToken');
+      const trainButton = document.querySelector('#trainButton');
+      const nextButton = document.querySelector('#nextButton');
+      const changeNote = document.querySelector('#changeNote');
+      const completeMessage = document.querySelector('#completeMessage');
+      const resetButton = document.querySelector('#resetButton');
+
+      let currentIndex = 0;
+      let logits = [...EXAMPLES[0].logits];
+      let phase = 'ready';
+      let busy = false;
+      let targetIncrease = 0;
+      let probabilityChanges = [];
+
+      function delay(milliseconds) {
+        return new Promise((resolve) => setTimeout(resolve, milliseconds));
+      }
+
+      function softmax(values) {
+        const maximum = Math.max(...values);
+        const exponentials = values.map((value) => Math.exp(value - maximum));
+        const total = exponentials.reduce((sum, value) => sum + value, 0);
+        return exponentials.map((value) => value / total);
+      }
+
+      function formatNumber(value) {
+        return value.toLocaleString('fa-IR');
+      }
+
+      function formatPercent(value) {
+        return (
+          (value * 100).toLocaleString('fa-IR', {
+            minimumFractionDigits: 1,
+            maximumFractionDigits: 1,
+          }) + '٪'
+        );
+      }
+
+      function currentExample() {
+        return EXAMPLES[currentIndex];
+      }
+
+      function renderProbabilities(probabilities, showChange) {
+        const example = currentExample();
+        const targetIndex = example.candidates.indexOf(example.target);
+        const sorted = probabilities
+          .map((probability, index) => ({ probability, index }))
+          .sort((a, b) => b.probability - a.probability);
+
+        probabilityList.innerHTML = '';
+        sorted.forEach(({ probability, index }) => {
+          const isTarget = index === targetIndex;
+          const change = probabilityChanges[index] || 0;
+          const hasChange = showChange && Math.abs(change) > 0.000001;
+          const row = document.createElement('div');
+          row.className =
+            'probability-row' +
+            (isTarget ? ' target' : '') +
+            (hasChange ? ' changed' : '');
+
+          const meta = document.createElement('div');
+          meta.className = 'probability-meta';
+
+          const token = document.createElement('span');
+          token.className = 'token';
+          token.textContent = example.candidates[index];
+
+          const tag = document.createElement('span');
+          tag.className = 'target-tag';
+          tag.textContent = 'توکن واقعی';
+
+          const delta = document.createElement('span');
+          delta.className = 'delta' + (change < 0 ? ' negative' : '');
+          delta.textContent = hasChange
+            ? (change > 0 ? '+' : '−') + formatPercent(Math.abs(change))
+            : '';
+
+          const value = document.createElement('span');
+          value.className = 'value';
+          value.textContent = formatPercent(probability);
+
+          const track = document.createElement('div');
+          track.className = 'track';
+          const fill = document.createElement('div');
+          fill.className = 'fill';
+          track.appendChild(fill);
+
+          meta.append(token, tag, delta, value);
+          row.append(meta, track);
+          probabilityList.appendChild(row);
+          requestAnimationFrame(() => {
+            fill.style.width = probability * 100 + '%';
+          });
+        });
+      }
+
+      function renderReady() {
+        const example = currentExample();
+        sentenceText.textContent = example.prompt;
+        truthToken.textContent = example.target;
+        sampleCount.textContent =
+          'نمونه‌ی ' +
+          formatNumber(currentIndex + 1) +
+          ' از ' +
+          formatNumber(EXAMPLES.length);
+        boxStage.className = 'box-stage';
+        boxStatus.textContent = 'جمله را به من بده';
+        results.classList.remove('visible');
+        completeMessage.classList.remove('visible');
+        sendButton.hidden = false;
+        sendButton.disabled = false;
+        trainButton.hidden = false;
+        trainButton.disabled = false;
+        nextButton.hidden = true;
+        changeNote.textContent = '';
+        resetButton.disabled = false;
+      }
+
+      async function sendSentence() {
+        if (busy || phase !== 'ready') return;
+        busy = true;
+        phase = 'analysing';
+        sendButton.disabled = true;
+        resetButton.disabled = true;
+        boxStage.className = 'box-stage working';
+        boxStatus.textContent = 'در حال ساختن احتمال‌ها...';
+
+        await delay(850);
+        renderProbabilities(softmax(logits), false);
+        phase = 'shown';
+        busy = false;
+        boxStage.className = 'box-stage';
+        boxStatus.textContent = 'احتمال‌ها آماده‌اند';
+        sendButton.hidden = true;
+        results.classList.add('visible');
+        resetButton.disabled = false;
+      }
+
+      async function train() {
+        if (busy || phase !== 'shown') return;
+        busy = true;
+        phase = 'training';
+        trainButton.disabled = true;
+        resetButton.disabled = true;
+        boxStage.className = 'box-stage training';
+        boxStatus.textContent = 'در حال تغییر احتمال‌ها...';
+
+        const example = currentExample();
+        const before = softmax(logits);
+        const targetIndex = example.candidates.indexOf(example.target);
+        await delay(900);
+
+        logits = logits.map((logit, index) =>
+          index === targetIndex ? logit + LEARNING_STEP : logit
+        );
+
+        const after = softmax(logits);
+        probabilityChanges = after.map(
+          (probability, index) => probability - before[index]
+        );
+        targetIncrease = probabilityChanges[targetIndex];
+        renderProbabilities(after, true);
+
+        phase = 'trained';
+        busy = false;
+        boxStage.className = 'box-stage';
+        boxStatus.textContent = 'احتمال توکن واقعی کمی بیشتر شد';
+        changeNote.textContent =
+          'احتمال «' +
+          example.target +
+          '» ' +
+          formatPercent(targetIncrease) +
+          ' افزایش پیدا کرد.';
+        trainButton.hidden = true;
+        nextButton.hidden = false;
+        nextButton.textContent =
+          currentIndex === EXAMPLES.length - 1 ? 'دیدن نتیجه' : 'نمونه‌ی بعدی';
+        resetButton.disabled = false;
+      }
+
+      function nextExample() {
+        if (busy || phase !== 'trained') return;
+
+        if (currentIndex === EXAMPLES.length - 1) {
+          phase = 'complete';
+          results.classList.remove('visible');
+          sampleCount.textContent =
+            formatNumber(EXAMPLES.length) + ' نمونه دیده شد';
+          sentenceText.textContent = 'پایان نمونه‌های آموزشی';
+          boxStatus.textContent = 'با هر نمونه کمی تغییر کردم';
+          completeMessage.classList.add('visible');
+          return;
+        }
+
+        currentIndex += 1;
+        logits = [...currentExample().logits];
+        targetIncrease = 0;
+        probabilityChanges = [];
+        phase = 'ready';
+        renderReady();
+      }
+
+      function resetGame() {
+        if (busy) return;
+        currentIndex = 0;
+        logits = [...EXAMPLES[0].logits];
+        targetIncrease = 0;
+        probabilityChanges = [];
+        phase = 'ready';
+        renderReady();
+      }
+
+      sendButton.addEventListener('click', sendSentence);
+      trainButton.addEventListener('click', train);
+      nextButton.addEventListener('click', nextExample);
+      resetButton.addEventListener('click', resetGame);
+
       renderReady();
-    }
-
-    function resetGame() {
-      if (busy) return;
-      currentIndex = 0;
-      logits = [...EXAMPLES[0].logits];
-      targetIncrease = 0;
-      probabilityChanges = [];
-      phase = "ready";
-      renderReady();
-    }
-
-    sendButton.addEventListener("click", sendSentence);
-    trainButton.addEventListener("click", train);
-    nextButton.addEventListener("click", nextExample);
-    resetButton.addEventListener("click", resetGame);
-
-    renderReady();
-  </script>
-</body>
+    </script>
+  </body>
 </html>

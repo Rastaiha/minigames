@@ -2,7 +2,12 @@ import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 const root = process.cwd();
-const ignored = new Set(['node_modules', '.git', '.wrangler', 'minigames-backend']);
+const ignored = new Set([
+  'node_modules',
+  '.git',
+  '.wrangler',
+  'minigames-backend',
+]);
 const forbidden = [
   /api\.groq\.com/i,
   /generativelanguage\.googleapis\.com/i,
@@ -17,7 +22,7 @@ async function filesIn(directory) {
   for (const entry of entries) {
     if (ignored.has(entry.name)) continue;
     const full = path.join(directory, entry.name);
-    if (entry.isDirectory()) files.push(...await filesIn(full));
+    if (entry.isDirectory()) files.push(...(await filesIn(full)));
     else if (/\.(html|js|mjs|css)$/.test(entry.name)) files.push(full);
   }
   return files;

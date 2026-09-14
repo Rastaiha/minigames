@@ -1,34 +1,140 @@
 <!doctype html>
 <html lang="fa" dir="rtl">
-<head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#080e20"><meta name="description" content="میان پنج هزار واژهٔ فارسی سفر کنید و پیوندهایشان را در فضایی سه‌بعدی کشف کنید.">
-  <title>آسمان واژه‌های فارسی</title><link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <canvas id="universe" aria-label="نقشهٔ تعاملی سه‌بعدی واژه‌های فارسی. برای کنترل ماوس کلیک کنید و برای آزاد کردن آن Escape را بزنید؛ با حرکت ماوس یا کشیدن انگشت بچرخید و با کلیدهای جهت‌نما حرکت کنید." tabindex="0"></canvas>
-  <canvas id="overlay" aria-hidden="true"></canvas>
-  <div class="vignette"></div>
-  <header>
-    <a class="brand" href="./" aria-label="خانهٔ واژه"><span class="brand-mark">✧</span><span><strong lang="fa" dir="rtl">آسمان واژه‌های فارسی</strong></span></a>
-    <div class="header-right"><button class="icon-button" id="help-button" aria-label="راهنمای بازی">؟</button></div>
-  </header>
-  <main>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#080e20" />
+    <meta
+      name="description"
+      content="میان پنج هزار واژهٔ فارسی سفر کنید و پیوندهایشان را در فضایی سه‌بعدی کشف کنید."
+    />
+    <title>آسمان واژه‌های فارسی</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <canvas
+      id="universe"
+      aria-label="نقشهٔ تعاملی سه‌بعدی واژه‌های فارسی. برای کنترل ماوس کلیک کنید و برای آزاد کردن آن Escape را بزنید؛ با حرکت ماوس یا کشیدن انگشت بچرخید و با کلیدهای جهت‌نما حرکت کنید."
+      tabindex="0"
+    ></canvas>
+    <canvas id="overlay" aria-hidden="true"></canvas>
+    <div class="vignette"></div>
+    <header>
+      <a class="brand" href="./" aria-label="خانهٔ واژه"
+        ><span class="brand-mark">✧</span
+        ><span
+          ><strong lang="fa" dir="rtl">آسمان واژه‌های فارسی</strong></span
+        ></a
+      >
+      <div class="header-right">
+        <button class="icon-button" id="help-button" aria-label="راهنمای بازی">
+          ؟
+        </button>
+      </div>
+    </header>
+    <main>
+      <aside id="selection" class="panel" aria-label="واژهٔ انتخاب‌شده" hidden>
+        <div class="panel-heading">
+          <span class="eyebrow">صورت فلکی تو</span
+          ><button
+            id="close-selection"
+            class="icon-button"
+            aria-label="بستن جزئیات واژه"
+          >
+            ×
+          </button>
+        </div>
+        <div class="word-heading">
+          <h2 id="selected-word" lang="fa" dir="rtl"></h2>
+          <span class="star-symbol">✧</span>
+        </div>
+        <div class="coordinate-line" id="coordinates"></div>
+        <button class="primary" id="fly-to">
+          رفتن به این واژه <span>↗</span>
+        </button>
+        <div class="neighbors-heading">
+          <span>نزدیک‌ترین واژه‌ها</span
+          ><span id="distance-mode">فاصله در نقشه</span>
+        </div>
+        <div id="neighbors"></div>
+        <p class="panel-note">
+          نزدیکی در نقشه، همیشه به معنای شباهت معنایی نیست.<br />با انتخاب یک
+          همسایه، سفر را ادامه بده.
+        </p>
+      </aside>
 
-    <aside id="selection" class="panel" aria-label="واژهٔ انتخاب‌شده" hidden>
-      <div class="panel-heading"><span class="eyebrow">صورت فلکی تو</span><button id="close-selection" class="icon-button" aria-label="بستن جزئیات واژه">×</button></div>
-      <div class="word-heading"><h2 id="selected-word" lang="fa" dir="rtl"></h2><span class="star-symbol">✧</span></div>
-      <div class="coordinate-line" id="coordinates"></div>
-      <button class="primary" id="fly-to">رفتن به این واژه <span>↗</span></button>
-      <div class="neighbors-heading"><span>نزدیک‌ترین واژه‌ها</span><span id="distance-mode">فاصله در نقشه</span></div>
-      <div id="neighbors"></div><p class="panel-note">نزدیکی در نقشه، همیشه به معنای شباهت معنایی نیست.<br>با انتخاب یک همسایه، سفر را ادامه بده.</p>
-    </aside>
-
-    <div id="toast" role="status" aria-live="polite">در حال آماده‌سازی جهان واژه‌ها…</div>
-  </main>
-  <div class="crosshair" aria-hidden="true"><span></span></div>
-  <div class="mobile-controls"><div id="joystick" aria-label="دستهٔ لمسی: حرکت به جلو، عقب، چپ و راست"><div id="joystick-knob"></div></div><div class="altitude"><button id="rise" aria-label="حرکت به بالا">↑</button><button id="fall" aria-label="حرکت به پایین">↓</button></div><span class="swipe-hint">برای چرخیدن بکش · برای انتخاب لمس کن</span></div>
-  <footer><div class="flight-help"><kbd dir="ltr">W A S D</kbd><span>حرکت</span><b>·</b><span>کلیک برای کنترل ماوس · Esc برای آزاد کردن</span><b>·</b><span>انتخاب ستاره با کلیک</span></div><div class="view-controls"><button id="reset" class="text-button">↺ <span>نمای آغازین</span></button></div></footer>
-  <dialog id="help"><button id="close-help" class="icon-button" aria-label="بستن راهنما">×</button><span class="eyebrow">به جهان واژه‌ها خوش آمدید</span><h2>میان واژه‌ها سفر کنید</h2><p>هر ستاره یک واژهٔ فارسی است. آن را انتخاب کنید تا نزدیک‌ترین واژه‌ها و پیوندهای میانشان را ببینید.</p><dl><dt>حرکت</dt><dd>با کلیدهای <bdi>W A S D</bdi> یا کلیدهای جهت‌نما حرکت کنید. برای حرکت سریع‌تر، کلید شیفت را نگه دارید.</dd><dt>چرخیدن</dt><dd>روی رایانه، روی آسمان کلیک کنید تا نشانگر ماوس پنهان شود. ماوس را حرکت دهید تا جهت نگاه عوض شود و برای انتخاب ستارهٔ زیر نشانهٔ وسط صفحه کلیک کنید. برای آزاد کردن ماوس و استفاده از دکمه‌ها، کلید Escape را بزنید. اگر مرورگر از این قابلیت پشتیبانی نکند، برای چرخیدن ماوس را با دکمهٔ نگه‌داشته بکشید. با چرخ ماوس جلو و عقب بروید.</dd><dt>بالا و پایین رفتن</dt><dd>از کلیدهای <bdi>E / Q</bdi> یا دکمه‌های ↑ و ↓ استفاده کنید.</dd><dt>بازی با گوشی</dt><dd>با دستهٔ سمت چپ حرکت کنید. برای چرخیدن، انگشتتان را روی آسمان بکشید و برای انتخاب یک ستاره، آن را لمس کنید.</dd><dt>کشف واژه‌ها</dt><dd>یک ستاره را انتخاب کنید؛ سپس با انتخاب یکی از همسایه‌هایش، سفر را ادامه دهید.</dd></dl><p class="panel-note">فاصله‌ها در نقشهٔ سه‌بعدی محاسبه می‌شوند؛ نزدیک بودن در نقشه همیشه به معنای شباهت معنایی نیست.</p><button id="begin" class="primary">شروع سفر <span>↖</span></button></dialog>
-  <script type="module" src="app.js"></script>
-</body></html>
+      <div id="toast" role="status" aria-live="polite">
+        در حال آماده‌سازی جهان واژه‌ها…
+      </div>
+    </main>
+    <div class="crosshair" aria-hidden="true"><span></span></div>
+    <div class="mobile-controls">
+      <div id="joystick" aria-label="دستهٔ لمسی: حرکت به جلو، عقب، چپ و راست">
+        <div id="joystick-knob"></div>
+      </div>
+      <div class="altitude">
+        <button id="rise" aria-label="حرکت به بالا">↑</button
+        ><button id="fall" aria-label="حرکت به پایین">↓</button>
+      </div>
+      <span class="swipe-hint">برای چرخیدن بکش · برای انتخاب لمس کن</span>
+    </div>
+    <footer>
+      <div class="flight-help">
+        <kbd dir="ltr">W A S D</kbd><span>حرکت</span><b>·</b
+        ><span>کلیک برای کنترل ماوس · Esc برای آزاد کردن</span><b>·</b
+        ><span>انتخاب ستاره با کلیک</span>
+      </div>
+      <div class="view-controls">
+        <button id="reset" class="text-button">
+          ↺ <span>نمای آغازین</span>
+        </button>
+      </div>
+    </footer>
+    <dialog id="help">
+      <button id="close-help" class="icon-button" aria-label="بستن راهنما">
+        ×</button
+      ><span class="eyebrow">به جهان واژه‌ها خوش آمدید</span>
+      <h2>میان واژه‌ها سفر کنید</h2>
+      <p>
+        هر ستاره یک واژهٔ فارسی است. آن را انتخاب کنید تا نزدیک‌ترین واژه‌ها و
+        پیوندهای میانشان را ببینید.
+      </p>
+      <dl>
+        <dt>حرکت</dt>
+        <dd>
+          با کلیدهای <bdi>W A S D</bdi> یا کلیدهای جهت‌نما حرکت کنید. برای حرکت
+          سریع‌تر، کلید شیفت را نگه دارید.
+        </dd>
+        <dt>چرخیدن</dt>
+        <dd>
+          روی رایانه، روی آسمان کلیک کنید تا نشانگر ماوس پنهان شود. ماوس را حرکت
+          دهید تا جهت نگاه عوض شود و برای انتخاب ستارهٔ زیر نشانهٔ وسط صفحه کلیک
+          کنید. برای آزاد کردن ماوس و استفاده از دکمه‌ها، کلید Escape را بزنید.
+          اگر مرورگر از این قابلیت پشتیبانی نکند، برای چرخیدن ماوس را با دکمهٔ
+          نگه‌داشته بکشید. با چرخ ماوس جلو و عقب بروید.
+        </dd>
+        <dt>بالا و پایین رفتن</dt>
+        <dd>از کلیدهای <bdi>E / Q</bdi> یا دکمه‌های ↑ و ↓ استفاده کنید.</dd>
+        <dt>بازی با گوشی</dt>
+        <dd>
+          با دستهٔ سمت چپ حرکت کنید. برای چرخیدن، انگشتتان را روی آسمان بکشید و
+          برای انتخاب یک ستاره، آن را لمس کنید.
+        </dd>
+        <dt>کشف واژه‌ها</dt>
+        <dd>
+          یک ستاره را انتخاب کنید؛ سپس با انتخاب یکی از همسایه‌هایش، سفر را
+          ادامه دهید.
+        </dd>
+      </dl>
+      <p class="panel-note">
+        فاصله‌ها در نقشهٔ سه‌بعدی محاسبه می‌شوند؛ نزدیک بودن در نقشه همیشه به
+        معنای شباهت معنایی نیست.
+      </p>
+      <button id="begin" class="primary">شروع سفر <span>↖</span></button>
+    </dialog>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>

@@ -11,7 +11,7 @@ async function filesIn(directory) {
   for (const entry of entries) {
     if (ignored.has(entry.name)) continue;
     const full = path.join(directory, entry.name);
-    if (entry.isDirectory()) files.push(...await filesIn(full));
+    if (entry.isDirectory()) files.push(...(await filesIn(full)));
     else if (/\.js$/.test(entry.name)) files.push(full);
   }
   return files;
