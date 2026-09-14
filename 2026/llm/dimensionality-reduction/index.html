@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="fa" dir="rtl">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>3D → 2D → 1D Ball Space</title>
+    <title>کاهش بُعد: سه‌بعدی تا یک‌بعدی</title>
     <style>
       @font-face {
         font-family: 'Vazirmatn';
@@ -44,6 +44,7 @@
         background: rgba(255, 255, 255, 0.92);
         color: #111;
         border-radius: 8px;
+        min-height: 44px;
         padding: 9px 14px;
         font-family: inherit;
         font-size: 14px;
@@ -64,17 +65,23 @@
         border-radius: 7px;
         pointer-events: none;
       }
+      @media (prefers-reduced-motion: reduce) {
+        button {
+          transition: none !important;
+        }
+      }
     </style>
   </head>
   <body>
     <div id="app">
       <div class="controls">
-        <button id="btn2d">2D</button>
-        <button id="btn1d">1D</button>
-        <button id="reset">Reset</button>
+        <button id="btn2d" type="button">۲بعدی</button>
+        <button id="btn1d" type="button">۱بعدی</button>
+        <button id="reset" type="button">شروع دوباره</button>
       </div>
       <div class="hint" id="hint">
-        3D: drag to rotate · right-drag to pan · wheel to zoom
+        سه‌بعدی: کشیدن برای چرخش · کشیدن راست برای جابه‌جایی · چرخ برای
+        بزرگ‌نمایی
       </div>
     </div>
 
@@ -174,7 +181,12 @@
         0x4f86f7, 0xff6b6b, 0x42b883, 0xf6b73c, 0x9b6df2, 0x28b6c8,
       ];
       const balls = [];
-      const rand = (r) => (Math.random() * 2 - 1) * r;
+      let seed = 20260915;
+      const random = () => {
+        seed = (seed * 1664525 + 1013904223) >>> 0;
+        return seed / 4294967296;
+      };
+      const rand = (r) => (random() * 2 - 1) * r;
 
       for (let i = 0; i < CONFIG.pointCount; i++) {
         const original = new THREE.Vector3(
@@ -182,7 +194,7 @@
           rand(CONFIG.worldSpread * 0.72),
           rand(CONFIG.worldSpread * 0.72)
         );
-        const color = palette[Math.floor(Math.random() * palette.length)];
+        const color = palette[Math.floor(random() * palette.length)];
         const mesh = new THREE.Mesh(geometry, makeBallMaterial(color));
         mesh.position.copy(original);
         mesh.scale.setScalar(CONFIG.radius);
@@ -500,7 +512,7 @@
             configure2DControls();
             controls.update();
             hint.textContent =
-              '2D: left-drag to rotate around screen center · right-drag to pan · zoom disabled';
+              '۲بعدی: کشیدن برای چرخش · کشیدن راست برای جابه‌جایی';
           }
         } else if (transition.kind === 'to1d') {
           balls.forEach((ball) => {
@@ -527,12 +539,18 @@
             configure1DControls();
             controls.update();
             hint.textContent =
-              '1D: all points collapsed to a horizontal line · drag to pan';
+              '۱بعدی: همهٔ نقاط روی یک خط قرار گرفتند · برای جابه‌جایی بکش';
           }
         }
       }
 
+      let pageVisible = true;
+      document.addEventListener('visibilitychange', () => {
+        pageVisible = !document.hidden;
+        if (pageVisible) requestAnimationFrame(animate);
+      });
       function animate(now) {
+        if (!pageVisible) return;
         requestAnimationFrame(animate);
         animateTransition(now);
         controls.update();
