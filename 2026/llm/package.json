@@ -1,0 +1,9 @@
+{
+  "name": "llm-minigames-quality",
+  "private": true,
+  "scripts": {
+    "check:api-boundary": "node scripts/check-api-boundary.mjs",
+    "check:js": "node scripts/check-js-syntax.mjs",
+    "check": "npm run check:api-boundary && npm run check:js"
+  }
+}
