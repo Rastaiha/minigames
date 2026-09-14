@@ -57,6 +57,11 @@
       if (!response.ok) {
         throw new Error(body.error || 'پاسخ سرویس ناموفق بود.');
       }
+      if (settings.isCurrent && !settings.isCurrent(settings.generation)) {
+        var staleError = new Error('درخواست منقضی شده است.');
+        staleError.name = 'StaleRequestError';
+        throw staleError;
+      }
       return body;
     } catch (error) {
       if (error && error.name === 'AbortError') {
@@ -84,5 +89,35 @@
     return body;
   }
 
-  global.MinigameApi = Object.freeze({ request: request, respond: respond });
+  function createRequestGuard() {
+    var generation = 0;
+    return Object.freeze({
+      next: function next() {
+        generation += 1;
+        return generation;
+      },
+      current: function current() {
+        return generation;
+      },
+      isCurrent: function isCurrent(value) {
+        return value === generation;
+      },
+      options: function options(signal) {
+        var value = generation;
+        return {
+          signal: signal,
+          generation: value,
+          isCurrent: function isCurrentGeneration() {
+            return value === generation;
+          },
+        };
+      },
+    });
+  }
+
+  global.MinigameApi = Object.freeze({
+    request: request,
+    respond: respond,
+    createRequestGuard: createRequestGuard,
+  });
 })(window);
