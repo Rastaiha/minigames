@@ -109,6 +109,11 @@
         color: var(--muted);
         font-size: 12px;
       }
+      .source-badge {
+        margin: 3px 0 0;
+        color: var(--muted);
+        font-size: 10px;
+      }
 
       .status-dot {
         width: 7px;
@@ -526,6 +531,9 @@
             <span class="status-dot" id="statusDot" aria-hidden="true"></span>
             <span id="statusText">آماده گفت‌وگو</span>
           </p>
+          <p class="source-badge">
+            پاسخ Worker؛ شبیه‌سازی آموزشی فقط هنگام خطا
+          </p>
         </div>
         <button
           id="clearButton"
@@ -873,7 +881,9 @@
             { signal }
           );
           const resText = response.data.text || response.data.answer;
-          if (resText) return resText;
+          if (typeof resText === 'string' && resText.trim())
+            return resText.trim();
+          throw new Error('پاسخ متنی خالی یا نامعتبر است.');
         } catch (e) {
           if (signal.aborted) throw e;
           console.warn(
@@ -958,7 +968,7 @@
       });
 
       promptInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
+        if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
           e.preventDefault();
           handleSubmit();
         }
