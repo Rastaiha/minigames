@@ -25,10 +25,10 @@ The compatibility routes remain available while clients migrate, but new code us
 
 ## Tooling and quality gates
 
-- Add `pyproject.toml` with Ruff format/lint configuration, a narrow Python target, and exclusions for generated data.
-- Add `.pre-commit-config.yaml` with Ruff (format and check), standard whitespace/YAML checks, and the API-boundary scan. Add an `.editorconfig` for UTF-8, LF, two-space web files, and four-space Python.
+- Add ESLint and Prettier configuration for browser JavaScript, HTML, CSS, and JSON. Keep generated data and third-party/vendor code excluded.
+- Add `.pre-commit-config.yaml` with ESLint, Prettier, standard whitespace/YAML checks, and the API-boundary scan. Add an `.editorconfig` for UTF-8, LF, two-space web files, and four-space Python.
 - Add a root `package.json` script set for boundary checks, JavaScript syntax checks, and game smoke checks. Keep game-local package scripts working.
-- Run hooks in CI and before deployment; report `ruff check`, `ruff format --check`, `node --check`, boundary scan, and `git diff --check` results. Do not regenerate large datasets as part of normal checks.
+- Run hooks in CI and before deployment; report ESLint, Prettier check, `node --check`, boundary scan, and `git diff --check` results. Do not regenerate large datasets as part of normal checks.
 - Add small fixture tests for Worker request validation, route adapters, response normalization, CORS, rate limits, cancellation, and next-token structured output.
 
 ## Shared frontend/API work
@@ -51,33 +51,33 @@ Use short Persian labels, one primary action per state, an explicit status line,
 
 ## Individual game backlog
 
-| Game | Main problems | Planned cleanup |
-| --- | --- | --- |
-| `Dimensions/` | Three near-copy pages and duplicated CSS/JS | Extract one dimensionality engine plus 1D/2D/3D configs; keep uppercase URL. |
-| `attention/` | Pointer-only tokens, fixed layout, remote font, no reduced motion | Semantic buttons/keyboard focus, responsive board, local font, shared stage shell. |
-| `bpe-tree/` | English metadata/controls, dense long lines, unreadable default graph, modal focus gaps | Persian RTL copy, formatted modules, responsive zoom, focus-trapped modal and graph keyboard alternatives. |
-| `contexual-embedding/` | Mouse-only drag, fixed 100vh, inaccessible modal, remote font | Pointer Events plus keyboard movement, responsive canvas/modal, local font; preserve typo URL. |
-| `dimensionality-reduction/` | CDN-only Three.js, random non-reproducible data, English UI, broken 1D navigation | Seeded data, shared Three controller, staged loading/error state, reduced motion and correct navigation. |
-| `hallucination/` | Duplicate latest user message, weak validation, silent simulation fallback | Shared chat client/request builder, response schema checks, explicit simulation badge, reset-safe aborts. |
-| `jailbreak/` | Stale URL, browser-owned policy/model knobs, stale-response risk, checklist field mismatch | Server-owned policy, shared lifecycle/client, canonical checklist fields, current Worker config. |
-| `jailbreak-old/` | Direct Flask/provider branches, duplicate message, silent fallback, legacy UX | Remove bypasses; redirect/archive to current challenge while preserving URL compatibility. |
-| `model-lab/` | Duplicated chat client, stale URL, dead local helpers | Shared client/shell; retain tab histories; remove dead generation/token code. |
-| `next-token-prediction/` | Exposed Groq credential/direct fetch, unsafe `innerHTML`, duplicate newer game | Immediate Worker migration, text-safe rendering, move useful presets to v2, then thin compatibility page. |
-| `next-token-prediction2/` | Uses jailbreak as token API, exposes model/system/temp, weak probability validation, alerts | Dedicated structured Worker operation, server-owned settings, sum/range validation, cancellable UI and estimates label. |
-| `pretrained-llm/` | Duplicated API/chat code, stale fallback URL, silent local fallback, IME gaps | Shared shell/client, canonical config, visible local/remote source, fixtures and IME-safe submit. |
-| `sft-llm/` | Same duplication and safety-fixture drift | Same migration; align fixtures with Worker policy and label simulation. |
-| `rlhf-llm/` | Same duplication; ambiguous SFT naming | Shared migration; rename visible copy to aligned/helpful while keeping route. |
-| `random-llm/` | ~732KB unused tokenizer blob; prompt semantics unclear | Remove dead blob, keep deterministic seeded generator, explain “random generation” and reuse shared stage shell. |
-| `pretraining-box/` | Every probability row tagged “real token”; no cumulative learning | Correct tag logic, make simulation explicit, add deterministic reset/state tests. |
-| `transformer/` | Shared files but untranslated reset and weak state explanation | Shared controller/status, Persian controls, live step narration and manual-step accessibility. |
-| `word-embedding/` | Large monolith, inline handlers, duplicated Three code, unsafe storage | Split state/render/data modules, reuse dimensionality engine, guarded storage, preserve hash/state. |
-| `wordembedding/` | Older dense overlap, custom pointer/touch code | Keep unique arithmetic as compatibility mode or redirect; shared interaction helpers and accessible controls. |
-| `word-in-line/` | Best baseline but minified CSS/inline handlers and no tests | Preserve storage key; format modules, remove inline handlers, add layout/schema tests. |
-| `word-in-space/` | Best visual reference but remote font/minified CSS/no tests | Make it the canonical workbench; local fonts, tokens, schema tests, preserve `vazhechin-layout-v2`. |
-| `word-in-space/vectors.html` | Limited help/return and shared-layout assumptions | Add clear back/help state and read-only schema tests; never write the main layout. |
-| `words-and-vectors/` | Static, cramped four-column mobile view, unclear illustrative dimensions | Responsive stage, concise explanation/caption, shared visual tokens. |
-| `words-world/` | Dark visual outlier, dense app, always-running animation, generated JS/CSV drift | Adopt compatible tokens, pause hidden animation, split modules, document reproducible data pipeline and test it. |
-| `llm2.html` | 1.77MB workshop monolith, base64 assets, absolute iframe URLs | Split state/content/media manifest, relative canonical URLs, preserve sandbox and workshop behavior. |
+| Game                         | Main problems                                                                               | Planned cleanup                                                                                                         |
+| ---------------------------- | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `Dimensions/`                | Three near-copy pages and duplicated CSS/JS                                                 | Extract one dimensionality engine plus 1D/2D/3D configs; keep uppercase URL.                                            |
+| `attention/`                 | Pointer-only tokens, fixed layout, remote font, no reduced motion                           | Semantic buttons/keyboard focus, responsive board, local font, shared stage shell.                                      |
+| `bpe-tree/`                  | English metadata/controls, dense long lines, unreadable default graph, modal focus gaps     | Persian RTL copy, formatted modules, responsive zoom, focus-trapped modal and graph keyboard alternatives.              |
+| `contexual-embedding/`       | Mouse-only drag, fixed 100vh, inaccessible modal, remote font                               | Pointer Events plus keyboard movement, responsive canvas/modal, local font; preserve typo URL.                          |
+| `dimensionality-reduction/`  | CDN-only Three.js, random non-reproducible data, English UI, broken 1D navigation           | Seeded data, shared Three controller, staged loading/error state, reduced motion and correct navigation.                |
+| `hallucination/`             | Duplicate latest user message, weak validation, silent simulation fallback                  | Shared chat client/request builder, response schema checks, explicit simulation badge, reset-safe aborts.               |
+| `jailbreak/`                 | Stale URL, browser-owned policy/model knobs, stale-response risk, checklist field mismatch  | Server-owned policy, shared lifecycle/client, canonical checklist fields, current Worker config.                        |
+| `jailbreak-old/`             | Direct Flask/provider branches, duplicate message, silent fallback, legacy UX               | Remove bypasses; redirect/archive to current challenge while preserving URL compatibility.                              |
+| `model-lab/`                 | Duplicated chat client, stale URL, dead local helpers                                       | Shared client/shell; retain tab histories; remove dead generation/token code.                                           |
+| `next-token-prediction/`     | Exposed Groq credential/direct fetch, unsafe `innerHTML`, duplicate newer game              | Immediate Worker migration, text-safe rendering, move useful presets to v2, then thin compatibility page.               |
+| `next-token-prediction2/`    | Uses jailbreak as token API, exposes model/system/temp, weak probability validation, alerts | Dedicated structured Worker operation, server-owned settings, sum/range validation, cancellable UI and estimates label. |
+| `pretrained-llm/`            | Duplicated API/chat code, stale fallback URL, silent local fallback, IME gaps               | Shared shell/client, canonical config, visible local/remote source, fixtures and IME-safe submit.                       |
+| `sft-llm/`                   | Same duplication and safety-fixture drift                                                   | Same migration; align fixtures with Worker policy and label simulation.                                                 |
+| `rlhf-llm/`                  | Same duplication; ambiguous SFT naming                                                      | Shared migration; rename visible copy to aligned/helpful while keeping route.                                           |
+| `random-llm/`                | ~732KB unused tokenizer blob; prompt semantics unclear                                      | Remove dead blob, keep deterministic seeded generator, explain “random generation” and reuse shared stage shell.        |
+| `pretraining-box/`           | Every probability row tagged “real token”; no cumulative learning                           | Correct tag logic, make simulation explicit, add deterministic reset/state tests.                                       |
+| `transformer/`               | Shared files but untranslated reset and weak state explanation                              | Shared controller/status, Persian controls, live step narration and manual-step accessibility.                          |
+| `word-embedding/`            | Large monolith, inline handlers, duplicated Three code, unsafe storage                      | Split state/render/data modules, reuse dimensionality engine, guarded storage, preserve hash/state.                     |
+| `wordembedding/`             | Older dense overlap, custom pointer/touch code                                              | Keep unique arithmetic as compatibility mode or redirect; shared interaction helpers and accessible controls.           |
+| `word-in-line/`              | Best baseline but minified CSS/inline handlers and no tests                                 | Preserve storage key; format modules, remove inline handlers, add layout/schema tests.                                  |
+| `word-in-space/`             | Best visual reference but remote font/minified CSS/no tests                                 | Make it the canonical workbench; local fonts, tokens, schema tests, preserve `vazhechin-layout-v2`.                     |
+| `word-in-space/vectors.html` | Limited help/return and shared-layout assumptions                                           | Add clear back/help state and read-only schema tests; never write the main layout.                                      |
+| `words-and-vectors/`         | Static, cramped four-column mobile view, unclear illustrative dimensions                    | Responsive stage, concise explanation/caption, shared visual tokens.                                                    |
+| `words-world/`               | Dark visual outlier, dense app, always-running animation, generated JS/CSV drift            | Adopt compatible tokens, pause hidden animation, split modules, document reproducible data pipeline and test it.        |
+| `llm2.html`                  | 1.77MB workshop monolith, base64 assets, absolute iframe URLs                               | Split state/content/media manifest, relative canonical URLs, preserve sandbox and workshop behavior.                    |
 
 ## Delivery sequence
 
@@ -93,5 +93,5 @@ Use short Persian labels, one primary action per state, an explicit status line,
 - No provider URL, provider credential, or browser `Authorization` header remains in a game directory.
 - Every model call goes through the shared client and documented Worker endpoint.
 - Every entry page uses the shared visual tokens and one of the three shells, with RTL/keyboard/touch/reduced-motion support.
-- Ruff/pre-commit/JS syntax/API-boundary checks pass; Worker contract tests cover all routes and the new operation.
+- ESLint/Prettier/pre-commit/JS syntax/API-boundary checks pass; Worker contract tests cover all routes and the new operation.
 - Existing URLs, storage schemas, educational distinctions, and workshop iframe behavior remain compatible or have an explicit redirect/migration note.

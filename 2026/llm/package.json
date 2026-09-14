@@ -4,6 +4,16 @@
   "scripts": {
     "check:api-boundary": "node scripts/check-api-boundary.mjs",
     "check:js": "node scripts/check-js-syntax.mjs",
-    "check": "npm run check:api-boundary && npm run check:js"
+    "lint": "eslint . --fix",
+    "lint:check": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "npm run lint:check && npm run format:check && npm run check:api-boundary && npm run check:js"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.34.0",
+    "eslint": "^9.34.0",
+    "globals": "^16.3.0",
+    "prettier": "^3.6.2"
   }
 }
