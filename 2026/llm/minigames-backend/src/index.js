@@ -1,5 +1,3 @@
-import { predictNextToken } from "./next-token.js";
-
 const JSON_HEADERS = { "Content-Type": "application/json; charset=utf-8" };
 
 function json(body, status = 200, headers = {}) {
@@ -846,32 +844,6 @@ export default {
 
     if (!cors) return json({ error: "Origin is not allowed." }, 403);
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
-
-    if (url.pathname === "/next-token") {
-      if (request.method !== "POST") return json({ error: "Method not allowed." }, 405, cors);
-      if (!request.headers.get("Content-Type")?.toLowerCase().includes("application/json")) {
-        return json({ error: "Content-Type must be application/json." }, 415, cors);
-      }
-      let body;
-      try { body = await request.json(); }
-      catch { return json({ error: "Invalid JSON." }, 400, cors); }
-      const prompt = body?.prompt;
-      if (typeof prompt !== "string" || !prompt.trim() || prompt.length > 4000) {
-        return json({ error: "Prompt must contain 1 to 4000 characters." }, 400, cors);
-      }
-      if (env.RATE_LIMITER) {
-        const suppliedId = request.headers.get("X-Client-Id") || "";
-        const clientId = /^[a-zA-Z0-9-]{10,80}$/.test(suppliedId) ? suppliedId : "anonymous";
-        const { success } = await env.RATE_LIMITER.limit({ key: `${clientId}:next-token` });
-        if (!success) return json({ error: "Too many requests." }, 429, cors);
-      }
-      const result = await predictNextToken(prompt, {
-        ...env,
-        LLM_BASE_URL: resolveApiUrl(env.LLM_BASE_URL),
-        LLM_API_KEY: gatewayApiKey(env)
-      });
-      return json(result.body, result.status, cors);
-    }
 
     if (url.pathname === "/hallucination") {
       if (request.method !== "POST") return json({ error: "Method not allowed." }, 405, cors);

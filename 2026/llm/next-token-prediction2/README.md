@@ -1,43 +1,28 @@
-# Next-token prediction
+# Next-word prediction
 
-`tokenize_static.html` uses the same public Worker as the jailbreak game, configured
-in `config.js`. No provider key is accepted or stored in the browser.
+The game is fully static. `tokenize_static.html` reads the finite continuation
+tree in `word-tree.js`; it makes no network requests and contains no API key.
 
-## Live mode
+The checked-in tree contains four rounds for each preset sentence. At every
+node, it starts with Llama's real top-five token log probabilities at temperature
+1. Each candidate token is then forced into the assistant response and greedily
+continued at temperature 0 until the token pieces form a visible word. A word's
+probability is the product of the probabilities along that token path. Different
+token paths that produce the same word are merged.
 
-Deploy the updated `minigames-backend` with:
+When a player's word is present in the stored choices, the game follows that
+word's branch. Otherwise it samples one of the stored word branches using their
+relative probabilities. Some nodes contain fewer than five words because invalid
+fragments are removed or multiple token paths form the same word.
 
-- `LLM_BASE_URL`: the existing OpenAI-compatible chat completions endpoint.
-- `LLM_API_KEY`: uses the same backend credential resolution as the other games.
-- `TOKEN_MODEL`: configured in `wrangler.toml` as
-  `cf/@cf/meta/llama-3.1-8b-instruct-fp8-fast`.
+## Regenerating the tree
 
-Deploy from `minigames-backend` with `npm run deploy`. No additional provider
-credential is required. An existing `LLM_API_KEY` Worker secret takes precedence
-over the existing shared backend credential.
+Install `generator-requirements.txt`, then run:
 
-The route requests a continuous six-token continuation at temperature 1 with
-top-k sampling restricted to five tokens, and returns the real
-top-five probabilities at every position. The browser reveals that sequence one
-token at a time. Tokens may include spaces or partial words. If a guess matches any
-of the five candidates, that token is forced into the continuation and unused
-cached positions are discarded; the next request follows the player's chosen path.
-Otherwise the model's sampled token is appended. Top-five probabilities are not
-renormalized, and an absent guess has unknown probability rather than zero. Models
-producing incomplete UTF-8 byte tokens are currently unsupported.
+```sh
+LLM_API_KEY=... LLM_BASE_URL=... python generate_word_tree.py
+```
 
-## API failures
-
-Every prediction requires the real API. Missing configuration, connection failures,
-HTTP errors, and missing or invalid logprobs produce a visible error. The text and
-guess are preserved so the player can retry. Failed requests never append a token
-or display invented probabilities. There is no local simulation or offline fallback;
-the preset buttons only fill the starting text.
-
-## Verification status
-
-On 2026-09-13, curl verified HTTP 200 with complete JSON, Persian output, and
-`logprobs.content[0].top_logprobs` from the configured Llama model using
-`logprobs: true`, `top_logprobs: 5`, and `max_tokens: 1`. Local curl checks used
-IPv4, explicit DNS resolution, and HTTP/1.0. The public Worker still needs deployment
-of the new `/next-token` route before the browser game can use it.
+The generator uses `cf/@cf/meta/llama-3.1-8b-instruct-fp8-fast` by default and
+stores its resumable API cache under `/tmp`. Credentials are read only by the
+generator and are never written into the generated JavaScript.
