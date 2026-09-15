@@ -11,11 +11,43 @@ let camera = { scale: 1, x: 0, y: 0 };
 const pointers = new Map();
 let gesture = null;
 let suppressClick = false;
+let activeId = null;
+let hintDismissed = false;
+let hintElement = null;
+
 const format = (value) =>
   (Math.abs(value) < 0.005 ? 0 : value).toLocaleString('en-US', {
     maximumFractionDigits: 2,
     useGrouping: false,
   });
+
+function dismissHint() {
+  if (hintDismissed) return;
+  hintDismissed = true;
+  if (hintElement) {
+    hintElement.classList.add('dismissed');
+    setTimeout(() => {
+      hintElement?.remove();
+      hintElement = null;
+    }, 250);
+  }
+}
+
+function showHoverHint() {
+  if (hintDismissed || !tiles.size) return;
+  const firstTile = tiles.values().next().value;
+  if (!firstTile) return;
+
+  hintElement = document.createElement('div');
+  hintElement.className = 'hover-hint-callout';
+  hintElement.setAttribute('aria-hidden', 'true');
+  hintElement.innerHTML = `
+    <span class="hint-pulse-dot"></span>
+    <span class="hint-text">نشانگر را روی واژه‌ها نگه‌دارید</span>
+    <span class="hint-arrow"></span>
+  `;
+  firstTile.append(hintElement);
+}
 
 // Read the main game's cache without ever changing it, including its camera.
 let legacy = null;
@@ -35,6 +67,7 @@ try {
   /* An unavailable cache shows the invitation to play the main game. */
 }
 
+let tileIndex = 0;
 for (const word of words) {
   const oldPoint = legacy?.[word.id];
   if (
@@ -46,10 +79,12 @@ for (const word of words) {
   tile.type = 'button';
   tile.className = 'word board-word';
   tile.dataset.id = word.id;
+  tile.style.animationDelay = `${(tileIndex % 4) * 0.4}s`;
+  tileIndex++;
   // Keep the original tile dimensions and cached top-left anchor.
   tile.innerHTML = `<span>${word.text}</span><span class="grip" aria-hidden="true">⠿</span>`;
   tile.setAttribute('aria-pressed', 'false');
-  tile.setAttribute('aria-label', `${word.text}؛ نمایش بردار`);
+  tile.setAttribute('aria-label', `${word.text}؛ نمایش مختصات بردار`);
   world.append(tile);
   if (!positions[word.id]) {
     positions[word.id] = {
@@ -63,6 +98,33 @@ for (const word of words) {
   }
   tile.style.left = `${positions[word.id].x}px`;
   tile.style.top = `${positions[word.id].y}px`;
+
+  // Hover interactions for mouse pointer:
+  tile.addEventListener('pointerenter', (event) => {
+    if (event.pointerType !== 'touch' && pointers.size === 0) {
+      dismissHint();
+      select(word.id);
+    }
+  });
+  tile.addEventListener('pointerleave', (event) => {
+    if (event.pointerType !== 'touch' && pointers.size === 0) {
+      if (activeId === word.id) {
+        select(null);
+      }
+    }
+  });
+
+  // Keyboard accessibility:
+  tile.addEventListener('focus', () => {
+    dismissHint();
+    select(word.id);
+  });
+  tile.addEventListener('blur', () => {
+    if (activeId === word.id) {
+      select(null);
+    }
+  });
+
   tiles.set(word.id, tile);
 }
 
@@ -78,11 +140,13 @@ if (points.length) {
         Math.max(...points.map((p) => p.y))) /
       2,
   };
+  showHoverHint();
 } else {
   document.querySelector('#empty').hidden = false;
 }
 
 function select(id) {
+  activeId = id;
   for (const [wordId, tile] of tiles) {
     const active = wordId === id;
     tile.classList.toggle('selected', active);
@@ -96,18 +160,23 @@ function select(id) {
     vector.setAttribute('aria-hidden', 'true');
     vector.innerHTML = `<span class="vector-column"><span>${x}</span><span>${y}</span></span>`;
     tile.append(vector);
-    document.querySelector('#announcement').textContent =
-      `${words.find((word) => word.id === id).text}؛ x = ${x}، y = ${y}`;
-    // Keep the annotation visible when selecting a word near the viewport edge.
+    const wordObj = words.find((word) => word.id === id);
+    if (wordObj) {
+      document.querySelector('#announcement').textContent =
+        `${wordObj.text}؛ x = ${x}، y = ${y}`;
+    }
+
+    // Keep the annotation visible without shifting camera on hover
     const rect = vector.getBoundingClientRect();
     const bounds = board.getBoundingClientRect();
-    if (rect.right > bounds.right - 12)
-      camera.x -= rect.right - bounds.right + 12;
-    if (rect.left < bounds.left + 12) camera.x += bounds.left + 12 - rect.left;
-    if (rect.bottom > bounds.bottom - 12)
-      camera.y -= rect.bottom - bounds.bottom + 12;
-    if (rect.top < bounds.top + 12) camera.y += bounds.top + 12 - rect.top;
-    applyCamera();
+    if (rect.right > bounds.right - 10) {
+      vector.classList.add('flip-left');
+    }
+    if (rect.top < bounds.top + 8) {
+      vector.classList.add('shift-down');
+    } else if (rect.bottom > bounds.bottom - 8) {
+      vector.classList.add('shift-up');
+    }
   }
 }
 
@@ -160,9 +229,16 @@ function fit() {
 
 board.addEventListener('click', (event) => {
   if (suppressClick) return;
+  dismissHint();
   const tile = event.target.closest('.board-word');
-  select(tile ? tile.dataset.id : null);
+  if (tile) {
+    const id = tile.dataset.id;
+    select(activeId === id ? null : id);
+  } else {
+    select(null);
+  }
 });
+
 board.addEventListener('keydown', (event) => {
   if (event.key === 'Escape') select(null);
   // Native buttons provide Enter/Space selection. Movement/deletion has no handler.
@@ -177,10 +253,12 @@ function gesturePoint() {
     distance: Math.max(1, Math.hypot(a.x - b.x, a.y - b.y)),
   };
 }
+
 function beginGesture() {
   const point = gesturePoint();
   gesture = { ...point, camera: { ...camera }, count: pointers.size };
 }
+
 board.addEventListener('pointerdown', (event) => {
   if (event.button !== 0) return;
   if (!pointers.size) suppressClick = false;
@@ -188,6 +266,7 @@ board.addEventListener('pointerdown', (event) => {
   beginGesture();
   if (pointers.size > 1) suppressClick = true;
 });
+
 window.addEventListener('pointermove', (event) => {
   if (!pointers.has(event.pointerId)) return;
   pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
@@ -198,6 +277,10 @@ window.addEventListener('pointermove', (event) => {
   )
     return;
   suppressClick = true;
+  dismissHint();
+  if (activeId) {
+    select(null);
+  }
   const start = gesture.camera;
   camera.scale =
     gesture.count > 1
@@ -210,6 +293,7 @@ window.addEventListener('pointermove', (event) => {
   camera.y = point.y - ((gesture.y - start.y) / start.scale) * camera.scale;
   applyCamera();
 });
+
 function finishPointer(event) {
   if (!pointers.delete(event.pointerId)) return;
   if (pointers.size) beginGesture();
@@ -221,8 +305,10 @@ function finishPointer(event) {
     }, 0);
   }
 }
+
 window.addEventListener('pointerup', finishPointer);
 window.addEventListener('pointercancel', finishPointer);
+
 viewport.addEventListener(
   'wheel',
   (event) => {
@@ -252,6 +338,7 @@ viewport.addEventListener(
   },
   { passive: false }
 );
+
 new ResizeObserver(fit).observe(viewport);
 fit();
 document.fonts.ready.then(fit);

@@ -12,20 +12,30 @@
     <main class="workspace">
       <section class="board-section" aria-label="صفحهٔ بردارها">
         <header class="vector-header">
-          <a class="back-link" href="index.html">← بازگشت به واژه‌چین</a>
-          <p>یک واژه را انتخاب کن تا مختصات دوبعدی آن را ببینی.</p>
+          <div class="vector-instruction" role="note">
+            <span class="instruction-dot" aria-hidden="true"></span>
+            <span class="instruction-label">راهنما:</span>
+            <span class="instruction-text"
+              >نشانگر را روی هر واژه نگه‌دارید تا مختصات دوبعدی آن نمایش داده
+              شود.</span
+            >
+          </div>
         </header>
         <div id="board-viewport" class="board-viewport">
           <div
             id="board"
             class="board fine-grid"
             tabindex="0"
-            aria-label="صفحهٔ مختصات؛ یک واژه را انتخاب کن."
+            aria-label="صفحهٔ مختصات؛ نشانگر را روی هر واژه نگه‌دارید یا انتخاب کنید."
           >
             <svg id="axes" class="axes" aria-hidden="true"></svg>
             <div id="sheet-content" class="sheet-content"></div>
             <div id="empty" class="empty-state" hidden>
+              <p>هنوز واژه‌ای روی صفحه قرار نگرفته است.</p>
               <p>اول واژه‌ها را در واژه‌چین بچین، سپس به این صفحه برگرد.</p>
+              <a class="empty-action-btn" href="index.html"
+                >ورود به صفحهٔ چیدمان واژه‌چین</a
+              >
             </div>
           </div>
         </div>
