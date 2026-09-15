@@ -6,7 +6,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#f7f8fc" />
-    <title>تولید تصادفی زبان</title>
+    <title>مدل خام</title>
     <style>
       @font-face {
         font-family: Vazir;
@@ -83,9 +83,26 @@
         margin-left: 5px;
         border-radius: 50%;
         background: #4cab83;
+        box-shadow: 0 0 0 4px rgba(76, 171, 131, 0.13);
+        transition:
+          background 200ms ease,
+          box-shadow 200ms ease;
       }
       .status-dot.busy {
         background: #f59e0b;
+        box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2);
+        animation: pulse-dot 1.4s ease-in-out infinite;
+      }
+      @keyframes pulse-dot {
+        0%,
+        100% {
+          opacity: 1;
+          box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2);
+        }
+        50% {
+          opacity: 0.6;
+          box-shadow: 0 0 0 7px rgba(245, 158, 11, 0.05);
+        }
       }
       .messages {
         overflow: auto;
@@ -124,9 +141,10 @@
       }
       .empty strong {
         display: block;
-        margin-bottom: 8px;
-        color: var(--ink);
-        font-size: 18px;
+        margin: 0;
+        color: var(--muted);
+        font-size: 20px;
+        font-weight: 600;
       }
       .composer-wrap {
         padding: 16px 20px 20px;
@@ -228,7 +246,7 @@
       <header>
         <div class="avatar" aria-hidden="true">خ</div>
         <div>
-          <h1>تولید تصادفی زبان</h1>
+          <h1>مدل خام</h1>
           <p class="status">
             <span id="dot" class="status-dot" aria-hidden="true"></span
             ><span id="status">آماده</span>
@@ -245,19 +263,10 @@
         aria-label="گفت‌وگو"
       >
         <div id="empty" class="empty">
-          <div>
-            <strong>مدل خام چه می‌سازد؟</strong
-            ><span
-              >این صفحه فقط ترکیب تصادفی قطعه‌های فارسی را شبیه‌سازی
-              می‌کند.</span
-            >
-          </div>
+          <p><strong>مدل خام</strong></p>
         </div>
       </section>
       <div class="composer-wrap">
-        <p class="note">
-          شبیه‌سازی آفلاین؛ این متن از مدل زبانی واقعی پاسخ نمی‌گیرد.
-        </p>
         <form id="composer">
           <textarea
             id="prompt"
@@ -317,7 +326,7 @@
           ),
           state = { node, pieces, index: 0, timer: null };
         generation = state;
-        status.textContent = 'در حال ساختن ترکیب تصادفی…';
+        status.textContent = 'در حال نوشتن…';
         dot.classList.add('busy');
         send.textContent = '■';
         send.setAttribute('aria-label', 'توقف');

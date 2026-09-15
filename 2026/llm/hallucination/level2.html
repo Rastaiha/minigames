@@ -127,6 +127,19 @@
       .status-dot.thinking {
         background: var(--warning);
         box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2);
+        animation: pulse-dot 1.4s ease-in-out infinite;
+      }
+
+      @keyframes pulse-dot {
+        0%,
+        100% {
+          opacity: 1;
+          box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2);
+        }
+        50% {
+          opacity: 0.6;
+          box-shadow: 0 0 0 7px rgba(245, 158, 11, 0.05);
+        }
       }
 
       .clear-button {
@@ -253,13 +266,10 @@
       }
 
       .empty-state p {
-        margin: 0 0 5px;
-        color: var(--ink);
-        font-size: 16px;
+        margin: 0;
+        color: var(--muted);
+        font-size: 20px;
         font-weight: 600;
-      }
-      .empty-state span {
-        font-size: 13px;
       }
 
       .composer-wrap {
@@ -428,7 +438,7 @@
           <h1 id="levelTitle">مرحله ۲</h1>
           <p class="status">
             <span class="status-dot" id="statusDot" aria-hidden="true"></span>
-            <span id="statusText">آماده گفت‌وگو</span>
+            <span id="statusText">آماده</span>
           </p>
         </div>
         <button
@@ -458,9 +468,7 @@
         aria-label="گفت‌وگو با هوش مصنوعی"
       >
         <div class="empty-state" id="emptyState">
-          <div class="empty-mark" aria-hidden="true">؟</div>
           <p id="emptyTitle">مرحله ۲</p>
-          <span id="emptyDesc">پیامی بنویسید تا گفت‌وگو آغاز شود.</span>
         </div>
       </section>
 
@@ -531,10 +539,10 @@
       function updateStatus() {
         if (isGenerating) {
           statusDot.className = 'status-dot thinking';
-          statusText.textContent = 'در حال تولید پاسخ…';
+          statusText.textContent = 'در حال نوشتن…';
         } else {
           statusDot.className = 'status-dot';
-          statusText.textContent = 'آماده گفت‌وگو';
+          statusText.textContent = 'آماده';
         }
         clearButton.disabled = messagesList.length === 0 || isGenerating;
       }

@@ -121,6 +121,27 @@
         border-radius: 50%;
         background: var(--ready);
         box-shadow: 0 0 0 4px rgba(76, 171, 131, 0.13);
+        transition:
+          background 200ms ease,
+          box-shadow 200ms ease;
+      }
+
+      .status-dot.thinking {
+        background: var(--accent, #f59e0b);
+        box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2);
+        animation: pulse-dot 1.4s ease-in-out infinite;
+      }
+
+      @keyframes pulse-dot {
+        0%,
+        100% {
+          opacity: 1;
+          box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2);
+        }
+        50% {
+          opacity: 0.6;
+          box-shadow: 0 0 0 7px rgba(245, 158, 11, 0.05);
+        }
       }
 
       .messages {
@@ -217,13 +238,10 @@
       }
 
       .empty-state p {
-        margin: 0 0 5px;
-        color: var(--ink);
-        font-size: 16px;
+        margin: 0;
+        color: var(--muted);
+        font-size: 20px;
         font-weight: 600;
-      }
-      .empty-state span {
-        font-size: 13px;
       }
 
       .composer-wrap {
@@ -407,8 +425,8 @@
         <div class="identity">
           <h1>مدل گفتگو</h1>
           <p class="status">
-            <span class="status-dot" aria-hidden="true"></span
-            ><span id="statusText">آماده گفت‌وگو</span>
+            <span class="status-dot" id="statusDot" aria-hidden="true"></span
+            ><span id="statusText">آماده</span>
           </p>
         </div>
         <button
@@ -438,9 +456,7 @@
         aria-label="گفت‌وگو"
       >
         <div class="empty-state" id="emptyState">
-          <div class="empty-mark" aria-hidden="true">؟</div>
-          <p>هر چیزی می‌خواهی بنویس</p>
-          <span>یک سؤال، جمله یا موضوع را امتحان کن</span>
+          <p>مدل گفتگو</p>
         </div>
       </section>
 
@@ -499,6 +515,7 @@
       const clearButton = document.querySelector('#clearButton');
       const emptyState = document.querySelector('#emptyState');
       const statusText = document.querySelector('#statusText');
+      const statusDot = document.querySelector('#statusDot');
 
       let currentController = null;
       let typingTimer = null;
@@ -613,7 +630,7 @@
         } catch (error) {
           if (error.name === 'AbortError') throw error;
           console.warn(
-            'Remote generation unavailable; using local response.',
+            'Remote generation unavailable; using local continuation.',
             error
           );
           return localCompletion(text);
@@ -672,7 +689,8 @@
         sendButton.disabled = false;
         sendButton.setAttribute('aria-label', value ? 'توقف' : 'ارسال پیام');
         promptInput.disabled = value;
-        statusText.textContent = value ? 'در حال نوشتن…' : 'آماده گفت‌وگو';
+        statusText.textContent = value ? 'در حال نوشتن…' : 'آماده';
+        statusDot?.classList.toggle('thinking', value);
       }
 
       function stopGeneration() {

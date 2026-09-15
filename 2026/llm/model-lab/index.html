@@ -122,6 +122,27 @@
         border-radius: 50%;
         background: var(--ready);
         box-shadow: 0 0 0 4px rgba(76, 171, 131, 0.13);
+        transition:
+          background 200ms ease,
+          box-shadow 200ms ease;
+      }
+
+      .status-dot.thinking {
+        background: var(--accent, #f59e0b);
+        box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2);
+        animation: pulse-dot 1.4s ease-in-out infinite;
+      }
+
+      @keyframes pulse-dot {
+        0%,
+        100% {
+          opacity: 1;
+          box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2);
+        }
+        50% {
+          opacity: 0.6;
+          box-shadow: 0 0 0 7px rgba(245, 158, 11, 0.05);
+        }
       }
 
       .messages {
@@ -218,13 +239,10 @@
       }
 
       .empty-state p {
-        margin: 0 0 5px;
-        color: var(--ink);
-        font-size: 16px;
+        margin: 0;
+        color: var(--muted);
+        font-size: 20px;
         font-weight: 600;
-      }
-      .empty-state span {
-        font-size: 13px;
       }
 
       .composer-wrap {
@@ -454,8 +472,8 @@
         <div class="identity">
           <h1 id="modelName">مدل خام</h1>
           <p class="status">
-            <span class="status-dot" aria-hidden="true"></span
-            ><span id="statusText">آماده گفت‌وگو</span>
+            <span class="status-dot" id="statusDot" aria-hidden="true"></span
+            ><span id="statusText">آماده</span>
           </p>
         </div>
         <button
@@ -529,9 +547,7 @@
         aria-label="گفت‌وگو"
       >
         <div class="empty-state" id="emptyState">
-          <div class="empty-mark" aria-hidden="true">؟</div>
-          <p>یک پیام را با چهار مدل امتحان کن</p>
-          <span>مدل را از نوار بالا تغییر بده</span>
+          <p id="emptyTitle">مدل خام</p>
         </div>
       </section>
 
@@ -756,7 +772,9 @@
       const sendButton = document.querySelector('#send');
       const clearButton = document.querySelector('#clearButton');
       const emptyState = document.querySelector('#emptyState');
+      const emptyTitle = document.querySelector('#emptyTitle');
       const statusText = document.querySelector('#statusText');
+      const statusDot = document.querySelector('#statusDot');
       const modelName = document.querySelector('#modelName');
       const avatar = document.querySelector('#avatar');
       const modelTabs = [...document.querySelectorAll('.model-tab')];
@@ -775,18 +793,22 @@
         return value[0] % limit;
       }
 
-      function rawCompletion() {
-        return window.RandomPersianModel.generateText(48 + randomIndex(25));
+      function localRawCompletion() {
+        const pieces = window.RandomPersianModel.generatePieces(
+          44 + randomIndex(26)
+        );
+        return pieces.map((item) => item.text).join(' ');
       }
 
       async function requestCompletion(mode, text, signal) {
-        const operation = MODELS[mode].mode;
-        if (!operation) return rawCompletion();
+        if (mode === 'raw') {
+          return localRawCompletion();
+        }
 
         try {
           const response = await MinigameApi.respond(
             'completion',
-            operation,
+            mode,
             { prompt: text },
             { signal }
           );
@@ -855,7 +877,7 @@
             element.appendChild(token);
             requestAnimationFrame(() => token.classList.remove('entering'));
             messages.scrollTop = messages.scrollHeight;
-            typingTimer = setTimeout(writeNext, 30 + Math.random() * 34);
+            typingTimer = setTimeout(writeNext, 34 + Math.random() * 38);
           };
 
           writeNext();
@@ -868,7 +890,8 @@
         sendButton.disabled = value ? false : !promptInput.value.trim();
         sendButton.setAttribute('aria-label', value ? 'توقف' : 'ارسال پیام');
         promptInput.disabled = value;
-        statusText.textContent = value ? 'در حال نوشتن…' : 'آماده گفت‌وگو';
+        statusText.textContent = value ? 'در حال نوشتن…' : 'آماده';
+        statusDot?.classList.toggle('thinking', value);
       }
 
       function stopGeneration() {
@@ -888,6 +911,7 @@
         const model = MODELS[mode];
         modelName.textContent = model.name;
         avatar.textContent = model.avatar;
+        if (emptyTitle) emptyTitle.textContent = model.name;
 
         modelTabs.forEach((tab) => {
           tab.setAttribute('aria-selected', String(tab.dataset.model === mode));
