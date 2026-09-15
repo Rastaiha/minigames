@@ -121,71 +121,142 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 8px;
+        gap: 12px;
         margin: 8px 0;
-        padding: 6px 12px;
+        padding: 7px 14px;
         background: var(--soft);
         border: 1px solid #e5eaf2;
-        border-radius: 11px;
-        min-height: 34px;
-        transition: background 250ms ease, border-color 250ms ease;
-      }
-
-      .status-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: #94a3b8;
-        flex-shrink: 0;
-        transition: background 250ms ease, transform 250ms ease;
+        border-radius: 13px;
+        min-height: 50px;
+        transition:
+          background 250ms ease,
+          border-color 250ms ease,
+          box-shadow 250ms ease;
       }
 
       .box-stage.working {
         background: rgba(53, 98, 233, 0.06);
-        border-color: rgba(53, 98, 233, 0.25);
-      }
-
-      .box-stage.working .status-dot {
-        background: var(--blue);
-        animation: statusPulse 700ms ease-in-out infinite alternate;
+        border-color: rgba(53, 98, 233, 0.3);
+        box-shadow: 0 4px 14px rgba(53, 98, 233, 0.08);
       }
 
       .box-stage.training {
         background: rgba(230, 154, 69, 0.08);
-        border-color: rgba(230, 154, 69, 0.3);
-      }
-
-      .box-stage.training .status-dot {
-        background: var(--orange);
-        animation: statusPulse 550ms ease-in-out infinite alternate;
+        border-color: rgba(230, 154, 69, 0.35);
+        box-shadow: 0 4px 14px rgba(230, 154, 69, 0.1);
       }
 
       .box-stage.done {
         background: rgba(54, 169, 120, 0.08);
-        border-color: rgba(54, 169, 120, 0.28);
+        border-color: rgba(54, 169, 120, 0.3);
       }
 
-      .box-stage.done .status-dot {
-        background: var(--green);
-        transform: scale(1.15);
+      .model-brain-wrap {
+        position: relative;
+        width: 38px;
+        height: 38px;
+        display: grid;
+        place-items: center;
+        border-radius: 11px;
+        background: linear-gradient(
+          135deg,
+          rgba(53, 98, 233, 0.1),
+          rgba(128, 103, 239, 0.12)
+        );
+        border: 1px solid rgba(83, 113, 227, 0.24);
+        color: var(--blue);
+        box-shadow: 0 2px 8px rgba(53, 98, 233, 0.08);
+        flex-shrink: 0;
+        transition:
+          background 250ms ease,
+          border-color 250ms ease,
+          color 250ms ease,
+          box-shadow 250ms ease,
+          transform 250ms ease;
       }
 
-      @keyframes statusPulse {
+      .model-brain-svg {
+        width: 25px;
+        height: 25px;
+        display: block;
+      }
+
+      .box-stage.working .model-brain-wrap {
+        background: linear-gradient(
+          135deg,
+          rgba(53, 98, 233, 0.18),
+          rgba(83, 113, 227, 0.28)
+        );
+        border-color: rgba(53, 98, 233, 0.5);
+        color: var(--blue);
+        animation: brainPulse 700ms ease-in-out infinite alternate;
+      }
+
+      .box-stage.training .model-brain-wrap {
+        background: linear-gradient(
+          135deg,
+          rgba(230, 154, 69, 0.18),
+          rgba(221, 118, 79, 0.28)
+        );
+        border-color: rgba(230, 154, 69, 0.55);
+        color: var(--orange);
+        animation: brainPulse 550ms ease-in-out infinite alternate;
+      }
+
+      .box-stage.done .model-brain-wrap {
+        background: rgba(54, 169, 120, 0.14);
+        border-color: rgba(54, 169, 120, 0.4);
+        color: var(--green);
+        transform: scale(1.02);
+      }
+
+      @keyframes brainPulse {
         from {
-          transform: scale(0.75);
-          opacity: 0.5;
+          transform: scale(0.96);
+          box-shadow: 0 0 0 0 rgba(53, 98, 233, 0.2);
         }
         to {
-          transform: scale(1.35);
-          opacity: 1;
+          transform: scale(1.06);
+          box-shadow: 0 0 12px 2px rgba(53, 98, 233, 0.25);
         }
+      }
+
+      .model-stage-text {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: right;
+        gap: 2px;
+      }
+
+      .model-badge {
+        font-size: 9.5px;
+        font-weight: 700;
+        color: var(--blue);
+        background: rgba(53, 98, 233, 0.1);
+        padding: 1px 6px;
+        border-radius: 5px;
+        line-height: 1.4;
+        transition:
+          background 250ms ease,
+          color 250ms ease;
+      }
+
+      .box-stage.training .model-badge {
+        color: #b96a1a;
+        background: rgba(230, 154, 69, 0.15);
+      }
+
+      .box-stage.done .model-badge {
+        color: #1e704e;
+        background: rgba(54, 169, 120, 0.15);
       }
 
       .box-status {
         color: #4b5563;
         font-size: 11.5px;
         font-weight: 600;
-        line-height: 1.5;
+        line-height: 1.4;
       }
 
       .send-button,
@@ -480,12 +551,86 @@
         </div>
 
         <div class="box-stage" id="boxStage" aria-live="polite">
-          <span class="status-dot" aria-hidden="true"></span>
-          <span class="box-status" id="boxStatus">جمله را به جعبه بده</span>
+          <div class="model-brain-wrap" aria-hidden="true">
+            <svg
+              class="model-brain-svg"
+              viewBox="0 0 40 40"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <!-- نیمکره چپ مغز -->
+              <path
+                d="M19 8.5C16.8 8.5 14.8 9.6 13.7 11.3C12.3 10.5 10.5 10.7 9.2 11.7C7.6 12.9 7 14.9 7.3 16.9C5.8 18.2 5.2 20.2 5.6 22.2C6.1 24.4 7.8 26 10 26.4C10.7 28 12.2 29.2 14 29.5C15.5 29.8 17.1 29.3 18.3 28.4C18.6 28.9 19 29.3 19 29.8"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <!-- نیمکره راست مغز -->
+              <path
+                d="M21 8.5C23.2 8.5 25.2 9.6 26.3 11.3C27.7 10.5 29.5 10.7 30.8 11.7C32.4 12.9 33 14.9 32.7 16.9C34.2 18.2 34.8 20.2 34.4 22.2C33.9 24.4 32.2 26 30 26.4C29.3 28 27.8 29.2 26 29.5C24.5 29.8 22.9 29.3 21.7 28.4C21.4 28.9 21 29.3 21 29.8"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <!-- شیار عصبی میانی -->
+              <path
+                d="M20 9V30"
+                stroke="currentColor"
+                stroke-width="1.4"
+                stroke-dasharray="2 2"
+                opacity="0.5"
+              />
+              <!-- مدارهای عصبی مدل هوش مصنوعی -->
+              <path
+                d="M12 17H15L17 20"
+                stroke="currentColor"
+                stroke-width="1.4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M13 23L16 23L17 21"
+                stroke="currentColor"
+                stroke-width="1.4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <circle cx="12" cy="17" r="1.5" fill="currentColor" />
+              <circle cx="13" cy="23" r="1.5" fill="currentColor" />
+              <circle cx="17" cy="20.5" r="1.5" fill="currentColor" />
+
+              <path
+                d="M28 17H25L23 20"
+                stroke="currentColor"
+                stroke-width="1.4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M27 23L24 23L23 21"
+                stroke="currentColor"
+                stroke-width="1.4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <circle cx="28" cy="17" r="1.5" fill="currentColor" />
+              <circle cx="27" cy="23" r="1.5" fill="currentColor" />
+              <circle cx="23" cy="20.5" r="1.5" fill="currentColor" />
+
+              <circle cx="20" cy="14" r="1.7" fill="currentColor" />
+              <circle cx="20" cy="25" r="1.7" fill="currentColor" />
+            </svg>
+          </div>
+          <div class="model-stage-text">
+            <span class="model-badge" id="modelBadge">مدل زبانی (LLM)</span>
+            <span class="box-status" id="boxStatus">جمله را به مدل بده</span>
+          </div>
         </div>
 
         <button class="send-button" id="sendButton" type="button">
-          جمله را به جعبه بده
+          جمله را به مدل بده
         </button>
 
         <div class="results" id="results">
@@ -564,6 +709,7 @@
       const sampleCount = document.querySelector('#sampleCount');
       const boxStage = document.querySelector('#boxStage');
       const boxStatus = document.querySelector('#boxStatus');
+      const modelBadge = document.querySelector('#modelBadge');
       const sendButton = document.querySelector('#sendButton');
       const results = document.querySelector('#results');
       const probabilityList = document.querySelector('#probabilityList');
@@ -684,7 +830,8 @@
           ' از ' +
           formatNumber(EXAMPLES.length);
         boxStage.className = 'box-stage';
-        boxStatus.textContent = 'جمله را به جعبه بده';
+        boxStatus.textContent = 'جمله را به مدل بده';
+        if (modelBadge) modelBadge.textContent = 'مدل زبانی (LLM)';
         results.classList.remove('visible');
         completeMessage.classList.remove('visible');
         sendButton.hidden = false;
@@ -705,7 +852,8 @@
         sendButton.disabled = true;
         resetButton.disabled = true;
         boxStage.className = 'box-stage working';
-        boxStatus.textContent = 'در حال ساختن احتمال‌ها...';
+        boxStatus.textContent = 'در حال پردازش و محاسبه‌ی احتمال‌ها...';
+        if (modelBadge) modelBadge.textContent = 'در حال تحلیل...';
 
         await delay(650);
         renderInitialProbabilities(softmax(logits));
@@ -713,6 +861,7 @@
         busy = false;
         boxStage.className = 'box-stage';
         boxStatus.textContent = 'احتمال‌ها آماده‌اند';
+        if (modelBadge) modelBadge.textContent = 'پیش‌بینی توکن';
         sendButton.hidden = true;
         results.classList.add('visible');
         resetButton.disabled = false;
@@ -726,6 +875,7 @@
         resetButton.disabled = true;
         boxStage.className = 'box-stage training';
         boxStatus.textContent = 'در حال به‌روزرسانی احتمال‌ها...';
+        if (modelBadge) modelBadge.textContent = 'آموزش مدل';
 
         const example = currentExample();
         const before = softmax(logits);
@@ -813,6 +963,7 @@
         busy = false;
         boxStage.className = 'box-stage done';
         boxStatus.textContent = 'احتمال توکن واقعی با موفقیت بیشتر شد';
+        if (modelBadge) modelBadge.textContent = 'مدل به‌روز شد';
         changeNote.textContent =
           'احتمال «' +
           example.target +
@@ -837,6 +988,7 @@
           sentenceText.textContent = 'پایان نمونه‌های آموزشی';
           boxStage.className = 'box-stage done';
           boxStatus.textContent = 'با هر نمونه کمی تغییر کردم';
+          if (modelBadge) modelBadge.textContent = 'آموزش کامل';
           completeMessage.classList.add('visible');
           return;
         }
