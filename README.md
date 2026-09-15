@@ -83,7 +83,7 @@
 | 📁 `2026/llm/archive/jailbreak-old/` | **نگهبان (نسخه قدیمی) | چالش جیل‌بریک (Jailbreak Challenge)** | `index.html` | [🌐 مشاهده و اجرا](https://rastaiha.github.io/minigames/2026/llm/archive/jailbreak-old/index.html) |
 | 📁 `2026/llm/archive/next-token-prediction/` | **کارگاه مدل زبانی: پیش‌بینی توکن بعدی** | `index.html` | [🌐 مشاهده و اجرا](https://rastaiha.github.io/minigames/2026/llm/archive/next-token-prediction/index.html) |
 
-*آخرین به‌روزرسانی خودکار: 2026-09-15 14:16:50 UTC — تعداد کل صفحات: 30*
+*آخرین به‌روزرسانی خودکار: 2026-09-15 14:23:07 UTC — تعداد کل صفحات: 30*
 <!-- MINIGAMES_LIST:END -->
 
 ---
