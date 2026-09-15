@@ -226,9 +226,13 @@
       }
 
       .token.pivot {
-        border: 2px dashed #94a3b8;
-        font-weight: bold;
-        box-shadow: 0 0 20px rgba(148, 163, 184, 0.25);
+        border: 2px dashed #f8fafc;
+        background: #1e293b;
+        color: #ffffff;
+        font-size: 16px;
+        font-weight: 700;
+        box-shadow: 0 0 25px rgba(255, 255, 255, 0.35);
+        z-index: 100;
       }
       button:focus-visible,
       .sidebar-token:focus-visible,
@@ -622,9 +626,10 @@
           });
 
           if (!isReviewMode) {
-            revealBtn.style.display = !isColorsRevealed
-              ? 'inline-block'
-              : 'none';
+            const remaining =
+              sidebarList.querySelectorAll('.sidebar-token').length;
+            revealBtn.style.display =
+              !isColorsRevealed && remaining === 0 ? 'inline-block' : 'none';
             addPivotBtn.style.display =
               isColorsRevealed && !pivotAdded ? 'inline-block' : 'none';
             nextStageBtn.style.display = pivotAdded ? 'inline-block' : 'none';
@@ -669,10 +674,16 @@
 
       function updateControlsVisibility() {
         if (isReviewMode) return;
+        const remainingSidebar =
+          sidebarList.querySelectorAll('.sidebar-token').length;
         const placedTokens = canvasSpace.querySelectorAll('.token:not(.pivot)');
-        if (placedTokens.length >= 3 && !isColorsRevealed) {
+        if (
+          remainingSidebar === 0 &&
+          placedTokens.length > 0 &&
+          !isColorsRevealed
+        ) {
           revealBtn.style.display = 'inline-block';
-        } else if (placedTokens.length < 3 && !isColorsRevealed) {
+        } else if (!isColorsRevealed) {
           revealBtn.style.display = 'none';
         }
       }
@@ -933,15 +944,18 @@
         });
 
         if (closestCluster && minDistance < 180) {
-          pivotEl.style.backgroundColor = closestCluster.bg;
-          pivotEl.style.borderColor = closestCluster.border;
+          pivotEl.style.backgroundColor = closestCluster.bg.replace(
+            '0.25',
+            '0.45'
+          );
+          pivotEl.style.borderColor = closestCluster.color;
           pivotEl.style.color = closestCluster.color;
-          pivotEl.style.boxShadow = `0 0 25px ${closestCluster.border}`;
+          pivotEl.style.boxShadow = `0 0 30px ${closestCluster.border}`;
         } else {
-          pivotEl.style.backgroundColor = 'rgba(100, 116, 139, 0.2)';
-          pivotEl.style.borderColor = 'rgba(148, 163, 184, 0.5)';
-          pivotEl.style.color = '#e2e8f0';
-          pivotEl.style.boxShadow = '0 0 15px rgba(148, 163, 184, 0.2)';
+          pivotEl.style.backgroundColor = '#1e293b';
+          pivotEl.style.borderColor = '#f8fafc';
+          pivotEl.style.color = '#ffffff';
+          pivotEl.style.boxShadow = '0 0 25px rgba(255, 255, 255, 0.35)';
         }
       }
 
