@@ -33,6 +33,10 @@ body {
   font-family: 'Vazir Local', Vazir, sans-serif;
 }
 
+:where(button, input, textarea, select) {
+  font-family: inherit;
+}
+
 :where(button, a, input, textarea, [tabindex]):focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 3px;
