@@ -59,29 +59,6 @@
         text-align: justify;
       }
 
-      .sidebar-buttons {
-        display: flex;
-        gap: 8px;
-      }
-
-      .nav-step-btn {
-        flex: 1;
-        background: rgba(59, 130, 246, 0.15);
-        color: #93c5fd;
-        border: 1px solid rgba(59, 130, 246, 0.3);
-        padding: 8px;
-        border-radius: 8px;
-        font-size: 12px;
-        cursor: pointer;
-        display: none;
-        transition: all 0.2s;
-      }
-
-      .nav-step-btn:hover {
-        background: rgba(59, 130, 246, 0.3);
-        color: #fff;
-      }
-
       .reset-btn {
         width: 100%;
         background: rgba(239, 68, 68, 0.15);
@@ -179,15 +156,6 @@
         transform: translateY(-2px);
       }
 
-      .action-btn.secondary {
-        background: #059669;
-        box-shadow: 0 4px 15px rgba(5, 150, 105, 0.4);
-      }
-
-      .action-btn.secondary:hover {
-        background: #10b981;
-      }
-
       /* توکن کلمات */
       .token {
         position: absolute;
@@ -276,85 +244,12 @@
           transition-duration: 0.01ms !important;
         }
       }
-
-      /* مدال / پاپ‌آپ پایان */
-      .modal-overlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.75);
-        backdrop-filter: blur(8px);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 3000;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.3s ease;
-      }
-
-      .modal-overlay.active {
-        opacity: 1;
-        pointer-events: auto;
-      }
-
-      .modal-card {
-        background: #1e293b;
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        border-radius: 24px;
-        padding: 36px 30px;
-        max-width: 440px;
-        width: 90%;
-        text-align: center;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
-        transform: scale(0.9);
-        transition: transform 0.3s ease;
-      }
-
-      .modal-overlay.active .modal-card {
-        transform: scale(1);
-      }
-
-      .modal-card h2 {
-        color: #38bdf8;
-        font-size: 24px;
-        margin-bottom: 12px;
-      }
-
-      .modal-card p {
-        color: #cbd5e1;
-        font-size: 15px;
-        line-height: 1.7;
-        margin-bottom: 24px;
-      }
-
-      .modal-card button {
-        background: #4f46e5;
-        color: #fff;
-        border: none;
-        padding: 12px 28px;
-        border-radius: 12px;
-        font-size: 15px;
-        font-weight: 600;
-        cursor: pointer;
-        box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);
-        transition: all 0.2s;
-      }
-
-      .modal-card button:hover {
-        background: #6366f1;
-        transform: translateY(-2px);
-      }
     </style>
     <link rel="stylesheet" href="../shared/ui/word-labs.css" />
   </head>
   <body class="mg-word-lab">
     <div class="sidebar" id="sidebar">
-      <div class="level-info" id="levelInfo">مرحله ۱ از ۳</div>
-
-      <div class="sidebar-buttons" id="navStepControls">
-        <button class="nav-step-btn" id="prevStageBtn">مرحله قبل</button>
-        <button class="nav-step-btn" id="nextReviewBtn">مرحله بعد</button>
-      </div>
+      <div class="level-info" id="levelInfo">خوشه‌بندی معنایی کلمات</div>
 
       <div class="sidebar-desc" id="sidebarDesc">
         کلمه‌های هم‌معنی یا مرتبط رو بکش داخل صفحه و اون‌هایی که فکر می‌کنی به
@@ -372,26 +267,6 @@
           چیدمان نهایی و بررسی رنگ‌ها
         </button>
         <button class="action-btn" id="addPivotBtn"></button>
-        <button class="action-btn secondary" id="nextStageBtn">
-          ثبت نهایی و مرحله بعد
-        </button>
-      </div>
-    </div>
-
-    <div
-      class="modal-overlay"
-      id="finishModal"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="finishTitle"
-    >
-      <div class="modal-card">
-        <h2 id="finishTitle">آفرین به تو!</h2>
-        <p>
-          تو تمام مراحل خوشه‌بندی معنایی کلمات رو با موفقیت به پایان رسوندی!
-          حالا می‌تونی از مرحله اول دونه‌دونه چیدمان‌ها و پاسخ‌هات رو چک کنی.
-        </p>
-        <button id="reviewAnswersBtn">بررسی و مرور پاسخ‌ها</button>
       </div>
     </div>
 
@@ -405,256 +280,65 @@
               color: '#fbbf24',
               bg: 'rgba(245, 158, 11, 0.25)',
               border: 'rgba(245, 158, 11, 0.8)',
-              words: [
-                'جنگل',
-                'پلنگ',
-                'ببر',
-                'گربه',
-                'شکار',
-                'سلطان',
-                'پنجه',
-              ],
+              words: ['جنگل', 'پلنگ', 'ببر', 'گربه', 'شکار', 'سلطان', 'پنجه'],
             },
             {
               name: 'آب',
               color: '#38bdf8',
               bg: 'rgba(6, 182, 212, 0.25)',
               border: 'rgba(6, 182, 212, 0.8)',
-              words: [
-                'آب',
-                'شلنگ',
-                'لوله',
-                'سینک',
-                'قطره',
-                'حمام',
-              ],
+              words: ['آب', 'شلنگ', 'لوله', 'سینک', 'قطره', 'حمام'],
             },
             {
               name: 'نوشیدنی',
               color: '#f472b6',
               bg: 'rgba(236, 72, 153, 0.25)',
               border: 'rgba(236, 72, 153, 0.8)',
-              words: [
-                'لبنیات',
-                'گاو',
-                'ماست',
-                'پنیر',
-                'کلسیم',
-                'صبحانه',
-              ],
-            },
-          ],
-        },
-        {
-          pivotWord: 'زبان',
-          clusters: [
-            {
-              name: 'گفتار',
-              color: '#34d399',
-              bg: 'rgba(16, 185, 129, 0.25)',
-              border: 'rgba(16, 185, 129, 0.8)',
-              words: [
-                'انگلیسی',
-                'فارسی',
-                'صحبت',
-                'واژه',
-                'گرامر',
-                'لهجه',
-                'ترجمه',
-              ],
-            },
-            {
-              name: 'عضو بدن',
-              color: '#fb7185',
-              bg: 'rgba(244, 63, 94, 0.25)',
-              border: 'rgba(244, 63, 94, 0.8)',
-              words: [
-                'مزه',
-                'چشایی',
-                'غذا',
-                'دهان',
-                'شیرین',
-                'حلق',
-              ],
-            },
-          ],
-        },
-        {
-          pivotWord: 'خیر',
-          clusters: [
-            {
-              name: 'نه',
-              color: '#f87171',
-              bg: 'rgba(239, 68, 68, 0.25)',
-              border: 'rgba(239, 68, 68, 0.8)',
-              words: [
-                'مخالف',
-                'نادرست',
-                'منفی',
-                'انکار',
-                'هرگز',
-                'رد',
-              ],
-            },
-            {
-              name: 'خوبی',
-              color: '#60a5fa',
-              bg: 'rgba(59, 130, 246, 0.25)',
-              border: 'rgba(59, 130, 246, 0.8)',
-              words: [
-                'نیکی',
-                'خوبی',
-                'کمک',
-                'بخشش',
-                'خیریه',
-                'احسان',
-                'ثواب',
-              ],
+              words: ['لبنیات', 'ماست', 'پنیر', 'کلسیم', 'صبحانه'],
             },
           ],
         },
       ];
 
-      // حافظه ذخیره‌سازی وضعیت کامل هر مرحله برای بازگشت و مرور
-      const stagesState = {};
-
-      let currentStageIdx = 0;
       let isColorsRevealed = false;
       let pivotAdded = false;
-      let isReviewMode = false;
 
       const sidebar = document.getElementById('sidebar');
       const sidebarList = document.getElementById('sidebarList');
       const canvasSpace = document.getElementById('canvasSpace');
       const levelInfo = document.getElementById('levelInfo');
+      const sidebarDesc = document.getElementById('sidebarDesc');
       const revealBtn = document.getElementById('revealBtn');
       const addPivotBtn = document.getElementById('addPivotBtn');
-      const nextStageBtn = document.getElementById('nextStageBtn');
       const resetBtn = document.getElementById('resetBtn');
-      const finishModal = document.getElementById('finishModal');
-      const reviewAnswersBtn = document.getElementById('reviewAnswersBtn');
-      const prevStageBtn = document.getElementById('prevStageBtn');
-      const nextReviewBtn = document.getElementById('nextReviewBtn');
-      let modalReturnFocus = null;
 
-      function saveCurrentStageState() {
-        const placedTokens = [];
-        canvasSpace.querySelectorAll('.token').forEach((tok) => {
-          placedTokens.push({
-            text: tok.innerText,
-            x: parseFloat(tok.style.left),
-            y: parseFloat(tok.style.top),
-            cluster: {
-              name: tok.dataset.clusterName,
-              color: tok.dataset.clusterColor,
-              bg: tok.dataset.clusterBg,
-              border: tok.dataset.clusterBorder,
-            },
-            isPivot: tok.classList.contains('pivot'),
-            isLocked: tok.classList.contains('locked'),
-          });
-        });
-
-        const sidebarTokens = [];
-        sidebarList.querySelectorAll('.sidebar-token').forEach((tok) => {
-          sidebarTokens.push({
-            text: tok.innerText,
-            cluster: {
-              name: tok.dataset.clusterName,
-              color: tok.dataset.clusterColor,
-              bg: tok.dataset.clusterBg,
-              border: tok.dataset.clusterBorder,
-            },
-          });
-        });
-
-        stagesState[currentStageIdx] = {
-          isColorsRevealed,
-          pivotAdded,
-          placedTokens,
-          sidebarTokens,
-        };
-      }
-
-      function loadStage(index) {
-        currentStageIdx = index;
-        levelInfo.innerText = `مرحله ${index + 1} از ${stages.length}`;
-        addPivotBtn.innerText = `اضافه کردن " ${stages[index].pivotWord} "`;
+      function loadStage() {
+        levelInfo.innerText = 'خوشه‌بندی معنایی کلمات';
+        addPivotBtn.innerText = `اضافه کردن " ${stages[0].pivotWord} "`;
+        sidebarDesc.innerText =
+          'کلمه‌های هم‌معنی یا مرتبط رو بکش داخل صفحه و اون‌هایی که فکر می‌کنی به هم نزدیکن رو کنار هم بچین. برای حذف هر کلمه، کافیه اون رو برگردونی سمت همین نوار.';
 
         // پاک کردن صفحه و سایدبار
         canvasSpace.querySelectorAll('.token').forEach((t) => t.remove());
         sidebarList.innerHTML = '';
 
-        // مدیریت دکمه‌های ناوبری بین مراحل
-        if (isReviewMode) {
-          prevStageBtn.style.display =
-            currentStageIdx > 0 ? 'inline-block' : 'none';
-          nextReviewBtn.style.display =
-            currentStageIdx < stages.length - 1 ? 'inline-block' : 'none';
-          resetBtn.style.display = 'none';
-          nextStageBtn.style.display = 'none';
-          revealBtn.style.display = 'none';
-          addPivotBtn.style.display = 'none';
-        } else {
-          prevStageBtn.style.display =
-            currentStageIdx > 0 ? 'inline-block' : 'none';
-          nextReviewBtn.style.display = 'none';
-          resetBtn.style.display = 'block';
-        }
+        isColorsRevealed = false;
+        pivotAdded = false;
 
-        // اگر مرحله قبلاً بازی و ثبت شده است، بازیابی وضعیت
-        if (stagesState[index]) {
-          const state = stagesState[index];
-          isColorsRevealed = state.isColorsRevealed;
-          pivotAdded = state.pivotAdded;
+        revealBtn.style.display = 'none';
+        addPivotBtn.style.display = 'none';
 
-          state.sidebarTokens.forEach((item) => {
-            addWordToSidebar(item.text, item.cluster);
+        const allWords = [];
+        stages[0].clusters.forEach((cluster) => {
+          cluster.words.forEach((word) => {
+            allWords.push({ text: word, cluster });
           });
+        });
+        allWords.sort(() => Math.random() - 0.5);
 
-          state.placedTokens.forEach((item) => {
-            const tok = createCanvasToken(
-              item.text,
-              item.x,
-              item.y,
-              item.cluster,
-              item.isPivot
-            );
-            if (item.isLocked) {
-              tok.classList.add('locked');
-            }
-          });
-
-          if (!isReviewMode) {
-            const remaining =
-              sidebarList.querySelectorAll('.sidebar-token').length;
-            revealBtn.style.display =
-              !isColorsRevealed && remaining === 0 ? 'inline-block' : 'none';
-            addPivotBtn.style.display =
-              isColorsRevealed && !pivotAdded ? 'inline-block' : 'none';
-            nextStageBtn.style.display = pivotAdded ? 'inline-block' : 'none';
-          }
-        } else {
-          // ایجاد مرحله جدید از صفر
-          isColorsRevealed = false;
-          pivotAdded = false;
-
-          revealBtn.style.display = 'none';
-          addPivotBtn.style.display = 'none';
-          nextStageBtn.style.display = 'none';
-
-          const allWords = [];
-          stages[index].clusters.forEach((cluster) => {
-            cluster.words.forEach((word) => {
-              allWords.push({ text: word, cluster });
-            });
-          });
-          allWords.sort(() => Math.random() - 0.5);
-
-          allWords.forEach((item) => {
-            addWordToSidebar(item.text, item.cluster);
-          });
-        }
+        allWords.forEach((item) => {
+          addWordToSidebar(item.text, item.cluster);
+        });
       }
 
       function addWordToSidebar(word, clusterData) {
@@ -673,7 +357,6 @@
       }
 
       function updateControlsVisibility() {
-        if (isReviewMode) return;
         const remainingSidebar =
           sidebarList.querySelectorAll('.sidebar-token').length;
         const placedTokens = canvasSpace.querySelectorAll('.token:not(.pivot)');
@@ -690,7 +373,7 @@
 
       function initSidebarDrag(el) {
         el.addEventListener('pointerdown', (e) => {
-          if (e.button !== 0 || isReviewMode) return;
+          if (e.button !== 0) return;
           e.preventDefault();
           el.setPointerCapture(e.pointerId);
 
@@ -852,14 +535,17 @@
           const sidebarRect = sidebar.getBoundingClientRect();
           // بازگشت کلمه به نوار کناری در صورت رها شدن در سایدبار
           if (e.clientX >= sidebarRect.left && e.clientX <= sidebarRect.right) {
-            if (!isPivot) {
-              addWordToSidebar(el.innerText, {
-                name: el.dataset.clusterName,
-                color: el.dataset.clusterColor,
-                bg: el.dataset.clusterBg,
-                border: el.dataset.clusterBorder,
-              });
+            if (isPivot) {
+              el.style.left = `${initLeft}px`;
+              el.style.top = `${initTop}px`;
+              return;
             }
+            addWordToSidebar(el.innerText, {
+              name: el.dataset.clusterName,
+              color: el.dataset.clusterColor,
+              bg: el.dataset.clusterBg,
+              border: el.dataset.clusterBorder,
+            });
             el.remove();
             updateControlsVisibility();
             return;
@@ -976,6 +662,8 @@
         if (!pivotAdded) {
           addPivotBtn.style.display = 'inline-block';
         }
+        sidebarDesc.innerText =
+          'حالا دکمه «اضافه کردن شیر» رو بزن تا کلمه چندمعنایی به صفحه بیاد.';
       });
 
       // ۲. اضافه کردن کلمه چندمعنایی
@@ -986,83 +674,24 @@
         const spaceW = canvasSpace.clientWidth;
         const spaceH = canvasSpace.clientHeight;
         createCanvasToken(
-          stages[currentStageIdx].pivotWord,
+          stages[0].pivotWord,
           spaceW / 2 - 40,
           spaceH / 2 - 20,
           null,
           true
         );
 
-        nextStageBtn.style.display = 'inline-block';
+        sidebarDesc.innerText =
+          'کلمه «شیر» رو بکش و به خوشه‌های مختلف نزدیک کن تا ببینی چطور معنا و تعبیه اون با تغییر بافت کلمات تغییر می‌کنه!';
       });
 
-      // ۳. ثبت نهایی و گذر به مرحله بعد / پایان
-      nextStageBtn.addEventListener('click', () => {
-        saveCurrentStageState();
-
-        if (currentStageIdx + 1 < stages.length) {
-          loadStage(currentStageIdx + 1);
-        } else {
-          // نمایش پاپ‌آپ پایان بازی
-          modalReturnFocus = nextStageBtn;
-          finishModal.classList.add('active');
-          reviewAnswersBtn.focus();
-        }
-      });
-
-      // دکمه بازگشت به مرحله قبلی
-      prevStageBtn.addEventListener('click', () => {
-        if (!isReviewMode) saveCurrentStageState();
-        if (currentStageIdx > 0) {
-          loadStage(currentStageIdx - 1);
-        }
-      });
-
-      // دکمه مرحله بعد در حالت مرور
-      nextReviewBtn.addEventListener('click', () => {
-        if (currentStageIdx < stages.length - 1) {
-          loadStage(currentStageIdx + 1);
-        }
-      });
-
-      // دکمه مرور و بررسی پاسخ‌ها از درون پاپ‌آپ
-      reviewAnswersBtn.addEventListener('click', () => {
-        finishModal.classList.remove('active');
-        isReviewMode = true;
-        loadStage(0);
-        if (modalReturnFocus) modalReturnFocus.focus();
-      });
-
-      finishModal.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape') {
-          finishModal.classList.remove('active');
-          if (modalReturnFocus) modalReturnFocus.focus();
-          return;
-        }
-        if (event.key !== 'Tab') return;
-        const focusable = finishModal.querySelectorAll(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-        );
-        if (!focusable.length) return;
-        const first = focusable[0];
-        const last = focusable[focusable.length - 1];
-        if (event.shiftKey && document.activeElement === first) {
-          event.preventDefault();
-          last.focus();
-        } else if (!event.shiftKey && document.activeElement === last) {
-          event.preventDefault();
-          first.focus();
-        }
-      });
-
-      // دکمه پاک کردن کل صفحه
+      // ۳. دکمه پاک کردن کل صفحه
       resetBtn.addEventListener('click', () => {
-        delete stagesState[currentStageIdx];
-        loadStage(currentStageIdx);
+        loadStage();
       });
 
       // بارگذاری آغازین
-      loadStage(0);
+      loadStage();
     </script>
   </body>
 </html>
