@@ -8,41 +8,37 @@
     <title>کارگاه مدل زبانی: پیش‌بینی توکن بعدی</title>
     <style>
       :root {
-        --bg: #0f172a;
-        --card: #1e293b;
-        --accent: #38bdf8;
-        --accent2: #f59e0b;
-        --text: #f8fafc;
-        --subtext: #94a3b8;
-        --bar-bg: #334155;
+        --bg: var(--paper);
+        --card: var(--surface);
+        --accent: #4657d8;
+        --accent2: #a75b19;
+        --text: var(--ink);
+        --subtext: var(--ink-muted);
+        --bar-bg: var(--surface-muted);
       }
       body {
         margin: 0;
-        padding: 24px;
-        font-family:
-          system-ui,
-          -apple-system,
-          BlinkMacSystemFont,
-          'Segoe UI',
-          Roboto,
-          sans-serif;
+        padding: clamp(10px, 3vw, 24px);
+        font-family: 'Vazir Local', Tahoma, sans-serif;
         background-color: var(--bg);
         color: var(--text);
         display: flex;
         justify-content: center;
       }
       .container {
+        box-sizing: border-box;
         width: 100%;
         max-width: 660px;
         background: var(--card);
-        padding: 28px;
-        border-radius: 16px;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        padding: clamp(16px, 3vw, 28px);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-paper);
       }
       h1 {
         font-size: 1.5rem;
         margin-top: 0;
-        color: var(--accent);
+        color: var(--ink);
         text-align: center;
       }
       .intro {
@@ -59,9 +55,9 @@
         margin-bottom: 20px;
       }
       .preset-btn {
-        background: #334155;
+        background: var(--action-soft);
         color: var(--text);
-        border: 1px solid #475569;
+        border: 1px solid var(--line);
         border-radius: 8px;
         padding: 8px 12px;
         cursor: pointer;
@@ -69,7 +65,7 @@
         transition: all 0.2s;
       }
       .preset-btn:hover {
-        background: #475569;
+        background: #dce2ff;
       }
       label {
         display: block;
@@ -81,8 +77,8 @@
       input {
         width: 100%;
         box-sizing: border-box;
-        background: #0f172a;
-        border: 1px solid #475569;
+        background: var(--surface);
+        border: 1px solid var(--line);
         color: var(--text);
         padding: 12px;
         border-radius: 8px;
@@ -102,7 +98,7 @@
       .submit-btn {
         width: 100%;
         background: var(--accent);
-        color: #0f172a;
+        color: #fff;
         border: none;
         padding: 12px;
         border-radius: 8px;
@@ -121,9 +117,9 @@
       }
       .secondary-btn {
         width: 100%;
-        background: transparent;
+        background: var(--surface);
         color: var(--subtext);
-        border: 1px solid #475569;
+        border: 1px solid var(--line);
         padding: 10px;
         border-radius: 8px;
         font-size: 0.85rem;
@@ -135,8 +131,8 @@
       }
 
       .context-box {
-        background: #0f172a;
-        border: 1px solid #475569;
+        background: var(--surface-muted);
+        border: 1px solid var(--line);
         border-radius: 8px;
         padding: 14px;
         line-height: 2.1;
@@ -203,7 +199,7 @@
       .target-box {
         margin-top: 20px;
         padding: 14px;
-        background: #0f172a;
+        background: var(--action-soft);
         border-radius: 8px;
         border-right: 4px solid var(--accent);
         line-height: 1.8;
@@ -211,7 +207,7 @@
       .model-box {
         margin-top: 14px;
         padding: 14px;
-        background: #0f172a;
+        background: #fff4e8;
         border-radius: 8px;
         border-right: 4px solid var(--accent2);
         line-height: 1.8;
@@ -225,10 +221,10 @@
         min-height: 1.2em;
       }
       .status-live {
-        color: #4ade80;
+        color: var(--success);
       }
       .status-error {
-        color: #fca5a5;
+        color: var(--danger);
       }
       .hidden {
         display: none;
@@ -249,6 +245,10 @@
       .model-probability {
         color: var(--accent2);
         font-weight: bold;
+      }
+      @media (max-width: 640px) {
+        h1 { font-size: 1.25rem; }
+        .container { border-radius: 10px; }
       }
     </style>
   </head>

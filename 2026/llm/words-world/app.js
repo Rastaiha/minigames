@@ -323,7 +323,7 @@ function render(time) {
     if (!p.visible) return;
     if (!active && (p.y < 100 || p.y > height - 80)) return;
     const text = words[i].word;
-    ctx.font = `${compactLabels ? (active ? 12 : 10) : active ? 16 : 12}px Vazirmatn, Tahoma, sans-serif`;
+    ctx.font = `${compactLabels ? (active ? 12 : 10) : active ? 16 : 12}px VazirLocal, Tahoma, sans-serif`;
     const w = ctx.measureText(text).width + 18,
       x = p.x - w / 2,
       y = p.y + (active ? 19 : 10);

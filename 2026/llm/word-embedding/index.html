@@ -639,6 +639,7 @@
         }
       }
     </style>
+    <link rel="stylesheet" href="../shared/ui/word-labs.css" />
 
     <script type="importmap">
       {
@@ -649,7 +650,7 @@
       }
     </script>
   </head>
-  <body>
+  <body class="mg-word-lab">
     <!-- ۱. صفحه هاب اصلی -->
     <div id="hub-view">
       <div class="hub-header">
@@ -976,7 +977,7 @@
           <a href="#hub" class="btn-hub-back" onclick="openHub(event)"
             >🏠 منوی کارگاه</a
           >
-          <h1 style="color: #38bdf8; font-size: 0.95rem">
+          <h1 style="color: var(--action-strong); font-size: 0.95rem">
             🌐 استیت ۲: فشرده‌سازی ۳ بعدی به ۲ بعدی و ۱ بعدی
           </h1>
         </div>
@@ -1006,7 +1007,7 @@
           <a href="#hub" class="btn-hub-back" onclick="openHub(event)"
             >🏠 منوی کارگاه</a
           >
-          <h1 style="color: #38bdf8; font-size: 0.95rem">
+          <h1 style="color: var(--action-strong); font-size: 0.95rem">
             🧠 استیت ۴: کشف ساختار و قالب کلمات
           </h1>
         </div>
@@ -1118,18 +1119,18 @@
               align-items: center;
             "
           >
-            <strong style="color: #f8fafc; font-size: 0.9rem"
+            <strong style="color: var(--ink); font-size: 0.9rem"
               >کلمات دسته‌بندی‌شده:</strong
             >
             <button
               class="btn"
-              style="background: #475569; padding: 4px 8px; font-size: 0.75rem"
+              style="padding: 4px 8px; font-size: 0.75rem"
               onclick="clearBucket()"
             >
               پاکسازی لیست
             </button>
           </div>
-          <p style="color: #94a3b8; font-size: 0.8rem; margin: 0">
+          <p style="color: var(--ink-muted); font-size: 0.8rem; margin: 0">
             با کلیک روی کلمات داخل متن، آن‌ها را در این بخش گردآوری کنید:
           </p>
 

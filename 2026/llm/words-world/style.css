@@ -108,7 +108,7 @@ header > * {
   color: var(--gold);
 }
 .brand strong {
-  font-family: Vazirmatn, serif;
+  font-family: VazirLocal, Tahoma, sans-serif;
   font-weight: 500;
   font-size: 32px;
   line-height: 1.1;
@@ -160,7 +160,7 @@ header > * {
   font-weight: 600;
 }
 h1 {
-  font-family: Vazirmatn, Tahoma, sans-serif;
+  font-family: VazirLocal, Tahoma, sans-serif;
   font-weight: 400;
   font-size: clamp(34px, 4vw, 58px);
   line-height: 1.65;
@@ -222,12 +222,12 @@ kbd {
   justify-content: space-between;
 }
 h2 {
-  font-family: Vazirmatn, Tahoma, sans-serif;
+  font-family: VazirLocal, Tahoma, sans-serif;
   font-weight: 400;
   font-size: 32px;
 }
 .word-heading h2 {
-  font-family: Vazirmatn, sans-serif;
+  font-family: VazirLocal, Tahoma, sans-serif;
   font-size: 38px;
   margin: 17px 0 6px;
   overflow-wrap: anywhere;
@@ -238,7 +238,7 @@ h2 {
 }
 .coordinate-line {
   font:
-    11px Vazirmatn,
+    11px VazirLocal,
     Tahoma,
     sans-serif;
   color: var(--muted);
@@ -268,7 +268,7 @@ h2 {
 }
 .neighbors-heading > span:last-child {
   font:
-    10px Vazirmatn,
+    10px VazirLocal,
     Tahoma,
     sans-serif;
   color: var(--muted);
@@ -284,20 +284,20 @@ h2 {
 }
 .neighbor .rank {
   font:
-    11px Vazirmatn,
+    11px VazirLocal,
     Tahoma,
     sans-serif;
   color: #71839d;
 }
 .neighbor .name {
-  font-family: Vazirmatn, sans-serif;
+  font-family: VazirLocal, Tahoma, sans-serif;
   font-size: 16px;
   flex: 1;
   text-align: start;
 }
 .neighbor .distance {
   font:
-    11px Vazirmatn,
+    11px VazirLocal,
     Tahoma,
     sans-serif;
   color: var(--muted);
