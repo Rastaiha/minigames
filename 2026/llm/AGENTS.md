@@ -29,7 +29,7 @@ The documentation records these exceptions; it does not mean the game implementa
 | Area | Relevant files and behavior |
 | --- | --- |
 | Base, SFT, aligned chat | `pretrained-llm/`, `sft-llm/`, `rlhf-llm/`: single-page chat, public `config.js`, local fallback, stop/clear controls and simulated typing |
-| Comparing model stages | `model-lab/`: four tabs with separate display histories; raw generation is local, other tabs call the Worker |
+| Comparing model stages | `model-lab/`: three tabs with separate display histories; raw generation is local, other tabs call the Worker |
 | Random language | `random-llm/` and shared `random-generator.js`; exposes `window.RandomPersianModel.generatePieces(limit)` and `.generateText(limit)`, also consumed by `model-lab/` |
 | Security challenge | `jailbreak/`: current three-level challenge; `jailbreak-old/`: separate legacy version with different backend behavior |
 | Hallucination | `hallucination/`: two-level model experiment with an offline simulation |
