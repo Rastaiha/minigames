@@ -425,7 +425,7 @@
         document.getElementById('results').style.display = 'none';
         renderContext();
         document.getElementById('turnIndicator').innerText =
-          '🧑‍🎓 نوبت توئه: یک کلمه حدس بزن';
+          'نوبت توئه: یک کلمه حدس بزن';
         const input = document.getElementById('guessInput');
         input.value = '';
         input.focus();
@@ -506,7 +506,7 @@
         document.getElementById('guessBtn').disabled = true;
         input.disabled = true;
         document.getElementById('turnIndicator').innerText =
-          '⏳ در حال محاسبه احتمالات روی متنِ فعلی...';
+          'در حال محاسبه احتمالات روی متنِ فعلی...';
         document.getElementById('results').style.display = 'block';
         document.getElementById('tokenList').innerHTML =
           'در حال برآورد احتمال کلمه‌ها...';
@@ -521,7 +521,7 @@
           predictions = await callModelAPI(getContextText());
           renderPredictions(predictions);
           statusEl.className = 'status-line status-live';
-          statusEl.innerText = '🟢 پیش‌بینی از مدل آنلاین دریافت شد';
+          statusEl.innerText = 'پیش‌بینی از مدل آنلاین دریافت شد';
         } catch (error) {
           if (error.name === 'AbortError') return;
           console.error('دریافت پیش‌بینی ناموفق بود:', error);
