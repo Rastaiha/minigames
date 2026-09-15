@@ -14,7 +14,9 @@ const TIME_WINDOW_SECONDS = INITIAL_TIME_TICKS - 1
 const TIME_AXIS_MARGIN = 24
 const NOISE_EPSILON = 0.08
 const RC_CONSTANT = 0.12
-const ERROR_RATE = 7
+const UNCLEAR_VOLTAGE_MIN = 2.2
+const UNCLEAR_VOLTAGE_MAX = 2.8
+const CLARITY_TINT = '#b5dcc4'
 let bitRate = Number.parseInt(rateSlider.value, 10)
 let bitSequence = []
 let bitElements = []
@@ -63,7 +65,7 @@ function resetTransmission() {
   currentActualVoltage = 0
   voltageSlider.value = '0'
   voltageLabel.textContent = '0.00'
-  bitElements.forEach((element) => element.classList.remove('active', 'error-state'))
+  bitElements.forEach((element) => element.classList.remove('active'))
 }
 
 function updateMessage() {
@@ -100,15 +102,19 @@ function updateActiveBit(currentBitIndex) {
   bitElements.forEach((element, index) => {
     const isActive = index === currentBitIndex
     element.classList.toggle('active', isActive)
-    element.classList.toggle('error-state', isActive && bitRate > ERROR_RATE)
   })
 }
 
-function drawThresholdRegions(width, yFor) {
-  context.fillStyle = 'rgb(24 90 58 / 12%)'
-  context.fillRect(0, yFor(5), width, yFor(3.5) - yFor(5))
-  context.fillStyle = 'rgb(184 42 49 / 10%)'
-  context.fillRect(0, yFor(1.5), width, yFor(0) - yFor(1.5))
+function drawClarityGradient(width, yFor) {
+  const highVoltageY = yFor(V_MAX)
+  const lowVoltageY = yFor(0)
+  const gradient = context.createLinearGradient(0, highVoltageY, 0, lowVoltageY)
+  gradient.addColorStop(0, CLARITY_TINT)
+  gradient.addColorStop((V_MAX - UNCLEAR_VOLTAGE_MAX) / V_MAX, '#ffffff')
+  gradient.addColorStop((V_MAX - UNCLEAR_VOLTAGE_MIN) / V_MAX, '#ffffff')
+  gradient.addColorStop(1, CLARITY_TINT)
+  context.fillStyle = gradient
+  context.fillRect(0, highVoltageY, width, lowVoltageY - highVoltageY)
 }
 
 function drawScope(currentTime) {
@@ -119,7 +125,7 @@ function drawScope(currentTime) {
     TIME_AXIS_MARGIN +
     ((time - visibleStartTime) / TIME_WINDOW_SECONDS) * (width - TIME_AXIS_MARGIN * 2)
   const yFor = (voltage) => voltageToY(voltage, graphHeight)
-  drawThresholdRegions(width, yFor)
+  drawClarityGradient(width, yFor)
   drawVoltageGrid(context, width, yFor)
 
   if (samples.length >= 2) {
