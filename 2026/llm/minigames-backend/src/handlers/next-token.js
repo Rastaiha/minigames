@@ -1,5 +1,5 @@
 import { json } from '../http.js';
-import { gatewayApiKey, resolveApiUrl } from '../gateway.js';
+import { gatewayApiKey, parseChatCompletion, resolveApiUrl } from '../gateway.js';
 import { apiRespondError, apiRespondSuccess } from '../api-response.js';
 
 export async function handleNextToken(request, env, cors, input) {
@@ -23,18 +23,18 @@ export async function handleNextToken(request, env, cors, input) {
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'gemini/gemini-3.8-flash',
+        model: 'ag/claude-opus-4-6-thinking',
         messages,
         temperature: 0,
-        max_tokens: 300,
+        max_tokens: 1500,
         stream: false,
       }),
       signal: AbortSignal.timeout(60000),
     });
     if (!response.ok) return apiRespondError('مدل پاسخ موفقی نداد.', 502, cors);
 
-    const payload = await response.json();
-    const text = String(payload?.choices?.[0]?.message?.content || '');
+    const rawText = await response.text();
+    const text = parseChatCompletion(rawText, { stripThinking: true });
     const match = text.match(/\[[\s\S]*\]/);
     if (!match)
       return apiRespondError('ساختار پیش‌بینی معتبر نبود.', 502, cors);
