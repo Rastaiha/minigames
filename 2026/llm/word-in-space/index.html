@@ -1,6 +1,8 @@
 <!doctype html>
 <html lang="fa" dir="rtl">
   <head>
+    <link rel="stylesheet" href="../shared/ui/tokens.css" />
+    <link rel="stylesheet" href="../shared/ui/shells.css" />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#f7f8fc" />
@@ -10,17 +12,31 @@
   <body>
     <main class="workspace">
       <aside class="sidebar" aria-label="فهرست واژه‌ها">
-        <button id="reset" class="reset-button" type="button"><span aria-hidden="true">↺</span> شروع دوباره</button>
+        <button id="reset" class="reset-button" type="button">
+          <span aria-hidden="true">↺</span> شروع دوباره
+        </button>
         <div id="word-list"></div>
       </aside>
 
       <section class="board-section" aria-label="صفحهٔ چیدمان">
         <div id="board-viewport" class="board-viewport">
-          <div id="board" class="board fine-grid" tabindex="0" aria-label="صفحهٔ شطرنجی بدون مبدأ. یک واژه انتخاب کن و روی صفحه کلیک کن."><div id="sheet-content" class="sheet-content"></div></div>
+          <div
+            id="board"
+            class="board fine-grid"
+            tabindex="0"
+            aria-label="صفحهٔ شطرنجی بدون مبدأ. یک واژه انتخاب کن و روی صفحه کلیک کن."
+          >
+            <div id="sheet-content" class="sheet-content"></div>
+          </div>
         </div>
       </section>
     </main>
-    <div id="announcement" class="sr-only" role="status" aria-live="polite"></div>
+    <div
+      id="announcement"
+      class="sr-only"
+      role="status"
+      aria-live="polite"
+    ></div>
     <script src="words.js"></script>
     <script src="app.js?v=infinite-sheet-6"></script>
   </body>

@@ -1,32 +1,39 @@
-# راه‌اندازی API مینی‌گیم‌های مدل پایه و مدل گفتگو
+# API مشترک مینی‌گیم‌های مدل
 
-این Worker درخواست مرورگر را به Gemini 3.5 Flash-Lite می‌فرستد و دو رفتار آموزشی متفاوت را ارائه می‌کند:
+این Worker تنها مرز مرورگر با دروازهٔ مدل است. کد مرورگر فقط باید Worker عمومی
+را صدا بزند؛ کلید، هدر احراز هویت و نشانی ارائه‌دهنده هرگز در مرورگر قرار
+نمی‌گیرد. قرارداد اصلی جدید `/api/respond` با پاسخ `{ok, data, meta, error}`
+است؛ مسیرهای قدیمی فقط برای سازگاری نگه داشته شده‌اند.
+
+این Worker چند رفتار آموزشی متفاوت را از طریق دروازهٔ OpenAI-compatible ارائه می‌کند:
 
 - مسیر `/generate` رفتار تکمیل متن یک مدل پایه را شبیه‌سازی می‌کند.
 - مسیر `/generate-sft` رفتار یک مدل گفت‌وگومحور و دستورپذیر را شبیه‌سازی می‌کند.
 - مسیر `/generate-aligned` رفتار یک دستیار کمک‌کننده، صادق و ایمن را شبیه‌سازی می‌کند.
 
-کلید Gemini فقط در Secretهای Worker نگهداری می‌شود و هرگز به مرورگر فرستاده نمی‌شود.
+اعتبار دروازه فقط در Secret محیط Worker با نام `LLM_API_KEY` نگهداری می‌شود و هرگز به مرورگر فرستاده نمی‌شود.
 
 هر درخواست کاملاً مستقل است. Worker فقط آخرین پیام را ارسال می‌کند و تاریخچه گفت‌وگوی کاربر را در اختیار مدل قرار نمی‌دهد. در مسیر مدل پایه، چند نمونه ثابت صرفاً برای تثبیت رفتار تکمیل متن همراه درخواست ارسال می‌شوند.
 
 برای اینکه آزمون درخواست‌های خطرناک در کارگاه به ارائه جزئیات عملی منجر نشود، چند الگوی پرخطر در مسیر `/generate-sft` به پاسخ‌های ازپیش‌تعیین‌شده و سانسورشده تبدیل می‌شوند. تنظیمات ایمنی Gemini نیز در حالت پیش‌فرض باقی مانده‌اند.
 
-## ۱. گرفتن کلید Gemini
+## ۱. تنظیم Secret Worker
 
-1. وارد [Google AI Studio](https://aistudio.google.com/) شوید.
-2. بخش API Keys را باز کنید.
-3. یک API key جدید بسازید و آن را کپی کنید.
+نام فعال Secret `LLM_API_KEY` است؛ از `GEMINI_API_KEY` یا کلیدهای provider در
+بازی‌ها و مستندات جدید استفاده نکنید. upstream فقط سمت Worker احراز هویت می‌شود.
+
+1. Secret دروازهٔ مورد استفادهٔ Worker را فقط در محیط deployment تهیه کنید.
+2. آن را با `npx wrangler secret put LLM_API_KEY` تنظیم کنید.
 
 کلید را داخل GitHub، فایل `config.js` یا کد Worker قرار ندهید.
 
 ## ۲. اجرای محلی Worker
 
-داخل پوشه `pretrained-llm-worker` اجرا کنید:
+داخل پوشه `minigames-backend` اجرا کنید:
 
 ```bash
-npm install
-cp .dev.vars.example .dev.vars
+npm ci
+npm run check
 ```
 
 در ویندوز می‌توانید به‌جای دستور `cp`، فایل `.dev.vars.example` را کپی و نام نسخه جدید را `.dev.vars` بگذارید. سپس کلید واقعی را فقط در `.dev.vars` وارد کنید و اجرا کنید:
@@ -38,19 +45,19 @@ npm run dev
 برای تست فرانت‌اند محلی، در `pretrained-llm/config.js` بنویسید:
 
 ```js
-window.PRETRAINED_MODEL_API_URL = "http://localhost:8787/generate";
+window.PRETRAINED_MODEL_API_URL = 'http://localhost:8787/generate';
 ```
 
 برای تست رابط مدل گفتگو، در `sft-llm/config.js` از این مسیر استفاده کنید:
 
 ```js
-window.PRETRAINED_MODEL_API_URL = "http://localhost:8787/generate-sft";
+window.PRETRAINED_MODEL_API_URL = 'http://localhost:8787/generate-sft';
 ```
 
 برای تست رابط مرحله بعد، در `rlhf-llm/config.js` از این مسیر استفاده کنید:
 
 ```js
-window.PRETRAINED_MODEL_API_URL = "http://localhost:8787/generate-aligned";
+window.PRETRAINED_MODEL_API_URL = 'http://localhost:8787/generate-aligned';
 ```
 
 ## ۳. انتشار Worker
@@ -74,30 +81,33 @@ notepad.exe .dev.vars
 npm run deploy:first
 ```
 
-فایل `.dev.vars` در git نادیده گرفته می‌شود و نباید commit شود. پس از ساخته‌شدن Worker، برای تغییر کلید می‌توانید از `npx wrangler secret put GEMINI_API_KEY` و برای انتشارهای بعدی از `npm run deploy` استفاده کنید.
+فایل `.dev.vars` در git نادیده گرفته می‌شود و نباید commit شود. پس از ساخته‌شدن Worker، برای تغییر کلید از `npx wrangler secret put LLM_API_KEY` و برای انتشارهای بعدی از `npm run deploy` استفاده کنید.
 
 در پایان URL منتشرشده را با مسیر `/generate` در `pretrained-llm/config.js` بگذارید، مثلاً:
 
 ```js
-window.PRETRAINED_MODEL_API_URL = "https://pretrained-llm-proxy.example.workers.dev/generate";
+window.PRETRAINED_MODEL_API_URL =
+  'https://pretrained-llm-proxy.example.workers.dev/generate';
 ```
 
 همین نشانی را با مسیر `/generate-sft` در `sft-llm/config.js` قرار دهید:
 
 ```js
-window.PRETRAINED_MODEL_API_URL = "https://pretrained-llm-proxy.example.workers.dev/generate-sft";
+window.PRETRAINED_MODEL_API_URL =
+  'https://pretrained-llm-proxy.example.workers.dev/generate-sft';
 ```
 
 در `rlhf-llm/config.js` نیز مسیر `/generate-aligned` را قرار دهید:
 
 ```js
-window.PRETRAINED_MODEL_API_URL = "https://pretrained-llm-proxy.example.workers.dev/generate-aligned";
+window.PRETRAINED_MODEL_API_URL =
+  'https://pretrained-llm-proxy.example.workers.dev/generate-aligned';
 ```
 
 مینی‌گیم نهایی `model-lab` هر چهار حالت را در یک رابط نمایش می‌دهد. در فایل `model-lab/config.js` فقط نشانی اصلی Worker را بدون مسیر پایانی قرار دهید:
 
 ```js
-window.MODEL_API_ROOT = "https://pretrained-llm-proxy.example.workers.dev";
+window.MODEL_API_ROOT = 'https://pretrained-llm-proxy.example.workers.dev';
 ```
 
 مدل خام در خود مرورگر اجرا می‌شود و سه مدل دیگر به‌ترتیب از مسیرهای `/generate`، `/generate-sft` و `/generate-aligned` استفاده می‌کنند. تاریخچه هر تب فقط برای نمایش در مرورگر نگه داشته می‌شود و همراه درخواست API ارسال نمی‌شود.

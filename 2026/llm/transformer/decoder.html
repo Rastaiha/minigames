@@ -1,40 +1,57 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fa" dir="rtl">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>رمزگشا چگونه واژهٔ بعد را پیش‌بینی می‌کند</title>
-  <link rel="stylesheet" href="transformer-viz.css" />
-  <script src="transformer-viz.js" defer></script>
-</head>
-<body data-mode="decoder" data-language="fa">
-  <main class="shell">
-    <div class="toolbar">
-      <div class="controls">
-        <button id="playBtn" type="button">پخش</button>
-        <button id="resetBtn" type="button">Reset</button>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>رمزگشا چگونه واژهٔ بعد را پیش‌بینی می‌کند</title>
+    <link rel="stylesheet" href="transformer-viz.css" />
+    <script src="transformer-viz.js" defer></script>
+  </head>
+  <body data-mode="decoder" data-language="fa">
+    <main class="shell">
+      <div class="toolbar">
+        <div class="controls">
+          <button id="playBtn" type="button">پخش</button>
+          <button id="nextBtn" type="button">گام بعد</button>
+          <button id="resetBtn" type="button">شروع دوباره</button>
+        </div>
       </div>
-    </div>
 
-    <div id="tokenStrip" class="token-strip" aria-label="بیت تولیدشده"></div>
+      <div id="tokenStrip" class="token-strip" aria-label="بیت تولیدشده"></div>
 
-    <section class="stage">
-      <svg id="space" viewBox="0 0 900 470" role="img" aria-label="حرکت بازنمایی واژه‌های شعر در بافت به‌سوی واژهٔ پیش‌بینی‌شده">
-        <defs>
-          <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="5" markerHeight="5" orient="auto">
-            <path d="M0 0L10 5L0 10Z" fill="var(--muted)" />
-          </marker>
-        </defs>
-        <rect class="stage-bg" x="1" y="1" width="898" height="468" rx="7" />
-        <g id="positionLayer"></g>
-        <g id="vocabLayer"></g>
-        <g id="activeLayer"></g>
-      </svg>
-    </section>
+      <section class="stage">
+        <svg
+          id="space"
+          viewBox="0 0 900 470"
+          role="img"
+          aria-label="حرکت بازنمایی واژه‌های شعر در بافت به‌سوی واژهٔ پیش‌بینی‌شده"
+        >
+          <defs>
+            <marker
+              id="arrow"
+              viewBox="0 0 10 10"
+              refX="8.5"
+              refY="5"
+              markerWidth="5"
+              markerHeight="5"
+              orient="auto"
+            >
+              <path d="M0 0L10 5L0 10Z" fill="var(--muted)" />
+            </marker>
+          </defs>
+          <rect class="stage-bg" x="1" y="1" width="898" height="468" rx="7" />
+          <g id="positionLayer"></g>
+          <g id="vocabLayer"></g>
+          <g id="activeLayer"></g>
+        </svg>
+      </section>
 
-    <footer class="status">
-      <div class="progress-track"><div id="progress" class="progress-fill"></div></div>
-    </footer>
-  </main>
-</body>
+      <footer class="status">
+        <div class="progress-track">
+          <div id="progress" class="progress-fill"></div>
+        </div>
+        <p id="narration" role="status" aria-live="polite">آمادهٔ شروع</p>
+      </footer>
+    </main>
+  </body>
 </html>

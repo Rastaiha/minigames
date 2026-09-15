@@ -11,8 +11,17 @@
   <body class="vector-game">
     <main class="workspace">
       <section class="board-section" aria-label="صفحهٔ بردارها">
+        <header class="vector-header">
+          <a class="back-link" href="index.html">← بازگشت به واژه‌چین</a>
+          <p>یک واژه را انتخاب کن تا مختصات دوبعدی آن را ببینی.</p>
+        </header>
         <div id="board-viewport" class="board-viewport">
-          <div id="board" class="board fine-grid" tabindex="0" aria-label="صفحهٔ مختصات؛ یک واژه را انتخاب کن.">
+          <div
+            id="board"
+            class="board fine-grid"
+            tabindex="0"
+            aria-label="صفحهٔ مختصات؛ یک واژه را انتخاب کن."
+          >
             <svg id="axes" class="axes" aria-hidden="true"></svg>
             <div id="sheet-content" class="sheet-content"></div>
             <div id="empty" class="empty-state" hidden>
@@ -22,7 +31,12 @@
         </div>
       </section>
     </main>
-    <div id="announcement" class="sr-only" role="status" aria-live="polite"></div>
+    <div
+      id="announcement"
+      class="sr-only"
+      role="status"
+      aria-live="polite"
+    ></div>
     <script src="words.js"></script>
     <script src="vectors.js"></script>
   </body>

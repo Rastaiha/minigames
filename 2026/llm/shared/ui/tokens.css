@@ -1,0 +1,78 @@
+@font-face {
+  font-family: 'Vazir Local';
+  src: url('../../fonts/vazir.ttf') format('truetype');
+  font-display: swap;
+}
+
+:root {
+  --paper: #f7f8fc;
+  --surface: #ffffff;
+  --surface-muted: #eef1f7;
+  --ink: #182033;
+  --ink-muted: #647089;
+  --line: #dce2ee;
+  --action: #4657d8;
+  --action-strong: #3344bd;
+  --action-soft: #e8ebff;
+  --success: #157a63;
+  --danger: #b94258;
+  --focus: #e6a928;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --shadow-paper: 0 12px 36px rgb(24 32 51 / 8%);
+  --touch-target: 44px;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+html {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+body {
+  font-family: 'Vazir Local', Vazir, sans-serif;
+}
+
+:where(button, a, input, textarea, [tabindex]):focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+:where(button, a, input, textarea) {
+  min-height: var(--touch-target);
+}
+
+:where(button, select, [role='button']) {
+  min-inline-size: var(--touch-target);
+}
+
+:where(select, [role='button']) {
+  min-block-size: var(--touch-target);
+}
+
+.mg-status {
+  color: var(--ink-muted);
+  font-size: 0.84rem;
+  line-height: 1.7;
+}
+
+.mg-status[data-state='busy'] {
+  color: var(--action-strong);
+}
+.mg-status[data-state='success'] {
+  color: var(--success);
+}
+.mg-status[data-state='error'] {
+  color: var(--danger);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

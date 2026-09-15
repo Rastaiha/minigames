@@ -1,0 +1,18 @@
+repos:
+  - repo: local
+    hooks:
+      - id: lint
+        name: ESLint
+        entry: npm --prefix 2026/llm run lint:check --
+        language: system
+        pass_filenames: false
+      - id: format
+        name: Prettier
+        entry: npm --prefix 2026/llm run format:check --
+        language: system
+        pass_filenames: false
+      - id: api-boundary
+        name: browser API boundary
+        entry: npm --prefix 2026/llm run check:api-boundary --
+        language: system
+        pass_filenames: false

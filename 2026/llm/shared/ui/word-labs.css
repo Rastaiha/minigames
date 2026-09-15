@@ -1,0 +1,175 @@
+/* Light workshop chrome for the word-placement and embedding labs.
+   The graph and 3D scene keep their own semantic colors. */
+body.mg-word-lab {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+body.mg-word-lab header,
+body.mg-word-lab .sidebar,
+body.mg-word-lab .bottom-panel,
+body.mg-word-lab .math-panel {
+  background: var(--surface);
+  color: var(--ink);
+  border-color: var(--line);
+  box-shadow: none;
+}
+body.mg-word-lab header h1,
+body.mg-word-lab .hub-header h1,
+body.mg-word-lab .math-result,
+body.mg-word-lab .hub-card.unlocked h3 {
+  color: var(--action-strong);
+}
+body.mg-word-lab header span,
+body.mg-word-lab .hub-header p,
+body.mg-word-lab .hub-card p,
+body.mg-word-lab .sidebar-desc {
+  color: var(--ink-muted);
+}
+body.mg-word-lab .btn,
+body.mg-word-lab .action-btn {
+  background: var(--action);
+  color: #fff;
+  border-radius: var(--radius-sm);
+}
+body.mg-word-lab .btn:hover,
+body.mg-word-lab .action-btn:hover {
+  background: var(--action-strong);
+}
+body.mg-word-lab .btn-green,
+body.mg-word-lab .action-btn.secondary { background: var(--success); }
+body.mg-word-lab .btn-green:hover,
+body.mg-word-lab .action-btn.secondary:hover { background: #0e6351; }
+body.mg-word-lab .btn-pink { background: #a64c85; }
+body.mg-word-lab .btn-pink:hover { background: #89396d; }
+body.mg-word-lab .btn-danger { background: var(--danger); }
+body.mg-word-lab .btn-danger:hover { background: #9c3047; }
+body.mg-word-lab .btn-purple,
+body.mg-word-lab .btn-save { background: #6856bb; }
+body.mg-word-lab .btn-purple:hover,
+body.mg-word-lab .btn-save:hover { background: #55439f; }
+body.mg-word-lab .btn-delete-r { background: var(--danger); }
+body.mg-word-lab .btn-delete-r:hover { background: #9c3047; }
+body.mg-word-lab .btn-hub-back,
+body.mg-word-lab .zoom-btn,
+body.mg-word-lab .scroll-arrow-btn {
+  background: var(--surface-muted);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  box-shadow: none;
+}
+body.mg-word-lab .btn-hub-back:hover,
+body.mg-word-lab .zoom-btn:hover,
+body.mg-word-lab .scroll-arrow-btn:hover { background: var(--action-soft); }
+body.mg-word-lab .word-bank {
+  background: var(--surface-muted);
+  border-color: var(--line);
+}
+body.mg-word-lab .word-bank .word-node,
+body.mg-word-lab .sidebar-token {
+  background: var(--surface);
+  color: var(--ink);
+  border-color: var(--line);
+}
+body.mg-word-lab .word-bank .word-node:hover,
+body.mg-word-lab .sidebar-token:hover { background: var(--action-soft); }
+body.mg-word-lab .word-node:not(.is-result-node) {
+  background: var(--surface);
+  color: var(--ink);
+  border-color: var(--action);
+  box-shadow: 0 4px 12px rgb(24 32 51 / 14%);
+}
+body.mg-word-lab .word-bank .word-node:not(.is-result-node),
+body.mg-word-lab .word-node.locked-node {
+  border-color: var(--line);
+}
+body.mg-word-lab .word-node.is-result-node {
+  background: #f9e7f1;
+  color: #762d62;
+}
+body.mg-word-lab .word-node .coord-tag,
+body.mg-word-lab .loss-display-box,
+body.mg-word-lab .level-info { color: var(--action-strong); }
+body.mg-word-lab .loss-display-box,
+body.mg-word-lab .level-info {
+  background: var(--action-soft);
+  border-color: var(--line);
+}
+body.mg-word-lab .panel-controls input,
+body.mg-word-lab .math-controls select,
+body.mg-word-lab .axis-setup-box input {
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+body.mg-word-lab .op-select { background: var(--surface-muted) !important; border-color: var(--line) !important; }
+body.mg-word-lab .axis-setup-box,
+body.mg-word-lab .quest-card {
+  background: var(--action-soft);
+  border-color: var(--line);
+  color: var(--ink);
+}
+body.mg-word-lab .quest-card strong { color: var(--action-strong); }
+body.mg-word-lab .sidebar label[style],
+body.mg-word-lab .sidebar strong[style] { color: var(--ink-muted) !important; }
+
+/* A bright field keeps movable words legible and matches the placement games. */
+body.mg-word-lab .canvas-container,
+body.mg-word-lab .canvas-space {
+  background-color: #f9faff;
+  background-image: linear-gradient(#e7eaf5 1px, transparent 1px),
+                    linear-gradient(90deg, #e7eaf5 1px, transparent 1px);
+  background-size: 80px 80px;
+}
+
+/* The multi-step workshop has a landing view and a reading exercise. */
+body.mg-word-lab #hub-view {
+  background: radial-gradient(circle at 50% 15%, var(--action-soft), var(--paper) 60%);
+}
+body.mg-word-lab .hub-card,
+body.mg-word-lab .french-text-box,
+body.mg-word-lab .nlp-sidebar,
+body.mg-word-lab .modal-card {
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-paper);
+}
+body.mg-word-lab .hub-card h3,
+body.mg-word-lab .french-text-box,
+body.mg-word-lab .french-word,
+body.mg-word-lab .modal-card p { color: var(--ink); }
+body.mg-word-lab .hub-card.unlocked { border-color: var(--action); }
+body.mg-word-lab .hub-card.locked { opacity: .65; filter: none; }
+body.mg-word-lab .hub-btn-reset,
+body.mg-word-lab .reset-btn {
+  background: #fff4f5;
+  color: var(--danger);
+  border: 1px solid #f1cbd2;
+}
+body.mg-word-lab .nlp-container { background: var(--paper); }
+body.mg-word-lab .bucket-zone {
+  background: var(--surface-muted);
+  border-color: var(--line);
+}
+body.mg-word-lab .picked-tag { background: var(--action-soft); color: var(--ink); border-color: var(--line); }
+body.mg-word-lab .modal-card h2 { color: var(--action-strong); }
+body.mg-word-lab .modal-card button { background: var(--action); }
+
+/* Contextual embedding uses the same controls around a draggable word field. */
+body.mg-word-lab .nav-step-btn {
+  background: var(--action-soft);
+  color: var(--action-strong);
+  border-color: var(--line);
+}
+body.mg-word-lab .nav-step-btn:hover { background: #dce2ff; color: var(--action-strong); }
+body.mg-word-lab .token {
+  background: var(--surface);
+  color: var(--ink);
+  border-color: var(--line);
+  box-shadow: 0 4px 12px rgb(24 32 51 / 12%);
+}
+
+@media (max-width: 700px) {
+  body.mg-word-lab .sidebar { border-top-color: var(--line); }
+}
