@@ -1,23 +1,32 @@
 // Shared packet-split game engine. Each version's main.js imports initGame
 // and passes a config for its interaction model, packet sizes, and copy.
+export function completedStopwatchTime(firstDeliveredAt, secondDeliveredAt, stopwatchTime) {
+  if (firstDeliveredAt === null || secondDeliveredAt === null) return null;
+  return stopwatchTime;
+}
+
 export function initGame(config) {
   const NS = 'http://www.w3.org/2000/svg';
   const BITS_PER_SECOND = 8;
   const BIT_TIME = 1 / BITS_PER_SECOND;
-  const BLUE_BITS   = config.blueBits;
+  const GREEN_BITS   = config.greenBits;
   const ORANGE_BITS = config.orangeBits;
   const SPLITTING = config.splitting !== false;
   const EVENT_PAUSES = config.eventPauses === true;
   const ITEM_NOUN = config.itemNoun || 'بسته';
   const ITEM_NOUN_WITH_EZAFE = config.itemNounWithEzafe || 'بستهٔ';
-  const BLUE_AVAILABLE_AT = EVENT_PAUSES ? (config.blueAvailableAt || 0) : 0;
+  const GREEN_AVAILABLE_AT = EVENT_PAUSES ? (config.greenAvailableAt || 0) : 0;
   const SHOW_MEMORY = config.showMemory === true;
+  const PACKET_COLORS = {
+    green:   { base: '#35afb8', soft: '#e5f6f6', onBase: '#2c2318', name: 'فیروزه‌ای' },
+    orange: { base: '#b82a31', soft: '#f9e9e9', onBase: '#fcfaf4', name: 'زرشکی' },
+  };
   const DEVICES = {
-    PC1: { x: 100, y: 130, kind: 'pc', num: 1, color: 'blue'   },
+    PC1: { x: 100, y: 130, kind: 'pc', num: 1, color: 'green'   },
     PC2: { x: 100, y: 370, kind: 'pc', num: 2, color: 'orange' },
     A:   { x: 340, y: 250, kind: 'switch', label: 'A' },
     B:   { x: 560, y: 250, kind: 'switch', label: 'B' },
-    PC3: { x: 800, y: 130, kind: 'pc', num: 3, color: 'blue'   },
+    PC3: { x: 800, y: 130, kind: 'pc', num: 3, color: 'green'   },
     PC4: { x: 800, y: 370, kind: 'pc', num: 4, color: 'orange' },
   };
   // Cubic-Bezier paths give the topology gentle curves like the reference sketch.
@@ -39,10 +48,10 @@ export function initGame(config) {
   };
   const MAX_PER_ROW = 5;
   const ROUTE = {
-    blue:   { PC1: { link: 'PC1-A', to: 'A' }, A: { link: 'A-B', to: 'B' }, B: { link: 'B-PC3', to: 'PC3' } },
+    green:   { PC1: { link: 'PC1-A', to: 'A' }, A: { link: 'A-B', to: 'B' }, B: { link: 'B-PC3', to: 'PC3' } },
     orange: { PC2: { link: 'PC2-A', to: 'A' }, A: { link: 'A-B', to: 'B' }, B: { link: 'B-PC4', to: 'PC4' } },
   };
-  const DEST = { blue: 'PC3', orange: 'PC4' };
+  const DEST = { green: 'PC3', orange: 'PC4' };
 
   function el(name, attrs = {}, ...children) {
     const e = document.createElementNS(NS, name);
@@ -84,29 +93,29 @@ export function initGame(config) {
     if (d.kind === 'switch') {
       devicesG.appendChild(el('rect', {
         x: d.x - 40, y: d.y - 22, width: 80, height: 44, rx: 6,
-        fill: '#35afb8',
+        fill: '#f3e7ca',
         stroke: '#2c2318',
         'stroke-width': 1.5,
       }));
       for (let i = 0; i < 4; i++) {
         devicesG.appendChild(el('rect', {
           x: d.x - 17 + i * 10, y: d.y + 8, width: 4, height: 4,
-          fill: '#fcfaf4',
+          fill: '#6b5d4a',
         }));
       }
       devicesG.appendChild(el('text', { x: d.x, y: d.y - 4, class: 'switch-label' }, d.label));
     } else {
       devicesG.appendChild(el('rect', {
         x: d.x - 42, y: d.y - 32, width: 84, height: 64, rx: 6,
-        fill: '#fcfaf4',
+        class: `pc-frame ${d.color}`,
         stroke: '#2c2318', 'stroke-width': 1.5,
       }));
       devicesG.appendChild(el('rect', {
         x: d.x - 36, y: d.y - 26, width: 72, height: 52, rx: 4,
         class: `pc-screen ${d.color}`
       }));
-      devicesG.appendChild(el('rect', { x: d.x - 8,  y: d.y + 32, width: 16, height: 8, fill: '#fcfaf4', stroke: '#2c2318', 'stroke-width': 1.5 }));
-      devicesG.appendChild(el('rect', { x: d.x - 22, y: d.y + 40, width: 44, height: 4, rx: 2, fill: '#fcfaf4', stroke: '#2c2318', 'stroke-width': 1.5 }));
+      devicesG.appendChild(el('rect', { x: d.x - 8,  y: d.y + 32, width: 16, height: 8, class: `pc-frame ${d.color}`, stroke: '#2c2318', 'stroke-width': 1.5 }));
+      devicesG.appendChild(el('rect', { x: d.x - 22, y: d.y + 40, width: 44, height: 4, rx: 2, class: `pc-frame ${d.color}`, stroke: '#2c2318', 'stroke-width': 1.5 }));
       devicesG.appendChild(el('text', { x: d.x, y: d.y, class: `pc-num ${d.color}` }, `PC${d.num}`));
     }
   }
@@ -114,7 +123,7 @@ export function initGame(config) {
   labelsG.appendChild(el('text', { x: 560, y: 298, class: 'device-label' }, 'سوییچ B'));
 
   // Arrival progress
-  const arrivalPc3 = el('text', { x: 800, y: 35,  class: 'progress-text blue'   }, `0 از ${BLUE_BITS} بیت`);
+  const arrivalPc3 = el('text', { x: 800, y: 35,  class: 'progress-text green'   }, `0 از ${GREEN_BITS} بیت`);
   const arrivalPc4 = el('text', { x: 800, y: 470, class: 'progress-text orange' }, `0 از ${ORANGE_BITS} بیت`);
   progressG.appendChild(arrivalPc3);
   progressG.appendChild(arrivalPc4);
@@ -128,7 +137,7 @@ export function initGame(config) {
   let currentSchedule = null;
   let animStart = 0;
   let roundStartTime = 0;
-  let blueDeliveredAt = null;
+  let greenDeliveredAt = null;
   let orangeDeliveredAt = null;
   let currentPopover = null;
   let activeTransfers = [];
@@ -203,7 +212,7 @@ export function initGame(config) {
   function initialState() {
     nextId = 1;
     packets = [
-      { id: nextId++, size: BLUE_BITS,   color: 'blue',   location: 'PC1', selected: false, availableAt: BLUE_AVAILABLE_AT },
+      { id: nextId++, size: GREEN_BITS,   color: 'green',   location: 'PC1', selected: false, availableAt: GREEN_AVAILABLE_AT },
       { id: nextId++, size: ORANGE_BITS, color: 'orange', location: 'PC2', selected: false, availableAt: 0 },
     ];
     totalTime = 0;
@@ -211,7 +220,7 @@ export function initGame(config) {
     animating = false;
     currentSchedule = null;
     roundStartTime = 0;
-    blueDeliveredAt = null;
+    greenDeliveredAt = null;
     orangeDeliveredAt = null;
     attemptStarted = false;
     activeTransfers = [];
@@ -355,7 +364,7 @@ export function initGame(config) {
   }
 
   function renderChip(pkt, x, y, interactive) {
-    const fill = pkt.color === 'blue' ? '#5669d1' : '#e8b33a';
+    const palette = PACKET_COLORS[pkt.color];
     const atDest = isAtDestination(pkt);
     const unavailable = !isAvailable(pkt);
     const canInteract = interactive && !unavailable && (!EVENT_PAUSES || !atDest);
@@ -370,12 +379,12 @@ export function initGame(config) {
     if (canInteract) {
       attrs.tabindex = '0';
       attrs.role = 'button';
-      attrs['aria-label'] = `${ITEM_NOUN_WITH_EZAFE} ${pkt.size} بیتی ${pkt.color === 'blue' ? 'آبی' : 'طلایی'}؛ ${isSelected ? 'انتخاب شده' : 'انتخاب نشده'}`;
+      attrs['aria-label'] = `${ITEM_NOUN_WITH_EZAFE} ${pkt.size} بیتی ${palette.name}؛ ${isSelected ? 'انتخاب شده' : 'انتخاب نشده'}`;
     } else if (unavailable) {
       attrs.tabindex = '0';
       attrs.role = 'button';
       attrs['aria-disabled'] = 'true';
-      attrs['aria-label'] = `${ITEM_NOUN_WITH_EZAFE} ${pkt.size} بیتی ${pkt.color === 'blue' ? 'آبی' : 'طلایی'}؛ اکنون در دسترس نیست و در ${pkt.availableAt.toFixed(1)} s آماده می‌شود`;
+      attrs['aria-label'] = `${ITEM_NOUN_WITH_EZAFE} ${pkt.size} بیتی ${palette.name}؛ اکنون در دسترس نیست و در ${pkt.availableAt.toFixed(1)} s آماده می‌شود`;
     }
     const g = el('g', attrs);
     if (unavailable) {
@@ -388,17 +397,17 @@ export function initGame(config) {
     g.appendChild(el('rect', { x: -17, y: -14, width: 34, height: 28, rx: 5, fill: 'transparent', stroke: 'transparent', class: 'focus-ring' }));
 
     envelopeShape(g, w, h, {
-      fill:        isSelected ? `${fill}38` : (atDest ? `${fill}3d` : `${fill}18`),
-      stroke:      fill,
+      fill:        isSelected ? (palette.solid || palette.base) : palette.soft,
+      stroke:      palette.base,
       strokeWidth: isSelected ? 2 : 1.4,
-      flapStroke:  fill,
+      flapStroke:  isSelected ? palette.onBase : palette.base,
     });
 
     g.appendChild(el('text', {
       x: 0, y: 3,
       'text-anchor': 'middle', 'dominant-baseline': 'middle',
       'font-size': '12', 'font-weight': '800',
-      fill: '#2c2318',
+      fill: isSelected ? palette.onBase : '#2c2318',
     }, String(pkt.size)));
 
     if (atDest) g.setAttribute('opacity', '0.85');
@@ -493,7 +502,8 @@ export function initGame(config) {
   function drawTransitPacket(evt, t, paused = false) {
     const p = (t - evt.start) / (evt.end - evt.start);
     const { x, y, angle } = pointOnWire(evt.link, p);
-    const color = evt.packet.color === 'blue' ? '#5669d1' : '#e8b33a';
+    const palette = PACKET_COLORS[evt.packet.color];
+    const color = palette.solid || palette.base;
     const rectW = Math.max(30, Math.min(84, evt.packet.size * 5 + 18));
     const rectH = 26;
     const g = el('g', {
@@ -504,12 +514,12 @@ export function initGame(config) {
       fill: color,
       stroke: color,
       strokeWidth: 1.5,
-      flapStroke: '#2c2318',
+      flapStroke: palette.onBase,
     });
     g.appendChild(el('text', {
       x: 0, y: 3,
       'text-anchor': 'middle', 'dominant-baseline': 'middle',
-      'font-size': '12', 'font-weight': '800', fill: '#2c2318',
+      'font-size': '12', 'font-weight': '800', fill: palette.onBase,
       // Flip text upright if the packet moves right-to-left (angle > 90°)
       transform: (Math.abs(angle) > 90) ? 'rotate(180)' : '',
     }, String(evt.packet.size)));
@@ -520,13 +530,13 @@ export function initGame(config) {
     let bBits = 0, oBits = 0;
     for (const p of packets) {
       if (isAtDestination(p)) {
-        if (p.color === 'blue') bBits += p.size;
+        if (p.color === 'green') bBits += p.size;
         else oBits += p.size;
       }
     }
-    arrivalPc3.textContent = `${bBits} از ${BLUE_BITS} بیت`;
+    arrivalPc3.textContent = `${bBits} از ${GREEN_BITS} بیت`;
     arrivalPc4.textContent = `${oBits} از ${ORANGE_BITS} بیت`;
-    arrivalPc3.classList.toggle('done', bBits === BLUE_BITS);
+    arrivalPc3.classList.toggle('done', bBits === GREEN_BITS);
     arrivalPc4.classList.toggle('done', oBits === ORANGE_BITS);
   }
 
@@ -625,7 +635,7 @@ export function initGame(config) {
     // Precompute when each color finishes fully arriving (relative to schedule start),
     // so animate() can fill the live row's cell as soon as it happens — not at round end.
     const colorDeliveryEnd = {};
-    for (const color of ['blue', 'orange']) {
+    for (const color of ['green', 'orange']) {
       const dest = DEST[color];
       const allWillArrive = packets.filter(p => p.color === color).every(p => {
         const evt = events.find(e => e.packet === p);
@@ -696,7 +706,7 @@ export function initGame(config) {
       })),
       duration: boundary - totalTime,
       boundary,
-      colorDeliveryEnd: { blue: null, orange: null },
+      colorDeliveryEnd: { green: null, orange: null },
     };
     animating = true;
     attemptStarted = true;
@@ -724,7 +734,7 @@ export function initGame(config) {
     }
     activeTransfers = activeTransfers.filter(transfer => transfer.end > boundary + 1e-9);
     updateMemoryPeaks();
-    checkEventDelivery('blue');
+    checkEventDelivery('green');
     checkEventDelivery('orange');
 
     const arrivedAtSwitch = completed.some(transfer => DEVICES[transfer.to]?.kind === 'switch');
@@ -773,10 +783,10 @@ export function initGame(config) {
   }
 
   function checkEventDelivery(color) {
-    if ((color === 'blue' ? blueDeliveredAt : orangeDeliveredAt) !== null) return;
+    if ((color === 'green' ? greenDeliveredAt : orangeDeliveredAt) !== null) return;
     const delivered = packets.filter(packet => packet.color === color).every(isAtDestination);
     if (!delivered) return;
-    if (color === 'blue') blueDeliveredAt = totalTime;
+    if (color === 'green') greenDeliveredAt = totalTime;
     else orangeDeliveredAt = totalTime;
   }
 
@@ -790,8 +800,8 @@ export function initGame(config) {
 
     if (!EVENT_PAUSES) {
       const cd = currentSchedule.colorDeliveryEnd;
-      if (blueDeliveredAt === null && cd.blue !== null && T >= cd.blue) {
-        blueDeliveredAt = roundStartTime + cd.blue;
+      if (greenDeliveredAt === null && cd.green !== null && T >= cd.green) {
+        greenDeliveredAt = roundStartTime + cd.green;
         updateStats();
       }
       if (orangeDeliveredAt === null && cd.orange !== null && T >= cd.orange) {
@@ -815,7 +825,7 @@ export function initGame(config) {
       evt.packet.selected = false;
     }
     const finishedEvents = currentSchedule.events;
-    checkColorDelivery('blue', 'PC3', finishedEvents);
+    checkColorDelivery('green', 'PC3', finishedEvents);
     checkColorDelivery('orange', 'PC4', finishedEvents);
 
     animating = false;
@@ -864,7 +874,7 @@ export function initGame(config) {
   }
 
   function checkColorDelivery(color, dest, roundEvents) {
-    if (color === 'blue'   && blueDeliveredAt   !== null) return;
+    if (color === 'green'   && greenDeliveredAt   !== null) return;
     if (color === 'orange' && orangeDeliveredAt !== null) return;
 
     const allOfColorDelivered = packets.filter(p => p.color === color).every(p => p.location === dest);
@@ -875,7 +885,7 @@ export function initGame(config) {
     const lastEnd = Math.max(...relevant.map(e => e.end));
     const t = roundStartTime + lastEnd;
 
-    if (color === 'blue') blueDeliveredAt = t;
+    if (color === 'green') greenDeliveredAt = t;
     else orangeDeliveredAt = t;
   }
 
@@ -908,7 +918,7 @@ export function initGame(config) {
   }
 
   function bestPerColumn(entries) {
-    const keys = ['blue', 'orange', 'sum', 'all', 'packets'];
+    const keys = ['green', 'orange', 'all', 'packets'];
     if (SHOW_MEMORY) keys.push('memoryA', 'memoryB');
     const out = {};
     for (const k of keys) {
@@ -919,15 +929,13 @@ export function initGame(config) {
   }
 
   function currentAttemptEntry() {
-    const blueDuration = timeSinceAvailability(blueDeliveredAt, BLUE_AVAILABLE_AT);
+    const greenDuration = timeSinceAvailability(greenDeliveredAt, GREEN_AVAILABLE_AT);
     const orangeDuration = timeSinceAvailability(orangeDeliveredAt, 0);
-    const both = blueDuration !== null && orangeDuration !== null;
     return {
       n:       attemptCounter + 1,
-      blue:    blueDuration,
+      green:    greenDuration,
       orange:  orangeDuration,
-      sum:     both ? blueDuration + orangeDuration : null,
-      all:     both ? Math.max(blueDuration, orangeDuration) : null,
+      all:     completedStopwatchTime(greenDeliveredAt, orangeDeliveredAt, totalTime),
       packets: packets.length,
       memoryA: peakMemoryA,
       memoryB: peakMemoryB,
@@ -967,9 +975,8 @@ export function initGame(config) {
       row.setAttribute('role', 'row');
       row.innerHTML = `
         <span class="num" role="cell"><bdi dir="ltr">${entry.n}</bdi></span>
-        ${cell('blue',   'blue',   entry, fmtTime(entry.blue))}
+        ${cell('green',   'green',   entry, fmtTime(entry.green))}
         ${cell('orange', 'orange', entry, fmtTime(entry.orange))}
-        ${cell('sum',    'sum',    entry, fmtTime(entry.sum))}
         ${cell('all',    'all',    entry, fmtTime(entry.all))}
         ${cell('packets', 'packets', entry, entry.packets)}
         ${SHOW_MEMORY ? cell('memory-a', 'memoryA', entry, `${entry.memoryA} بیت`) : ''}
@@ -983,24 +990,22 @@ export function initGame(config) {
 
   function commitCurrentAttempt() {
     // Only record attempts where at least one color made it to its destination.
-    if (blueDeliveredAt === null && orangeDeliveredAt === null) return;
+    if (greenDeliveredAt === null && orangeDeliveredAt === null) return;
     attemptCounter++;
-    const blueDuration = timeSinceAvailability(blueDeliveredAt, BLUE_AVAILABLE_AT);
+    const greenDuration = timeSinceAvailability(greenDeliveredAt, GREEN_AVAILABLE_AT);
     const orangeDuration = timeSinceAvailability(orangeDeliveredAt, 0);
-    const both = blueDuration !== null && orangeDuration !== null;
     attemptsHistory.push({
       n:       attemptCounter,
-      blue:    blueDuration,
+      green:    greenDuration,
       orange:  orangeDuration,
-      sum:     both ? blueDuration + orangeDuration : null,
-      all:     both ? Math.max(blueDuration, orangeDuration) : null,
+      all:     completedStopwatchTime(greenDeliveredAt, orangeDeliveredAt, totalTime),
       packets: packets.length,
       memoryA: peakMemoryA,
       memoryB: peakMemoryB,
     });
     // Clear per-color delivery times so the "current" live row goes back to
     // empty instead of mirroring the row we just committed.
-    blueDeliveredAt = null;
+    greenDeliveredAt = null;
     orangeDeliveredAt = null;
     renderHistory();
   }

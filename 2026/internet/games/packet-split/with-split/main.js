@@ -3,9 +3,9 @@ import { initGame } from '../shared/game.js'
 
 initGame({
   splitting: true,
-  blueBits: 16,
+  greenBits: 16,
   orangeBits: 48,
-  blueAvailableAt: 6,
+  greenAvailableAt: 6,
   eventPauses: true,
   showMemory: true,
   itemNoun: 'پیام',

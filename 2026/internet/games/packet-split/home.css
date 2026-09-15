@@ -1,10 +1,12 @@
 :root {
   color-scheme: light;
   --canvas: #fcfaf4;
+  --paper: #fbf3df;
+  --deep-paper: #f3e7ca;
   --ink: #2c2318;
   --ink-soft: #6b5d4a;
-  --blue: #5669d1;
-  --blue-tint: #eceefa;
+  --green: #3c9468;
+  --green-tint: #e7f3ec;
   --gold: #e8b33a;
   --gold-tint: #fff4d8;
   --line: rgba(44, 35, 24, 0.22);
@@ -53,8 +55,8 @@ html, body {
   gap: 10px;
   padding: 22px 20px;
   border: 1.5px solid var(--line);
-  border-radius: 14px;
-  background: var(--canvas);
+  border-radius: 10px;
+  background: var(--paper);
   color: inherit;
   text-decoration: none;
   transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
@@ -66,8 +68,8 @@ html, body {
   outline: none;
 }
 
-.hub-card.blue { border-color: var(--blue); background: var(--blue-tint); }
-.hub-card.blue:hover, .hub-card.blue:focus-visible { border-color: var(--blue); }
+.hub-card.green { border-color: var(--green); background: var(--green-tint); }
+.hub-card.green:hover, .hub-card.green:focus-visible { border-color: var(--green); }
 
 .hub-card.orange { border-color: var(--gold); background: var(--gold-tint); }
 .hub-card.orange:hover, .hub-card.orange:focus-visible { border-color: var(--gold); }
