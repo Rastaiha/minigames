@@ -14,9 +14,6 @@ import { extname, join, resolve, sep } from 'node:path';
 const root = process.cwd();
 const screenshotDirectory = process.env.BROWSER_SMOKE_SCREENSHOTS;
 const pages = [
-  'Dimensions/1-line.html',
-  'Dimensions/2-plane.html',
-  'Dimensions/3-space.html',
   'attention/index.html',
   'contexual-embedding/index.html',
   'dimensionality-reduction/index.html',
