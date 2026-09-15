@@ -61,6 +61,8 @@ export function initGame(config) {
   const packetsAtRestG = document.getElementById('packetsAtRest');
   const packetAnimG    = document.getElementById('packetAnim');
   const progressG      = document.getElementById('progress');
+  const availabilityTooltipG = el('g', { class: 'availability-tooltip', 'aria-hidden': 'true' });
+  document.getElementById('topology').appendChild(availabilityTooltipG);
 
   // --- Wires (curved paths) ---
   const wireEls = {};
@@ -323,23 +325,66 @@ export function initGame(config) {
     }));
   }
 
+  function hideAvailabilityTooltip() {
+    availabilityTooltipG.innerHTML = '';
+  }
+
+  function showAvailabilityTooltip(pkt, x, y) {
+    hideAvailabilityTooltip();
+    const width = 220;
+    const height = 42;
+    const margin = 8;
+    const boxX = Math.max(margin, Math.min(900 - width - margin, x - width / 2));
+    const boxY = Math.max(margin, y - height - 14);
+    const arrowX = Math.max(boxX + 12, Math.min(boxX + width - 12, x));
+    const tooltip = el('g', {});
+    tooltip.appendChild(el('rect', {
+      x: boxX, y: boxY, width, height, rx: 5, class: 'tooltip-box',
+    }));
+    tooltip.appendChild(el('path', {
+      d: `M ${arrowX - 6} ${boxY + height - 1} L ${arrowX} ${boxY + height + 8} L ${arrowX + 6} ${boxY + height - 1} Z`,
+      class: 'tooltip-arrow',
+    }));
+    tooltip.appendChild(el('text', {
+      x: boxX + width / 2, y: boxY + 15,
+      'text-anchor': 'middle', direction: 'rtl',
+    },
+      el('tspan', { x: boxX + width / 2, dy: 8 }, `این پیام تا لحظه ${pkt.availableAt.toFixed(1)}s آماده ارسال نیست.`),
+    ));
+    availabilityTooltipG.appendChild(tooltip);
+  }
+
   function renderChip(pkt, x, y, interactive) {
     const fill = pkt.color === 'blue' ? '#5669d1' : '#e8b33a';
     const atDest = isAtDestination(pkt);
-    const canInteract = interactive && (!EVENT_PAUSES || !atDest);
+    const unavailable = !isAvailable(pkt);
+    const canInteract = interactive && !unavailable && (!EVENT_PAUSES || !atDest);
     const isSelected = pkt.selected && !atDest;
     const w = 30, h = 22;
 
     const cls = ['chip-svg', pkt.color];
     if (!canInteract) cls.push('locked');
+    if (unavailable)  cls.push('unavailable');
     if (isSelected)   cls.push('selected');
     const attrs = { class: cls.join(' '), transform: `translate(${x}, ${y})` };
     if (canInteract) {
       attrs.tabindex = '0';
       attrs.role = 'button';
       attrs['aria-label'] = `${ITEM_NOUN_WITH_EZAFE} ${pkt.size} بیتی ${pkt.color === 'blue' ? 'آبی' : 'طلایی'}؛ ${isSelected ? 'انتخاب شده' : 'انتخاب نشده'}`;
+    } else if (unavailable) {
+      attrs.tabindex = '0';
+      attrs.role = 'button';
+      attrs['aria-disabled'] = 'true';
+      attrs['aria-label'] = `${ITEM_NOUN_WITH_EZAFE} ${pkt.size} بیتی ${pkt.color === 'blue' ? 'آبی' : 'طلایی'}؛ اکنون در دسترس نیست و در ${pkt.availableAt.toFixed(1)} s آماده می‌شود`;
     }
     const g = el('g', attrs);
+    if (unavailable) {
+      const showTooltip = () => showAvailabilityTooltip(pkt, x, y);
+      g.addEventListener('mouseenter', showTooltip);
+      g.addEventListener('mouseleave', hideAvailabilityTooltip);
+      g.addEventListener('focus', showTooltip);
+      g.addEventListener('blur', hideAvailabilityTooltip);
+    }
     g.appendChild(el('rect', { x: -17, y: -14, width: 34, height: 28, rx: 5, fill: 'transparent', stroke: 'transparent', class: 'focus-ring' }));
 
     envelopeShape(g, w, h, {
@@ -497,12 +542,13 @@ export function initGame(config) {
   }
 
   function renderStatic() {
+    hideAvailabilityTooltip();
     packetsAtRestG.innerHTML = '';
     packetAnimG.innerHTML = '';
     for (const key in wireEls) setWireClass(key, 'wire');
     const byDevice = {};
     for (const p of packets) {
-      if (!isAvailable(p) || (EVENT_PAUSES && isInTransit(p))) continue;
+      if (EVENT_PAUSES && isInTransit(p)) continue;
       (byDevice[p.location] = byDevice[p.location] || []).push(p);
     }
     for (const dev in byDevice) renderDock(dev, byDevice[dev], !animating);
@@ -535,7 +581,6 @@ export function initGame(config) {
     const transitEvents = [];
     const busyByLink = {};
     for (const p of packets) {
-      if (!isAvailable(p, totalTime + t)) continue;
       const pos = packetPositionAt(p, t);
       if (pos.kind === 'dock') {
         (byDevice[pos.device] = byDevice[pos.device] || []).push(p);
@@ -627,6 +672,7 @@ export function initGame(config) {
   }
 
   function beginEventSegment({ startSelected = false } = {}) {
+    hideAvailabilityTooltip();
     if (startSelected) startSelectedTransfers();
     const nextTransferEnd = activeTransfers.length
       ? Math.min(...activeTransfers.map(transfer => transfer.end))
