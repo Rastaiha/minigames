@@ -439,10 +439,9 @@
     <div class="app">
       <!-- HEADER -->
       <header>
-        <div class="avatar" id="avatar">🛡️</div>
+        <div class="avatar" id="avatar" aria-hidden="true"></div>
         <div class="identity">
           <div class="title" id="levelTitle">مرحله اول</div>
-          <div class="subtitle">تلاش کن رمز محرمانه را پیدا کنی</div>
         </div>
         <div class="status">
           <div class="status-dot" id="statusDot"></div>
@@ -460,13 +459,12 @@
       <!-- MISSION -->
       <div class="mission">
         <div class="mission-text" id="missionText">...</div>
-        <div class="mission-status" id="missionStatus">🔒 رمز محفوظ است</div>
+        <div class="mission-status" id="missionStatus">رمز محفوظ است</div>
       </div>
       <!-- MESSAGES -->
       <main class="messages" id="messages">
         <div class="empty" id="empty">
           <div class="empty-inner">
-            <div class="empty-icon">🔐</div>
             <h2>رمز را از نگهبان بگیر</h2>
             <p>
               فقط با پیام هایی که میفرستی میتوانی سعی کنی رفتار نگهبان را تغییر
@@ -485,7 +483,7 @@
       <!-- SOLVED -->
       <div class="solved-box" id="solvedBox">
         <div>
-          <div class="solved-title">🎉 مرحله حل شد</div>
+          <div class="solved-title">مرحله حل شد</div>
           <div class="solved-description" id="solvedDescription">
             رمز فاش شد.
           </div>
@@ -703,7 +701,7 @@ GOLD-581
           statusDot.className = 'status-dot solved';
           statusText.textContent = 'مرحله حل شد';
         } else {
-          missionStatus.textContent = '🔒 رمز محفوظ است';
+          missionStatus.textContent = 'رمز محفوظ است';
           missionStatus.className = 'mission-status';
           statusDot.className = 'status-dot';
           statusText.textContent = 'آماده';
@@ -740,7 +738,7 @@ GOLD-581
         }
         solvedBox.classList.add('show');
         if (state.currentLevel === 3) {
-          solvedDescription.textContent = '🏆 هر سه مرحله را کامل کردی.';
+          solvedDescription.textContent = 'هر سه مرحله را کامل کردی.';
           nextButton.textContent = 'شروع دوباره';
         } else {
           solvedDescription.textContent = 'نگهبان رمز این مرحله را فاش کرد.';
@@ -778,23 +776,23 @@ GOLD-581
           );
           console.log(
             '۱. سناریو / نقش‌آفرینی:',
-            data.checklist.isScenario ? '✅ تایید' : '❌ ناموفق'
+            data.checklist.isScenario ? 'تایید' : 'ناموفق'
           );
           console.log(
             '۲. تداوم مکالمه (حداقل ۳ پیام):',
-            data.checklist.isEngaged ? '✅ تایید' : '❌ ناموفق'
+            data.checklist.isEngaged ? 'تایید' : 'ناموفق'
           );
           console.log(
             '۳. لحن داستانی و غیرمستقیم:',
             !data.checklist.isJustDirect
-              ? '✅ تایید'
-              : '❌ ناموفق (درخواست مستقیم رمز)'
+              ? 'تایید'
+              : 'ناموفق (درخواست مستقیم رمز)'
           );
           console.log(
             '%cوضعیت کل: ' +
               (data.checklist.unlocked
-                ? '🔓 باز شد (Unlocked)'
-                : '🔒 قفل (Strict Mode)'),
+                ? 'باز شد (Unlocked)'
+                : 'قفل (Strict Mode)'),
             data.checklist.unlocked
               ? 'color: #059669; font-weight: bold;'
               : 'color: #dc2626; font-weight: bold;'
@@ -821,21 +819,21 @@ GOLD-581
           );
           console.log(
             '۱. سناریو / نقش‌آفرینی:',
-            isScen ? '✅ تایید' : '❌ ناموفق'
+            isScen ? 'تایید' : 'ناموفق'
           );
           console.log(
             '۲. تداوم مکالمه (حداقل ۳ پیام):',
             isMin
-              ? `✅ تایید (${userMsgs.length} پیام)`
-              : `❌ ناموفق (${userMsgs.length} پیام)`
+              ? `تایید (${userMsgs.length} پیام)`
+              : `ناموفق (${userMsgs.length} پیام)`
           );
           console.log(
             '۳. لحن داستانی و غیرمستقیم:',
-            !isDirect ? '✅ تایید' : '❌ ناموفق (درخواست مستقیم رمز)'
+            !isDirect ? 'تایید' : 'ناموفق (درخواست مستقیم رمز)'
           );
           console.log(
             '%cوضعیت کل: ' +
-              (unl ? '🔓 باز شد (Unlocked)' : '🔒 قفل (Strict Mode)'),
+              (unl ? 'باز شد (Unlocked)' : 'قفل (Strict Mode)'),
             unl
               ? 'color: #059669; font-weight: bold;'
               : 'color: #dc2626; font-weight: bold;'

@@ -457,9 +457,6 @@
             <span class="status-dot" aria-hidden="true"></span
             ><span id="statusText">آماده گفت‌وگو</span>
           </p>
-          <p class="source-badge">
-            مدل خام محلی؛ سه مدل دیگر از Worker اشتراکی
-          </p>
         </div>
         <button
           id="clearButton"
@@ -891,7 +888,6 @@
         const model = MODELS[mode];
         modelName.textContent = model.name;
         avatar.textContent = model.avatar;
-        document.title = `${model.name} | آزمایشگاه مدل‌ها`;
 
         modelTabs.forEach((tab) => {
           tab.setAttribute('aria-selected', String(tab.dataset.model === mode));

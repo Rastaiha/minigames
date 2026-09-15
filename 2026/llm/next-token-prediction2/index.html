@@ -254,7 +254,7 @@
   </head>
   <body>
     <div class="container">
-      <h1>🧠 مغز مدل: کلمه بعدی چیست؟</h1>
+      <h1>کلمهٔ بعدی چیست؟</h1>
       <p class="intro">
         یک متن کوتاه انتخاب کن یا خودت بنویس، بعد بازی رو شروع کن. هر دور یک
         کلمه حدس می‌زنی؛ بازی روی متنِ تا همین الان (نه فقط جملهٔ اول) دوباره یک
@@ -266,17 +266,17 @@
       <label>سناریوهای آماده کارگاه:</label>
       <div class="preset-group">
         <button class="preset-btn" data-preset="triangle">
-          📐 فیثاغورس (قطعیت بالا)
+          فیثاغورس (قطعیت بالا)
         </button>
         <button class="preset-btn" data-preset="dragon">
-          🐉 داستان تخیلی (خلاقیت بالا، توزیع باز)
+          داستان تخیلی (خلاقیت بالا، توزیع باز)
         </button>
       </div>
 
       <label for="promptArea">متن شروع (قبل از شروع بازی قابل ویرایشه):</label>
       <textarea id="promptArea">در مثلث قائم‌الزاویه با اضلاع ۳ و ۴</textarea>
 
-      <button class="submit-btn" id="startBtn">▶️ شروع بازی</button>
+      <button class="submit-btn" id="startBtn">شروع بازی</button>
 
       <div id="gamePlay" class="hidden">
         <div class="legend">
@@ -302,7 +302,7 @@
 
         <button class="submit-btn" id="guessBtn">ثبت حدس و ادامه</button>
         <button class="secondary-btn" id="resetBtn">
-          🔄 شروع دوباره با همین متن
+          شروع دوباره با همین متن
         </button>
       </div>
 
@@ -323,7 +323,7 @@
 
         <div id="modelResult" class="model-box">
           <div>
-            🤖 <strong>مدل خودش این کلمه رو انتخاب کرد:</strong>
+            <strong>مدل خودش این کلمه رو انتخاب کرد:</strong>
             <span id="modelPickLabel"></span>
           </div>
           <div>
@@ -520,7 +520,7 @@
           if (error.name === 'AbortError') return;
           console.error('دریافت پیش‌بینی ناموفق بود:', error);
           statusEl.className = 'status-line status-error';
-          statusEl.innerText = `⚠️ دریافت پیش‌بینی ناموفق بود: ${error.message}`;
+          statusEl.innerText = `دریافت پیش‌بینی ناموفق بود: ${error.message}`;
           document.getElementById('tokenList').textContent =
             'لطفاً دوباره تلاش کن.';
           busy = false;
@@ -567,8 +567,8 @@
         input.value = '';
         input.focus();
         document.getElementById('turnIndicator').innerText = passed
-          ? '✅ قبول شد! برای کلمه بعدی دوباره حدس بزن.'
-          : '🤖 این بار مدل جاش رو گرفت. دوباره حدس بزن.';
+          ? 'قبول شد! برای کلمه بعدی دوباره حدس بزن.'
+          : 'این بار مدل جاش رو گرفت. دوباره حدس بزن.';
       }
 
       // تمام اتصال‌های رابط کاربری در یک جا ثبت می‌شوند؛ HTML فقط ساختار صفحه است.

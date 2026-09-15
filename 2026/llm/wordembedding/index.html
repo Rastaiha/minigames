@@ -427,7 +427,7 @@
   </head>
   <body class="mg-word-lab">
     <header>
-      <h1>🌌 نمایش هندسی و برداری کلمات</h1>
+      <h1>نمایش هندسی و برداری کلمات</h1>
       <span>مسیر حرکت بردارها را به صورت زنده دنبال کنید</span>
     </header>
 
@@ -445,10 +445,10 @@
 
         <div class="btn-row">
           <button class="btn btn-green" onclick="toggleVectors()">
-            📐 بردار کلمات
+            بردار کلمات
           </button>
           <button class="btn btn-danger" onclick="resetCanvas()">
-            🔄 پاکسازی کل
+            پاکسازی کل
           </button>
         </div>
       </div>
@@ -458,7 +458,7 @@
           <button class="zoom-btn" onclick="changeZoom(1.2)">➕</button>
           <button class="zoom-btn" onclick="changeZoom(0.8)">➖</button>
           <button class="zoom-btn" title="بازگشت به مرکز" onclick="resetView()">
-            🎯
+            مرکز
           </button>
         </div>
 
@@ -977,7 +977,7 @@
         node.dataset.word = word;
         node.dataset.isResult = isResult ? 'true' : 'false';
 
-        const titleText = isResult ? `🔒 ${word}` : word;
+        const titleText = isResult ? word : word;
         node.innerHTML = `
         <div class="node-header">
           <span>${titleText}</span>
