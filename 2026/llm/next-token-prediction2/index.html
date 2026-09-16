@@ -1,611 +1,939 @@
 <!doctype html>
 <html lang="fa" dir="rtl">
   <head>
-    <link rel="stylesheet" href="../shared/ui/tokens.css" />
-    <link rel="stylesheet" href="../shared/ui/shells.css" />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>کارگاه مدل زبانی: پیش‌بینی توکن بعدی</title>
+    <title>پیش‌بینی کلمهٔ بعدی</title>
+    <link rel="stylesheet" href="../shared/ui/tokens.css" />
+    <link rel="stylesheet" href="../shared/ui/shells.css" />
     <style>
       :root {
-        --bg: var(--paper);
-        --card: var(--surface);
-        --accent: #4657d8;
-        --accent2: #a75b19;
-        --text: var(--ink);
-        --subtext: var(--ink-muted);
-        --bar-bg: var(--surface-muted);
+        --color-user: #2563eb;
+        --color-user-bg: #eff6ff;
+        --color-user-border: #bfdbfe;
+        --color-model: #d97706;
+        --color-model-bg: #fffbeb;
+        --color-model-border: #fde68a;
       }
+
       body {
         margin: 0;
-        padding: clamp(10px, 3vw, 24px);
-        font-family: 'Vazir Local', Tahoma, sans-serif;
-        background-color: var(--bg);
-        color: var(--text);
+        padding: clamp(12px, 3vw, 24px);
+        background: var(--paper);
+        color: var(--ink);
         display: flex;
         justify-content: center;
-      }
-      .container {
+        min-height: 100vh;
         box-sizing: border-box;
+      }
+
+      .app-container {
         width: 100%;
-        max-width: 660px;
-        background: var(--card);
-        padding: clamp(16px, 3vw, 28px);
+        max-width: 680px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .app-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding-bottom: 4px;
+      }
+
+      .header-main {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+
+      .app-title {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--ink);
+      }
+
+      .color-legend {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 0.8rem;
+        color: var(--ink-muted);
+      }
+
+      .legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .badge-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+      }
+
+      .dot-user {
+        background: var(--color-user);
+      }
+
+      .dot-model {
+        background: var(--color-model);
+      }
+
+      .icon-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-sm);
+        color: var(--ink-muted);
+        font-size: 0.82rem;
+        cursor: pointer;
+        font-family: inherit;
+        transition: all 0.2s ease;
+        min-height: 36px;
+      }
+
+      .icon-btn:hover {
+        color: var(--ink);
+        border-color: var(--ink-muted);
+        background: var(--surface-muted);
+      }
+
+      .card {
+        background: var(--surface);
         border: 1px solid var(--line);
         border-radius: var(--radius-md);
         box-shadow: var(--shadow-paper);
-      }
-      h1 {
-        font-size: 1.5rem;
-        margin-top: 0;
-        color: var(--ink);
-        text-align: center;
-      }
-      .intro {
-        color: var(--subtext);
-        font-size: 0.88rem;
-        text-align: center;
-        margin-bottom: 20px;
-        line-height: 1.8;
-      }
-      .preset-group {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-        margin-bottom: 20px;
-      }
-      button {
-        font-family: inherit;
-      }
-      .preset-btn {
-        background: var(--action-soft);
-        color: var(--text);
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        padding: 8px 12px;
-        cursor: pointer;
-        font-size: 0.85rem;
-        font-family: inherit;
-        transition: all 0.2s;
-      }
-      .preset-btn:hover {
-        background: #dce2ff;
-      }
-      label {
-        display: block;
-        margin-bottom: 6px;
-        font-size: 0.9rem;
-        color: var(--subtext);
-      }
-      textarea,
-      input {
-        width: 100%;
+        padding: 16px;
         box-sizing: border-box;
-        background: var(--surface);
-        border: 1px solid var(--line);
-        color: var(--text);
-        padding: 12px;
-        border-radius: 8px;
-        font-size: 1rem;
-        margin-bottom: 16px;
-        font-family: inherit;
-      }
-      textarea {
-        resize: vertical;
-        min-height: 60px;
-        line-height: 1.6;
-      }
-      textarea:disabled,
-      input:disabled {
-        opacity: 0.6;
-      }
-      .submit-btn {
-        width: 100%;
-        background: var(--accent);
-        color: #fff;
-        border: none;
-        padding: 12px;
-        border-radius: 8px;
-        font-size: 1rem;
-        font-weight: bold;
-        font-family: inherit;
-        cursor: pointer;
-        transition: opacity 0.2s;
-        margin-bottom: 10px;
-      }
-      .submit-btn:hover {
-        opacity: 0.9;
-      }
-      .submit-btn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-      }
-      .secondary-btn {
-        width: 100%;
-        background: var(--surface);
-        color: var(--subtext);
-        border: 1px solid var(--line);
-        padding: 10px;
-        border-radius: 8px;
-        font-size: 0.85rem;
-        font-family: inherit;
-        cursor: pointer;
-      }
-      .secondary-btn:hover {
-        color: var(--text);
-        border-color: var(--text);
       }
 
-      .context-box {
-        background: var(--surface-muted);
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        padding: 14px;
-        line-height: 2.1;
-        font-size: 1.05rem;
-        margin-bottom: 14px;
-        min-height: 50px;
-      }
-      .word-user {
-        color: var(--accent);
-        font-weight: bold;
-      }
-      .word-model {
-        color: var(--accent2);
-        font-weight: bold;
-      }
-      .legend {
-        display: flex;
-        gap: 16px;
-        font-size: 0.78rem;
-        color: var(--subtext);
-        margin-bottom: 16px;
-        flex-wrap: wrap;
-      }
-      .legend span.dot {
-        display: inline-block;
-        width: 9px;
-        height: 9px;
-        border-radius: 50%;
-        margin-left: 5px;
-      }
-      .turn-indicator {
-        text-align: center;
-        font-size: 0.9rem;
-        color: var(--subtext);
-        margin-bottom: 14px;
-        min-height: 1.2em;
-      }
-
-      .results {
-        margin-top: 24px;
-        display: none;
-      }
-      .token-row {
-        margin-bottom: 12px;
-      }
-      .token-labels {
+      .card-header-line {
         display: flex;
         justify-content: space-between;
-        font-size: 0.95rem;
-        margin-bottom: 4px;
-      }
-      .progress-bar {
-        height: 10px;
-        background: var(--bar-bg);
-        border-radius: 5px;
-        overflow: hidden;
-      }
-      .progress-fill {
-        height: 100%;
-        background: var(--accent);
-        border-radius: 5px;
-        transition: width 0.4s ease;
-      }
-      .target-box {
-        margin-top: 20px;
-        padding: 14px;
-        background: var(--action-soft);
-        border-radius: 8px;
-        border-right: 4px solid var(--accent);
-        line-height: 1.8;
-      }
-      .model-box {
-        margin-top: 14px;
-        padding: 14px;
-        background: #fff4e8;
-        border-radius: 8px;
-        border-right: 4px solid var(--accent2);
-        line-height: 1.8;
-        display: none;
+        align-items: center;
+        margin-bottom: 8px;
+        font-size: 0.84rem;
+        color: var(--ink-muted);
       }
 
-      .status-line {
+      .editor-box {
+        min-height: 64px;
+        padding: 12px 14px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-sm);
+        font-size: 1.05rem;
+        line-height: 2.1;
+        color: var(--ink);
+        outline: none;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s;
+        word-break: break-word;
+        white-space: pre-wrap;
+      }
+
+      .editor-box:focus {
+        border-color: var(--action);
+        box-shadow: 0 0 0 3px rgba(70, 87, 216, 0.12);
+      }
+
+      .editor-box .token-user {
+        display: inline-block;
+        color: var(--color-user);
+        background: var(--color-user-bg);
+        border: 1px solid var(--color-user-border);
+        padding: 1px 7px;
+        border-radius: 6px;
+        font-weight: 600;
+        margin: 0 2px;
+      }
+
+      .editor-box .token-model {
+        display: inline-block;
+        color: var(--color-model);
+        background: var(--color-model-bg);
+        border: 1px solid var(--color-model-border);
+        padding: 1px 7px;
+        border-radius: 6px;
+        font-weight: 600;
+        margin: 0 2px;
+      }
+
+      .stream-card {
+        padding: 20px 18px;
+      }
+
+      .stream-flow {
+        line-height: 2.7;
+        font-size: 1.08rem;
+        color: var(--ink);
+      }
+
+      .stream-words {
+        display: inline;
+      }
+
+      .stream-token {
+        display: inline-block;
+        padding: 2px 9px;
+        margin: 2px 4px;
+        border-radius: 8px;
+        vertical-align: middle;
+        transition:
+          transform 0.2s ease,
+          background-color 0.2s ease;
+      }
+
+      .stream-token.stream-seed {
+        background: var(--surface-muted);
+        color: var(--ink);
+      }
+
+      .stream-token.stream-user {
+        background: var(--color-user-bg);
+        color: var(--color-user);
+        font-weight: 600;
+        border: 1px solid var(--color-user-border);
+        animation: popIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+
+      .stream-token.stream-model {
+        background: var(--color-model-bg);
+        color: var(--color-model);
+        font-weight: 600;
+        border: 1px solid var(--color-model-border);
+        animation: popIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+
+      @keyframes popIn {
+        0% {
+          transform: scale(0.8);
+          opacity: 0;
+        }
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+
+      .inline-slot {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin: 2px 4px;
+        vertical-align: middle;
+      }
+
+      .inline-word-input {
+        width: 105px;
+        height: 38px;
+        box-sizing: border-box;
+        padding: 4px 10px;
+        border: 2px dashed #94a3b8;
+        border-radius: 8px;
+        background: #ffffff;
+        color: var(--ink);
+        font-size: 0.98rem;
         text-align: center;
+        outline: none;
+        font-family: inherit;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s,
+          width 0.15s ease;
+      }
+
+      .inline-word-input:focus {
+        border-style: solid;
+        border-color: var(--action);
+        box-shadow: 0 0 0 3px rgba(70, 87, 216, 0.15);
+      }
+
+      .inline-word-input.error-shake {
+        animation: shake 0.35s ease;
+        border-color: var(--danger);
+      }
+
+      @keyframes shake {
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        25% {
+          transform: translateX(-4px);
+        }
+        75% {
+          transform: translateX(4px);
+        }
+      }
+
+      .check-btn {
+        height: 38px;
+        padding: 0 16px;
+        background: var(--action);
+        color: #ffffff;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.92rem;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition:
+          background-color 0.2s,
+          transform 0.1s;
+        font-family: inherit;
+        white-space: nowrap;
+      }
+
+      .check-btn:hover:not(:disabled) {
+        background: var(--action-strong);
+        transform: translateY(-1px);
+      }
+
+      .check-btn:active:not(:disabled) {
+        transform: translateY(0);
+      }
+
+      .check-btn:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+
+      .spinner {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top-color: #ffffff;
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .checking-card {
+        animation: fadeIn 0.25s ease;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(6px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .checking-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+
+      .checking-title {
+        font-size: 0.92rem;
+        font-weight: 600;
+        color: var(--ink);
+      }
+
+      .status-badge {
         font-size: 0.78rem;
-        margin-top: 8px;
-        min-height: 1.2em;
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-weight: 500;
       }
-      .status-live {
-        color: var(--success);
+
+      .status-loading {
+        background: var(--surface-muted);
+        color: var(--ink-muted);
       }
+
+      .status-success {
+        background: #dcfce7;
+        color: #15803d;
+      }
+
+      .status-model {
+        background: #fef3c7;
+        color: #b45309;
+      }
+
       .status-error {
-        color: var(--danger);
+        background: #fee2e2;
+        color: #b91c1c;
       }
+
+      .candidate-row {
+        margin-bottom: 8px;
+        padding: 8px 12px;
+        border-radius: 8px;
+        background: var(--surface-muted);
+        transition:
+          background-color 0.2s,
+          border-color 0.2s;
+        border: 1px solid transparent;
+      }
+
+      .candidate-row.is-user-match {
+        background: var(--color-user-bg);
+        border-color: var(--color-user-border);
+      }
+
+      .candidate-row.is-model-pick {
+        background: var(--color-model-bg);
+        border-color: var(--color-model-border);
+      }
+
+      .candidate-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 5px;
+        font-size: 0.9rem;
+      }
+
+      .candidate-word {
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .candidate-prob {
+        color: var(--ink-muted);
+        font-size: 0.85rem;
+        font-weight: 500;
+      }
+
+      .user-match-badge {
+        font-size: 0.72rem;
+        padding: 1px 7px;
+        background: var(--color-user);
+        color: #fff;
+        border-radius: 10px;
+        font-weight: normal;
+      }
+
+      .model-pick-badge {
+        font-size: 0.72rem;
+        padding: 1px 7px;
+        background: var(--color-model);
+        color: #fff;
+        border-radius: 10px;
+        font-weight: normal;
+      }
+
+      .candidate-bar-bg {
+        height: 7px;
+        background: #e2e8f0;
+        border-radius: 4px;
+        overflow: hidden;
+      }
+
+      .candidate-bar-fill {
+        height: 100%;
+        background: var(--action);
+        border-radius: 4px;
+        width: 0%;
+        transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .candidate-bar-fill.fill-user {
+        background: var(--color-user);
+      }
+
+      .candidate-bar-fill.fill-model {
+        background: var(--color-model);
+      }
+
+      .verdict-banner {
+        margin-top: 12px;
+        padding: 10px 14px;
+        border-radius: 8px;
+        font-size: 0.86rem;
+        line-height: 1.7;
+      }
+
+      .verdict-user {
+        background: #dbeafe;
+        color: #1e40af;
+        border-right: 4px solid var(--color-user);
+      }
+
+      .verdict-model {
+        background: #fef3c7;
+        color: #92400e;
+        border-right: 4px solid var(--color-model);
+      }
+
       .hidden {
-        display: none;
+        display: none !important;
       }
-      .dot-seed {
-        background: var(--text);
+
+      .loading-placeholder {
+        padding: 18px 10px;
+        text-align: center;
+        color: var(--ink-muted);
+        font-size: 0.88rem;
       }
-      .dot-user {
-        background: var(--accent);
+
+      .error-placeholder {
+        padding: 14px;
+        text-align: center;
+        color: var(--danger);
+        font-size: 0.88rem;
       }
-      .dot-model {
-        background: var(--accent2);
-      }
-      .user-probability {
-        color: var(--accent);
-        font-weight: bold;
-      }
-      .model-probability {
-        color: var(--accent2);
-        font-weight: bold;
-      }
-      @media (max-width: 640px) {
-        h1 { font-size: 1.25rem; }
-        .container { border-radius: 10px; }
+
+      @media (max-width: 600px) {
+        .app-header {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 8px;
+        }
+        .header-main {
+          justify-content: space-between;
+        }
+        .inline-word-input {
+          width: 90px;
+        }
       }
     </style>
   </head>
   <body>
-    <div class="container">
-      <h1>کلمهٔ بعدی چیست؟</h1>
-      <p class="intro">
-        یک متن کوتاه انتخاب کن یا خودت بنویس، بعد بازی رو شروع کن. هر دور یک
-        کلمه حدس می‌زنی؛ بازی روی متنِ تا همین الان (نه فقط جملهٔ اول) دوباره یک
-        توزیع برآورد می‌کنه: اگه شانسِ کلمه‌ات بیشتر از ۰.۱٪ باشه، همون کلمه به
-        متن اضافه می‌شه، وگرنه یکی از پیشنهادهای مدل جای اون میاد. این روند
-        تکرار می‌شه.
-      </p>
-
-      <label>سناریوهای آماده کارگاه:</label>
-      <div class="preset-group">
-        <button class="preset-btn" data-preset="triangle">
-          فیثاغورس (قطعیت بالا)
-        </button>
-        <button class="preset-btn" data-preset="dragon">
-          داستان تخیلی (خلاقیت بالا، توزیع باز)
-        </button>
-      </div>
-
-      <label for="promptArea">متن شروع (قبل از شروع بازی قابل ویرایشه):</label>
-      <textarea id="promptArea">در مثلث قائم‌الزاویه با اضلاع ۳ و ۴</textarea>
-
-      <button class="submit-btn" id="startBtn">شروع بازی</button>
-
-      <div id="gamePlay" class="hidden">
-        <div class="legend">
-          <div><span class="dot dot-seed"></span>متن اولیه</div>
-          <div><span class="dot dot-user"></span>حدس دانش‌آموز</div>
-          <div><span class="dot dot-model"></span>انتخاب مدل</div>
+    <div class="app-container">
+      <header class="app-header">
+        <div class="header-main">
+          <h1 class="app-title">پیش‌بینی کلمهٔ بعدی</h1>
+          <div class="color-legend">
+            <span class="legend-item">
+              <span class="badge-dot dot-user"></span>حدس شما
+            </span>
+            <span class="legend-item">
+              <span class="badge-dot dot-model"></span>انتخاب مدل
+            </span>
+          </div>
         </div>
-        <div id="contextBox" class="context-box" dir="rtl"></div>
-        <div id="turnIndicator" class="turn-indicator"></div>
-        <div id="statusLine" class="status-line"></div>
+        <button
+          type="button"
+          id="resetBtn"
+          class="icon-btn"
+          title="بازنشانی متن به فیثاغورس"
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+            <path d="M3 3v5h5" />
+          </svg>
+          <span>بازنشانی</span>
+        </button>
+      </header>
 
-        <label for="guessInput">حدس بزن کلمه‌ی بعدی چیه؟ (فقط یک کلمه):</label>
-        <input
-          type="text"
-          id="guessInput"
-          autocomplete="off"
-          autocorrect="off"
-          autocapitalize="off"
+      <section class="card">
+        <div class="card-header-line">
+          <span>متن ورودی (قابل ویرایش):</span>
+        </div>
+        <div
+          id="editorBox"
+          class="editor-box"
+          contenteditable="true"
           spellcheck="false"
-          list=""
-          placeholder="مثلاً: پنج"
-        />
+          dir="rtl"
+          role="textbox"
+          aria-multiline="true"
+        ></div>
+      </section>
 
-        <button class="submit-btn" id="guessBtn">ثبت حدس و ادامه</button>
-        <button class="secondary-btn" id="resetBtn">
-          شروع دوباره با همین متن
-        </button>
-      </div>
-
-      <div id="results" class="results">
-        <h3>۵ کلمه با بیشترین شانسِ برآوردشده برای کلمه بعدی:</h3>
-        <div id="tokenList"></div>
-
-        <div id="targetResult" class="target-box hidden">
-          <div>
-            <strong>کلمه حدس‌زده‌شده:</strong>
-            <span id="userTargetLabel"></span>
-          </div>
-          <div>
-            <strong>شانس برآوردشده:</strong>
-            <span id="userTargetProb" class="user-probability"></span>
-          </div>
+      <section class="card stream-card">
+        <div class="stream-flow" id="streamFlow">
+          <span id="streamWords" class="stream-words"></span>
+          <span class="inline-slot">
+            <input
+              type="text"
+              id="nextWordInput"
+              class="inline-word-input"
+              placeholder="کلمه بعدی..."
+              maxlength="30"
+              autocomplete="off"
+              autocorrect="off"
+              autocapitalize="off"
+              spellcheck="false"
+            />
+            <button type="button" id="checkBtn" class="check-btn">
+              <span id="checkBtnText">چک</span>
+              <span id="checkSpinner" class="spinner hidden"></span>
+            </button>
+          </span>
         </div>
+      </section>
 
-        <div id="modelResult" class="model-box">
-          <div>
-            <strong>مدل خودش این کلمه رو انتخاب کرد:</strong>
-            <span id="modelPickLabel"></span>
-          </div>
-          <div>
-            <strong>شانس برآوردشده:</strong>
-            <span id="modelPickProb" class="model-probability"></span>
-          </div>
+      <section id="checkingCard" class="card checking-card hidden">
+        <div class="checking-header">
+          <span class="checking-title">احتمال کلمات بعدی</span>
+          <span id="statusBadge" class="status-badge status-loading"></span>
         </div>
-      </div>
+        <div id="candidatesList" class="candidates-list"></div>
+        <div id="verdictBanner" class="verdict-banner hidden"></div>
+      </section>
     </div>
 
     <script src="config.js"></script>
     <script src="../shared/config.js"></script>
     <script src="../shared/api/client.js"></script>
     <script>
-      // ------------------------------------------------------------------
-      // پیش‌بینی زنده از همان Worker مشترک مینی‌گیم‌های دیگر گرفته می‌شود.
-      // کلید API فقط در Worker نگهداری می‌شود و هیچ رازی وارد مرورگر نمی‌شود.
-      // مدل فقط یک آرایه JSON شامل کلمه‌ها و احتمال‌های برآوردی برمی‌گرداند.
-      // ------------------------------------------------------------------
+      const DEFAULT_SEED_TEXT = 'در مثلث قائم‌الزاویه با اضلاع ۳ و ۴';
+      const PASS_THRESHOLD = 0.1; // حداقل درصد برای پذیرش کلمه کاربر
 
-      async function callModelAPI(contextText) {
-        const response = await MinigameApi.respond(
-          'next-token-prediction',
-          'predict',
-          { prompt: contextText },
-          { timeoutMs: 60000, signal: requestController?.signal }
-        );
-        const predictions = response.data.predictions;
-        if (
-          !Array.isArray(predictions) ||
-          predictions.length !== 5 ||
-          predictions.some(
-            (item) =>
-              !item ||
-              typeof item.word !== 'string' ||
-              !item.word.trim() ||
-              !Number.isFinite(Number(item.prob)) ||
-              Number(item.prob) < 0 ||
-              Number(item.prob) > 100
-          )
-        )
-          throw new Error('ساختار احتمال‌های دریافتی معتبر نیست.');
+      const editorBox = document.getElementById('editorBox');
+      const streamWords = document.getElementById('streamWords');
+      const nextWordInput = document.getElementById('nextWordInput');
+      const checkBtn = document.getElementById('checkBtn');
+      const checkBtnText = document.getElementById('checkBtnText');
+      const checkSpinner = document.getElementById('checkSpinner');
+      const resetBtn = document.getElementById('resetBtn');
+      const checkingCard = document.getElementById('checkingCard');
+      const statusBadge = document.getElementById('statusBadge');
+      const candidatesList = document.getElementById('candidatesList');
+      const verdictBanner = document.getElementById('verdictBanner');
+
+      let isBusy = false;
+      let requestController = null;
+
+      function parseEditorTokens() {
+        const tokens = [];
+        function walk(node) {
+          if (node.nodeType === Node.TEXT_NODE) {
+            const parts = node.textContent.split(/\s+/).filter(Boolean);
+            for (const p of parts) {
+              tokens.push({ text: p, type: 'seed' });
+            }
+          } else if (node.nodeType === Node.ELEMENT_NODE) {
+            if (node.classList.contains('token-user')) {
+              const text = node.textContent.trim();
+              if (text) tokens.push({ text, type: 'user' });
+            } else if (node.classList.contains('token-model')) {
+              const text = node.textContent.trim();
+              if (text) tokens.push({ text, type: 'model' });
+            } else {
+              for (const child of node.childNodes) {
+                walk(child);
+              }
+            }
+          }
+        }
+        for (const child of editorBox.childNodes) {
+          walk(child);
+        }
+        return tokens;
+      }
+
+      function syncStream() {
+        const tokens = parseEditorTokens();
+        streamWords.replaceChildren();
+
+        tokens.forEach((token) => {
+          const span = document.createElement('span');
+          span.className = `stream-token stream-${token.type}`;
+          span.textContent = token.text;
+          streamWords.appendChild(span);
+        });
+      }
+
+      function appendWordToEditor(word, type) {
+        const currentText = editorBox.textContent;
+        if (currentText.length > 0 && !/\s$/.test(currentText)) {
+          editorBox.appendChild(document.createTextNode(' '));
+        }
+
+        const span = document.createElement('span');
+        span.className = type === 'user' ? 'token-user' : 'token-model';
+        span.textContent = word;
+        editorBox.appendChild(span);
+        editorBox.appendChild(document.createTextNode(' '));
+
+        syncStream();
+      }
+
+      function initDefaultText() {
+        editorBox.replaceChildren();
+        editorBox.textContent = DEFAULT_SEED_TEXT;
+        syncStream();
+        checkingCard.classList.add('hidden');
+        nextWordInput.value = '';
+        autoResizeInput();
+      }
+
+      function autoResizeInput() {
+        const val = nextWordInput.value || '';
+        const len = Math.max(val.length, 8);
+        nextWordInput.style.width = `${Math.min(Math.max(len * 12 + 20, 95), 180)}px`;
+      }
+
+      function setBusy(busy) {
+        isBusy = busy;
+        checkBtn.disabled = busy;
+        nextWordInput.disabled = busy;
+        if (busy) {
+          checkBtnText.classList.add('hidden');
+          checkSpinner.classList.remove('hidden');
+        } else {
+          checkBtnText.classList.remove('hidden');
+          checkSpinner.classList.add('hidden');
+        }
+      }
+
+      function weightedRandomPick(predictions) {
         const total = predictions.reduce(
           (sum, item) => sum + Number(item.prob),
           0
         );
-        if (total < 99 || total > 101)
-          throw new Error('مجموع احتمال‌ها باید نزدیک به ۱۰۰٪ باشد.');
-        return predictions.map((item) => ({
-          word: item.word.trim(),
-          prob: Number(item.prob),
-        }));
-      }
-
-      let words = []; // { text, type: 'seed' | 'user' | 'model' }
-      let started = false;
-      let busy = false;
-      let requestController = null;
-      const TRIANGLE_SEED = 'در مثلث قائم‌الزاویه با اضلاع ۳ و ۴';
-      const DRAGON_SEED = 'اژدهای نقره‌ای بال‌هایش را گشود';
-
-      function applyPreset(text) {
-        document.getElementById('promptArea').value = text;
-        resetGame();
-      }
-
-      function resetGame() {
-        requestController?.abort();
-        requestController = null;
-        started = false;
-        busy = false;
-        words = [];
-        document.getElementById('gamePlay').style.display = 'none';
-        document.getElementById('promptArea').disabled = false;
-        document.getElementById('startBtn').style.display = 'block';
-        document.getElementById('results').style.display = 'none';
-        document.getElementById('targetResult').style.display = 'none';
-        document.getElementById('modelResult').style.display = 'none';
-      }
-
-      function startGame() {
-        const text = document.getElementById('promptArea').value.trim();
-        if (!text) {
-          document.getElementById('statusLine').textContent =
-            'اول یک متن شروع بنویس یا یکی از پیش‌فرض‌ها را انتخاب کن.';
-          return;
-        }
-        words = text.split(/\s+/).map((t) => ({ text: t, type: 'seed' }));
-        started = true;
-        document.getElementById('promptArea').disabled = true;
-        document.getElementById('startBtn').style.display = 'none';
-        document.getElementById('gamePlay').style.display = 'block';
-        document.getElementById('results').style.display = 'none';
-        renderContext();
-        document.getElementById('turnIndicator').innerText =
-          'نوبت توئه: یک کلمه حدس بزن';
-        const input = document.getElementById('guessInput');
-        input.value = '';
-        input.focus();
-      }
-
-      function getContextText() {
-        return words.map((w) => w.text).join(' ');
-      }
-
-      function renderContext() {
-        const box = document.getElementById('contextBox');
-        box.replaceChildren();
-
-        words.forEach((word, index) => {
-          if (index > 0) box.append(' ');
-
-          const span = document.createElement('span');
-          span.textContent = word.text;
-          if (word.type === 'user') span.className = 'word-user';
-          if (word.type === 'model') span.className = 'word-model';
-          box.appendChild(span);
-        });
-      }
-
-      function renderPredictions(predictions) {
-        const tokenList = document.getElementById('tokenList');
-        tokenList.innerHTML = '';
-        predictions.forEach((item) => {
-          const row = document.createElement('div');
-          row.className = 'token-row';
-
-          const labels = document.createElement('div');
-          labels.className = 'token-labels';
-
-          const tokenLabel = document.createElement('strong');
-          tokenLabel.textContent = `«${item.word}»`;
-          const probabilityLabel = document.createElement('span');
-          probabilityLabel.textContent = `${item.prob}٪`;
-          labels.append(tokenLabel, probabilityLabel);
-
-          const bar = document.createElement('div');
-          bar.className = 'progress-bar';
-          const fill = document.createElement('div');
-          fill.className = 'progress-fill';
-          fill.style.width = `${item.prob}%`;
-          bar.appendChild(fill);
-
-          row.append(labels, bar);
-          tokenList.appendChild(row);
-        });
-      }
-
-      function weightedRandomPick(predictions) {
-        const total = predictions.reduce((sum, item) => sum + item.prob, 0);
         if (total <= 0) return predictions[0];
         let r = Math.random() * total;
         for (const prediction of predictions) {
-          r -= prediction.prob;
+          r -= Number(prediction.prob);
           if (r <= 0) return prediction;
         }
         return predictions[predictions.length - 1];
       }
 
-      const PASS_THRESHOLD = 0.1; // درصد؛ اگر شانسِ کلمهٔ دانش‌آموز از این کمتر باشد، مدل جایگزینش می‌کند
+      function renderCandidates(predictions, userWord) {
+        candidatesList.replaceChildren();
+        predictions.forEach((item, index) => {
+          const isUser = item.word === userWord;
+          const row = document.createElement('div');
+          row.className = `candidate-row ${isUser ? 'is-user-match' : ''}`;
+          row.dataset.word = item.word;
 
-      async function submitGuess() {
-        if (busy || !started) return;
-        const input = document.getElementById('guessInput');
-        const word = input.value.trim().split(/\s+/)[0];
-        if (!word) {
-          document.getElementById('statusLine').textContent =
-            'لطفاً یک کلمه بنویس.';
-          return;
-        }
+          const info = document.createElement('div');
+          info.className = 'candidate-info';
 
-        busy = true;
-        requestController = new AbortController();
-        document.getElementById('guessBtn').disabled = true;
-        input.disabled = true;
-        document.getElementById('turnIndicator').innerText =
-          'در حال محاسبه احتمالات روی متنِ فعلی...';
-        document.getElementById('results').style.display = 'block';
-        document.getElementById('tokenList').innerHTML =
-          'در حال برآورد احتمال کلمه‌ها...';
-        document.getElementById('targetResult').style.display = 'none';
-        document.getElementById('modelResult').style.display = 'none';
+          const wordEl = document.createElement('span');
+          wordEl.className = 'candidate-word';
+          wordEl.textContent = `«${item.word}»`;
 
-        // همیشه روی متنِ کاملِ تا همین الان (که ممکن است شامل کلماتِ قبلیِ
-        // دانش‌آموز و مدل هم باشد) دوباره محاسبه می‌شود — نه فقط جملهٔ شروع.
-        const statusEl = document.getElementById('statusLine');
-        let predictions;
-        try {
-          predictions = await callModelAPI(getContextText());
-          renderPredictions(predictions);
-          statusEl.className = 'status-line status-live';
-          statusEl.innerText = 'پیش‌بینی از مدل آنلاین دریافت شد';
-        } catch (error) {
-          if (error.name === 'AbortError') return;
-          console.error('دریافت پیش‌بینی ناموفق بود:', error);
-          statusEl.className = 'status-line status-error';
-          statusEl.innerText = `دریافت پیش‌بینی ناموفق بود: ${error.message}`;
-          document.getElementById('tokenList').textContent =
-            'لطفاً دوباره تلاش کن.';
-          busy = false;
-          input.disabled = false;
-          document.getElementById('guessBtn').disabled = false;
-          input.focus();
-          return;
-        }
-        requestController = null;
+          if (isUser) {
+            const matchBadge = document.createElement('span');
+            matchBadge.className = 'user-match-badge';
+            matchBadge.textContent = 'حدس شما';
+            wordEl.appendChild(matchBadge);
+          }
 
-        const matched = predictions.find((item) => item.word === word);
-        const userProb = matched ? matched.prob : null;
-        const displayChance =
-          userProb != null ? `${userProb}٪` : 'زیر یک‌دهم درصد (کمتر از ۰.۱٪)';
+          const probEl = document.createElement('span');
+          probEl.className = 'candidate-prob';
+          probEl.textContent = `${item.prob}٪`;
 
-        document.getElementById('targetResult').style.display = 'block';
-        document.getElementById('userTargetLabel').innerText = `«${word}»`;
-        document.getElementById('userTargetProb').innerText = displayChance;
+          info.append(wordEl, probEl);
 
-        const passed = userProb != null && userProb > PASS_THRESHOLD;
+          const barBg = document.createElement('div');
+          barBg.className = 'candidate-bar-bg';
 
-        if (passed) {
-          // شانسِ کلمهٔ دانش‌آموز از ۰.۱٪ بیشتر بود: همان کلمه به متن اضافه می‌شود
-          words.push({ text: word, type: 'user' });
-          renderContext();
-          document.getElementById('modelResult').style.display = 'none';
-        } else {
-          // شانس کلمه دانش‌آموز خیلی کم بود: یکی از پیشنهادهای مدل جای آن می‌آید.
-          // مدل بر اساسِ توزیعِ احتمال یکی از ۵ گزینه رو انتخاب می‌کنه (نمونه‌گیریِ وزنی)،
-          // نه همیشه گزینهٔ اول رو — دقیقاً شبیهِ رفتار واقعیِ نمونه‌گیریِ مدل‌های زبانی.
-          const modelPick = weightedRandomPick(predictions);
-          words.push({ text: modelPick.word, type: 'model' });
-          renderContext();
-          document.getElementById('modelResult').style.display = 'block';
-          document.getElementById('modelPickLabel').innerText =
-            `«${modelPick.word}»`;
-          document.getElementById('modelPickProb').innerText =
-            `${modelPick.prob}٪`;
-        }
+          const barFill = document.createElement('div');
+          barFill.className = `candidate-bar-fill ${isUser ? 'fill-user' : ''}`;
+          barFill.style.width = '0%';
+          barBg.appendChild(barFill);
 
-        busy = false;
-        input.disabled = false;
-        document.getElementById('guessBtn').disabled = false;
-        input.value = '';
-        input.focus();
-        document.getElementById('turnIndicator').innerText = passed
-          ? 'قبول شد! برای کلمه بعدی دوباره حدس بزن.'
-          : 'این بار مدل جاش رو گرفت. دوباره حدس بزن.';
-      }
+          row.append(info, barBg);
+          candidatesList.appendChild(row);
 
-      // تمام اتصال‌های رابط کاربری در یک جا ثبت می‌شوند؛ HTML فقط ساختار صفحه است.
-      document.addEventListener('DOMContentLoaded', () => {
-        document.querySelectorAll('[data-preset]').forEach((button) => {
-          button.addEventListener('click', () => {
-            const presetId = button.dataset.preset;
-            const text = presetId === 'triangle' ? TRIANGLE_SEED : DRAGON_SEED;
-            applyPreset(text);
+          requestAnimationFrame(() => {
+            setTimeout(() => {
+              barFill.style.width = `${Math.min(Number(item.prob), 100)}%`;
+            }, index * 35);
           });
         });
+      }
 
-        document
-          .getElementById('startBtn')
-          .addEventListener('click', startGame);
-        document
-          .getElementById('guessBtn')
-          .addEventListener('click', submitGuess);
-        document
-          .getElementById('resetBtn')
-          .addEventListener('click', resetGame);
-
-        // جلوگیری از تایپ بیش از یک کلمه (بلاک کردن فاصله)
-        const input = document.getElementById('guessInput');
-        input.addEventListener('keydown', (event) => {
-          if (event.key === ' ') event.preventDefault();
-          if (event.key === 'Enter') {
-            event.preventDefault();
-            if (!document.getElementById('guessBtn').disabled) submitGuess();
+      function markModelPick(modelWord) {
+        const rows = candidatesList.querySelectorAll('.candidate-row');
+        rows.forEach((row) => {
+          if (row.dataset.word === modelWord) {
+            row.classList.add('is-model-pick');
+            const wordEl = row.querySelector('.candidate-word');
+            if (wordEl && !wordEl.querySelector('.model-pick-badge')) {
+              const badge = document.createElement('span');
+              badge.className = 'model-pick-badge';
+              badge.textContent = 'انتخاب مدل';
+              wordEl.appendChild(badge);
+            }
+            const bar = row.querySelector('.candidate-bar-fill');
+            if (bar) bar.classList.add('fill-model');
           }
         });
+      }
+
+      async function handleCheck() {
+        if (isBusy) return;
+
+        const userWord = nextWordInput.value.trim();
+        if (!userWord) {
+          nextWordInput.classList.add('error-shake');
+          setTimeout(() => nextWordInput.classList.remove('error-shake'), 400);
+          nextWordInput.focus();
+          return;
+        }
+
+        const contextText = editorBox.textContent.trim();
+        if (!contextText) {
+          editorBox.focus();
+          return;
+        }
+
+        setBusy(true);
+        checkingCard.classList.remove('hidden');
+        statusBadge.textContent = 'در حال برآورد...';
+        statusBadge.className = 'status-badge status-loading';
+        candidatesList.innerHTML =
+          '<div class="loading-placeholder">در حال محاسبهٔ احتمالات کلمات بعدی...</div>';
+        verdictBanner.classList.add('hidden');
+
+        let predictions;
+        try {
+          requestController = new AbortController();
+          const response = await MinigameApi.respond(
+            'next-token-prediction',
+            'predict',
+            { prompt: contextText },
+            { timeoutMs: 60000, signal: requestController?.signal }
+          );
+          predictions = response?.data?.predictions;
+          if (!Array.isArray(predictions) || predictions.length !== 5) {
+            throw new Error('ساختار پاسخ نامعتبر است.');
+          }
+        } catch (error) {
+          if (error?.name === 'AbortError') return;
+          console.error(error);
+          statusBadge.textContent = 'خطا در ارتباط';
+          statusBadge.className = 'status-badge status-error';
+          candidatesList.innerHTML = `<div class="error-placeholder">${error?.message || 'ارتباط با مدل برقرار نشد.'}</div>`;
+          setBusy(false);
+          nextWordInput.focus();
+          return;
+        } finally {
+          requestController = null;
+        }
+
+        renderCandidates(predictions, userWord);
+
+        const matched = predictions.find((item) => item.word === userWord);
+        const userProb = matched ? Number(matched.prob) : null;
+        const passed = userProb !== null && userProb > PASS_THRESHOLD;
+
+        let selectedWord = '';
+        let selectedType = '';
+
+        if (passed) {
+          selectedWord = userWord;
+          selectedType = 'user';
+          statusBadge.textContent = 'پذیرفته شد';
+          statusBadge.className = 'status-badge status-success';
+          verdictBanner.className = 'verdict-banner verdict-user';
+          verdictBanner.innerHTML = `کلمهٔ <strong>«${userWord}»</strong> با احتمال <strong>${userProb}٪</strong> تأیید شد و به متن پیوست.`;
+          verdictBanner.classList.remove('hidden');
+        } else {
+          const modelPick = weightedRandomPick(predictions);
+          selectedWord = modelPick.word;
+          selectedType = 'model';
+          statusBadge.textContent = 'انتخاب مدل';
+          statusBadge.className = 'status-badge status-model';
+          verdictBanner.className = 'verdict-banner verdict-model';
+
+          const probDisplay =
+            userProb !== null ? `${userProb}٪` : 'کمتر از ۰.۱٪';
+          verdictBanner.innerHTML = `احتمال کلمهٔ شما (${probDisplay}) کافی نبود؛ مدل کلمهٔ <strong>«${modelPick.word}»</strong> را با احتمال <strong>${modelPick.prob}٪</strong> انتخاب کرد.`;
+          verdictBanner.classList.remove('hidden');
+
+          markModelPick(modelPick.word);
+        }
+
+        appendWordToEditor(selectedWord, selectedType);
+
+        nextWordInput.value = '';
+        autoResizeInput();
+        setBusy(false);
+        nextWordInput.focus();
+      }
+
+      // Event Listeners
+      editorBox.addEventListener('input', () => {
+        syncStream();
+      });
+
+      editorBox.addEventListener('paste', (e) => {
+        e.preventDefault();
+        const text = (e.clipboardData || window.clipboardData).getData(
+          'text/plain'
+        );
+        const selection = window.getSelection();
+        if (!selection || !selection.rangeCount) return;
+        selection.deleteFromDocument();
+        const textNode = document.createTextNode(text);
+        selection.getRangeAt(0).insertNode(textNode);
+        selection.collapseToEnd();
+        syncStream();
+      });
+
+      nextWordInput.addEventListener('keydown', (e) => {
+        if (e.key === ' ') {
+          e.preventDefault();
+          return;
+        }
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          if (!checkBtn.disabled) {
+            handleCheck();
+          }
+        }
+      });
+
+      nextWordInput.addEventListener('input', () => {
+        if (/\s/.test(nextWordInput.value)) {
+          nextWordInput.value = nextWordInput.value.replace(/\s+/g, '');
+        }
+        autoResizeInput();
+      });
+
+      checkBtn.addEventListener('click', handleCheck);
+
+      resetBtn.addEventListener('click', () => {
+        if (requestController) {
+          requestController.abort();
+          requestController = null;
+        }
+        setBusy(false);
+        initDefaultText();
+        nextWordInput.focus();
+      });
+
+      document.addEventListener('DOMContentLoaded', () => {
+        initDefaultText();
+        nextWordInput.focus();
       });
     </script>
   </body>

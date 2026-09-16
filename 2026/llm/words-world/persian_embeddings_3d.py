@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Download pretrained Persian fastText word vectors, keep Persian-only tokens,
+Download pretrained Persian fastText word vectors, keep Persian-only words,
 reduce them to 3D using t-SNE (nonlinear)
 
 Output:
@@ -47,7 +47,7 @@ MAX_WORDS = 5000
 
 RANDOM_STATE = 42
 
-# Require tokens to consist only of Persian/Arabic-script letters and ZWNJ.
+# Require words to consist only of Persian/Arabic-script letters and ZWNJ.
 # This intentionally excludes numbers, punctuation, Latin characters, etc.
 PERSIAN_TOKEN_RE = re.compile(
     r"^[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\u200c]+$"
@@ -81,7 +81,7 @@ def download_file(url: str, output_path: Path) -> None:
 
 
 # ---------------------------------------------------------------------
-# Persian token filtering
+# Persian word filtering
 # ---------------------------------------------------------------------
 
 def is_persian_word(word: str) -> bool:

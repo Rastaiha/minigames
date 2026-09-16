@@ -637,12 +637,12 @@
           <div class="results-inner">
             <div class="results-content">
               <div class="results-heading">
-                <strong>احتمال توکن بعدی</strong>
+                <strong>احتمال کلمه بعدی</strong>
                 <span>شبیه‌سازی آموزشی · مجموع ۱۰۰٪</span>
               </div>
               <div class="probability-list" id="probabilityList"></div>
               <div class="truth-row">
-                <span>توکنی که واقعاً در متن آمده:</span>
+                <span>کلمه‌ای که واقعاً در متن آمده:</span>
                 <strong class="truth-token" id="truthToken"></strong>
               </div>
               <button class="train-button" id="trainButton" type="button">
@@ -791,7 +791,7 @@
 
           const tag = document.createElement('span');
           tag.className = 'target-tag';
-          tag.textContent = 'توکن واقعی';
+          tag.textContent = 'کلمه واقعی';
           tag.hidden = !isTarget;
 
           const delta = document.createElement('span');
@@ -861,7 +861,7 @@
         busy = false;
         boxStage.className = 'box-stage';
         boxStatus.textContent = 'احتمال‌ها آماده‌اند';
-        if (modelBadge) modelBadge.textContent = 'پیش‌بینی توکن';
+        if (modelBadge) modelBadge.textContent = 'پیش‌بینی کلمه';
         sendButton.hidden = true;
         results.classList.add('visible');
         resetButton.disabled = false;
@@ -962,7 +962,7 @@
         phase = 'trained';
         busy = false;
         boxStage.className = 'box-stage done';
-        boxStatus.textContent = 'احتمال توکن واقعی با موفقیت بیشتر شد';
+        boxStatus.textContent = 'احتمال کلمه واقعی با موفقیت بیشتر شد';
         if (modelBadge) modelBadge.textContent = 'مدل به‌روز شد';
         changeNote.textContent =
           'احتمال «' +

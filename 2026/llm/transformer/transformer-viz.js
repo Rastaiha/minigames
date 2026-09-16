@@ -697,7 +697,7 @@
       }));
 
       // Layer four is the visual checkpoint where causal context is rich
-      // enough to constrain a useful next-token prediction.
+      // enough to constrain a useful next-word prediction.
       this.contextTargets = isPersian
         ? [
             { x: 410, y: 245 },

@@ -124,7 +124,7 @@
         padding: 0 40px;
       }
 
-      /* باکس پس‌زمینه توکن‌ها */
+      /* باکس پس‌زمینه کلمات */
       .word-token {
         position: relative;
         font-size: 20px;
@@ -251,7 +251,7 @@
     </div>
 
     <script>
-      // پالت استایل توکن‌ها به همراه رنگ متن، پس‌زمینه و حاشیه
+      // پالت استایل کلمات به همراه رنگ متن، پس‌زمینه و حاشیه
       const tokenPalettes = [
         { color: '#0284c7', bg: '#f0f9ff', border: '#bae6fd' },
         { color: '#ea580c', bg: '#fff7ed', border: '#ffedd5' },
@@ -335,7 +335,7 @@
             3: { 2: 0.95 },
             4: { 0: 0.9, 2: 0.85 },
           },
-          hint: 'دو جفت توکن صفت و موصوف داریم: «دانش‌آموز درسخوان» و «نمره عالی».',
+          hint: 'دو جفت کلمه صفت و موصوف داریم: «دانش‌آموز درسخوان» و «نمره عالی».',
         },
         {
           words: ['مادر', 'مهربان،', 'کودک', 'را', 'بغل', 'کرد.'],
@@ -465,7 +465,7 @@
           span.className = 'word-token';
           span.textContent = word;
 
-          // تنظیم پالت لایت و شیک برای هر باکس توکن
+          // تنظیم پالت لایت و شیک برای هر باکس کلمه
           const palette = tokenPalettes[idx % tokenPalettes.length];
           span.style.color = palette.color;
           span.style.backgroundColor = palette.bg;
