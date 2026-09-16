@@ -1,5 +1,5 @@
 import { nearest } from './data.js';
-import { COLORS, createBackground } from './scene-data.js';
+import { COLORS } from './scene-data.js';
 import wordData from './word-data.js';
 
 const $ = (id) => document.getElementById(id);
@@ -31,7 +31,6 @@ const number = (value, digits = 0) =>
   value.toLocaleString('fa-IR', { maximumFractionDigits: digits });
 let pointerLockUnavailable = !canvas.requestPointerLock;
 let gl, program, buffer, vertexData;
-const background = createBackground();
 
 function toast(message, persistent = false) {
   clearTimeout(toastTimer);
@@ -131,8 +130,8 @@ function basis() {
   };
 }
 const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-function project(p, b, out, sky = false) {
-  const d = sky ? p : p.map((v, i) => v - camera[i]),
+function project(p, b, out) {
+  const d = p.map((v, i) => v - camera[i]),
     z = dot(d, b.forward),
     f = Math.min(width, height) * 0.95;
   out.z = z;
@@ -261,10 +260,6 @@ function render(time) {
     vertexData.set(color, j + 2);
     vertexData[j + 5] = size * ratio;
   };
-  for (const star of background) {
-    const p = project(star.p, b, {}, true);
-    if (p.visible) push(p, [0.38, 0.47, 0.64], 2 + star.brightness * 3);
-  }
   const selectedIndex = selected ? words.indexOf(selected) : -1;
   const linked = new Set(neighbors.map((n) => words.indexOf(n.word)));
   for (let i = 0; i < words.length; i++) {
@@ -567,7 +562,7 @@ try {
   resize();
   words = wordData;
   if (!words.length) throw new Error('دادهٔ واژه‌ها پیدا نشد.');
-  vertexData = new Float32Array((words.length + background.length) * 6);
+  vertexData = new Float32Array(words.length * 6);
   mapPositions();
   reset();
   requestAnimationFrame(render);
