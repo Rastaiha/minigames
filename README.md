@@ -54,7 +54,7 @@
 | 📁 `2026/llm/hallucination/` | **توهم‌نگار - مرحله ۱ | چالش توهم مدل‌های زبانی** | `level1.html` | [🌐 مشاهده و اجرا](https://rastaiha.github.io/minigames/2026/llm/hallucination/level1.html) |
 | 📁 `2026/llm/hallucination/` | **توهم‌نگار - مرحله ۲ | چالش توهم مدل‌های زبانی** | `level2.html` | [🌐 مشاهده و اجرا](https://rastaiha.github.io/minigames/2026/llm/hallucination/level2.html) |
 | 📁 `2026/llm/jailbreak/` | **چالش جیل‌بریک** | `index.html` | [🌐 مشاهده و اجرا](https://rastaiha.github.io/minigames/2026/llm/jailbreak/index.html) |
-| 📁 `2026/llm/jailbreak/` | **مینی گیم اول جیلبریک** | `level1.html` | [🌐 مشاهده و اجرا](https://rastaiha.github.io/minigames/2026/llm/jailbreak/level1.html) |
+| 📁 `2026/llm/jailbreak/` | **نگهبان تازه‌کار | چالش جیل‌بریک** | `level1.html` | [🌐 مشاهده و اجرا](https://rastaiha.github.io/minigames/2026/llm/jailbreak/level1.html) |
 | 📁 `2026/llm/jailbreak/` | **نگهبان | Jailbreak Challenge** | `level2.html` | [🌐 مشاهده و اجرا](https://rastaiha.github.io/minigames/2026/llm/jailbreak/level2.html) |
 | 📁 `2026/llm/model-lab/` | **آزمایشگاه مدل‌ها** | `index.html` | [🌐 مشاهده و اجرا](https://rastaiha.github.io/minigames/2026/llm/model-lab/index.html) |
 | 📁 `2026/llm/next-token-prediction2/` | **پیش‌بینی کلمهٔ بعدی** | `index.html` | [🌐 مشاهده و اجرا](https://rastaiha.github.io/minigames/2026/llm/next-token-prediction2/index.html) |
@@ -85,7 +85,7 @@
 | 📁 `2026/llm/archive/jailbreak-old/` | **نگهبان (نسخه قدیمی) | چالش جیل‌بریک (Jailbreak Challenge)** | `index.html` | [🌐 مشاهده و اجرا](https://rastaiha.github.io/minigames/2026/llm/archive/jailbreak-old/index.html) |
 | 📁 `2026/llm/archive/next-token-prediction/` | **کارگاه مدل زبانی: پیش‌بینی توکن بعدی** | `index.html` | [🌐 مشاهده و اجرا](https://rastaiha.github.io/minigames/2026/llm/archive/next-token-prediction/index.html) |
 
-*آخرین به‌روزرسانی خودکار: 2026-09-16 00:02:11 UTC — تعداد کل صفحات: 32*
+*آخرین به‌روزرسانی خودکار: 2026-09-16 05:40:48 UTC — تعداد کل صفحات: 32*
 <!-- MINIGAMES_LIST:END -->
 
 ---
