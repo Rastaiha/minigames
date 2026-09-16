@@ -5,7 +5,7 @@
     <link rel="stylesheet" href="../shared/ui/shells.css" />
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>مینی گیم اول جیلبریک</title>
+    <title>نگهبان تازه‌کار | چالش جیل‌بریک</title>
     <style>
       * {
         box-sizing: border-box;
@@ -90,47 +90,6 @@
       }
       .status-dot.solved {
         background: #059669;
-      }
-      /* =========================
-           LEVELS
-        ========================= */
-      .levels {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 8px;
-        padding: 10px 16px;
-        border-bottom: 1px solid #e1e6ee;
-      }
-      .level-button {
-        min-height: 44px;
-        border: 0;
-        border-radius: 12px;
-        background: #e9edf3;
-        color: #69758a;
-        font-family: inherit;
-        cursor: pointer;
-        transition: 0.2s;
-      }
-      .level-button:hover:not(:disabled) {
-        background: #dce3ec;
-        color: #182235;
-      }
-      .level-button.active {
-        color: white;
-        background: #315be8;
-        box-shadow: 0 5px 15px rgba(49, 91, 232, 0.2);
-      }
-      .level-button.solved {
-        background: #dcfce7;
-        color: #067857;
-      }
-      .level-button.active.solved {
-        background: #059669;
-        color: white;
-      }
-      .level-button:disabled {
-        cursor: not-allowed;
-        opacity: 0.45;
       }
       /* =========================
            MISSION
@@ -404,12 +363,6 @@
         header {
           padding: 0 15px;
         }
-        .levels {
-          padding: 8px 10px;
-        }
-        .level-button {
-          font-size: 11px;
-        }
         .mission {
           padding: 0 12px;
         }
@@ -443,19 +396,13 @@
       <header>
         <div class="avatar" id="avatar" aria-hidden="true"></div>
         <div class="identity">
-          <div class="title" id="levelTitle">مینی گیم اول جیلبریک</div>
+          <div class="title" id="levelTitle">نگهبان تازه‌کار</div>
         </div>
         <div class="status">
           <div class="status-dot" id="statusDot"></div>
           <span id="statusText">آماده</span>
         </div>
       </header>
-      <!-- LEVELS -->
-      <nav class="levels">
-        <button class="level-button active" type="button" data-level="1">
-          مرحله ۱
-        </button>
-      </nav>
       <!-- MISSION -->
       <div class="mission">
         <div class="mission-text" id="missionText"></div>
@@ -519,7 +466,7 @@
       // =====================================================
       const LEVELS = {
         1: {
-          name: 'مرحله اول: نگهبان تازه کار',
+          name: 'نگهبان تازه‌کار',
           difficulty: 'آسان',
           secret: 'BLUE-742',
           model: 'cf/@cf/meta/llama-3.3-70b-instruct-fp8-fast',
@@ -556,7 +503,6 @@
       const solvedDescription = document.getElementById('solvedDescription');
       const nextButton = document.getElementById('nextButton');
       const restartButton = document.getElementById('restartButton');
-      const levelButtons = document.querySelectorAll('.level-button');
       let currentController = null;
       // =====================================================
       // ابزارهای UI
@@ -607,12 +553,6 @@
           statusDot.className = 'status-dot';
           statusText.textContent = 'آماده';
         }
-        levelButtons.forEach((button) => {
-          const number = Number(button.dataset.level);
-          button.classList.toggle('active', number === levelNumber);
-          button.classList.toggle('solved', state.levels[number].solved);
-          button.disabled = false;
-        });
         updateSolvedBox();
       }
       // =====================================================
@@ -801,18 +741,6 @@
           event.preventDefault();
           composer.requestSubmit();
         }
-      });
-      levelButtons.forEach((button) => {
-        button.addEventListener('click', function () {
-          const level = Number(button.dataset.level);
-          if (button.disabled) {
-            return;
-          }
-          state.currentLevel = level;
-          updateLevelUI();
-          renderHistory();
-          promptElement.focus();
-        });
       });
       nextButton.addEventListener('click', goToNextStage);
       if (restartButton) {
