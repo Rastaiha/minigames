@@ -1,0 +1,983 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>پیش‌بینی کلمهٔ بعدی</title>
+    <link rel="stylesheet" href="../shared/ui/tokens.css" />
+    <link rel="stylesheet" href="../shared/ui/shells.css" />
+    <style>
+      :root {
+        --color-user: #2563eb;
+        --color-user-bg: #eff6ff;
+        --color-user-border: #bfdbfe;
+        --color-model: #d97706;
+        --color-model-bg: #fffbeb;
+        --color-model-border: #fde68a;
+      }
+
+      body {
+        margin: 0;
+        padding: clamp(12px, 3vw, 24px);
+        background: var(--paper);
+        color: var(--ink);
+        display: flex;
+        justify-content: center;
+        min-height: 100vh;
+        box-sizing: border-box;
+      }
+
+      .app-container {
+        width: 100%;
+        max-width: 680px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .app-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding-bottom: 4px;
+      }
+
+      .header-main {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+
+      .app-title {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--ink);
+      }
+
+      .color-legend {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 0.8rem;
+        color: var(--ink-muted);
+      }
+
+      .legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .badge-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+      }
+
+      .dot-user {
+        background: var(--color-user);
+      }
+
+      .dot-model {
+        background: var(--color-model);
+      }
+
+      .icon-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-sm);
+        color: var(--ink-muted);
+        font-size: 0.82rem;
+        cursor: pointer;
+        font-family: inherit;
+        transition: all 0.2s ease;
+        min-height: 36px;
+      }
+
+      .icon-btn:hover {
+        color: var(--ink);
+        border-color: var(--ink-muted);
+        background: var(--surface-muted);
+      }
+
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-paper);
+        padding: 16px;
+        box-sizing: border-box;
+      }
+
+      .card-header-line {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+        font-size: 0.84rem;
+        color: var(--ink-muted);
+      }
+
+      .editor-box {
+        min-height: 64px;
+        padding: 12px 14px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-sm);
+        font-size: 1.05rem;
+        line-height: 2.1;
+        color: var(--ink);
+        outline: none;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s;
+        word-break: break-word;
+        white-space: pre-wrap;
+      }
+
+      .editor-box:focus {
+        border-color: var(--action);
+        box-shadow: 0 0 0 3px rgba(70, 87, 216, 0.12);
+      }
+
+      .editor-box .token-user {
+        display: inline-block;
+        color: var(--color-user);
+        background: var(--color-user-bg);
+        border: 1px solid var(--color-user-border);
+        padding: 1px 7px;
+        border-radius: 6px;
+        font-weight: 600;
+        margin: 0 2px;
+      }
+
+      .editor-box .token-model {
+        display: inline-block;
+        color: var(--color-model);
+        background: var(--color-model-bg);
+        border: 1px solid var(--color-model-border);
+        padding: 1px 7px;
+        border-radius: 6px;
+        font-weight: 600;
+        margin: 0 2px;
+      }
+
+      .stream-card {
+        padding: 20px 18px;
+      }
+
+      .stream-flow {
+        line-height: 2.7;
+        font-size: 1.08rem;
+        color: var(--ink);
+      }
+
+      .stream-words {
+        display: inline;
+      }
+
+      .stream-token {
+        display: inline-block;
+        padding: 2px 9px;
+        margin: 2px 4px;
+        border-radius: 8px;
+        vertical-align: middle;
+        transition:
+          transform 0.2s ease,
+          background-color 0.2s ease;
+      }
+
+      .stream-token.stream-seed {
+        background: var(--surface-muted);
+        color: var(--ink);
+      }
+
+      .stream-token.stream-user {
+        background: var(--color-user-bg);
+        color: var(--color-user);
+        font-weight: 600;
+        border: 1px solid var(--color-user-border);
+        animation: popIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+
+      .stream-token.stream-model {
+        background: var(--color-model-bg);
+        color: var(--color-model);
+        font-weight: 600;
+        border: 1px solid var(--color-model-border);
+        animation: popIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+
+      @keyframes popIn {
+        0% {
+          transform: scale(0.8);
+          opacity: 0;
+        }
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+
+      .inline-slot {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin: 2px 4px;
+        vertical-align: middle;
+      }
+
+      .inline-word-input {
+        width: 105px;
+        height: 38px;
+        box-sizing: border-box;
+        padding: 4px 10px;
+        border: 2px dashed #94a3b8;
+        border-radius: 8px;
+        background: #ffffff;
+        color: var(--ink);
+        font-size: 0.98rem;
+        text-align: center;
+        outline: none;
+        font-family: inherit;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s,
+          width 0.15s ease;
+      }
+
+      .inline-word-input:focus {
+        border-style: solid;
+        border-color: var(--action);
+        box-shadow: 0 0 0 3px rgba(70, 87, 216, 0.15);
+      }
+
+      .inline-word-input.error-shake {
+        animation: shake 0.35s ease;
+        border-color: var(--danger);
+      }
+
+      @keyframes shake {
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        25% {
+          transform: translateX(-4px);
+        }
+        75% {
+          transform: translateX(4px);
+        }
+      }
+
+      .check-btn {
+        height: 38px;
+        padding: 0 16px;
+        background: var(--action);
+        color: #ffffff;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.92rem;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition:
+          background-color 0.2s,
+          transform 0.1s;
+        font-family: inherit;
+        white-space: nowrap;
+      }
+
+      .check-btn:hover:not(:disabled) {
+        background: var(--action-strong);
+        transform: translateY(-1px);
+      }
+
+      .check-btn:active:not(:disabled) {
+        transform: translateY(0);
+      }
+
+      .check-btn:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+
+      .spinner {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top-color: #ffffff;
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .checking-card {
+        animation: fadeIn 0.25s ease;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(6px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .checking-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+
+      .checking-title {
+        font-size: 0.92rem;
+        font-weight: 600;
+        color: var(--ink);
+      }
+
+      .status-badge {
+        font-size: 0.78rem;
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-weight: 500;
+      }
+
+      .status-loading {
+        background: var(--surface-muted);
+        color: var(--ink-muted);
+      }
+
+      .status-success {
+        background: #dcfce7;
+        color: #15803d;
+      }
+
+      .status-model {
+        background: #fef3c7;
+        color: #b45309;
+      }
+
+      .status-error {
+        background: #fee2e2;
+        color: #b91c1c;
+      }
+
+      .candidate-row {
+        margin-bottom: 8px;
+        padding: 8px 12px;
+        border-radius: 8px;
+        background: var(--surface-muted);
+        transition:
+          background-color 0.2s,
+          border-color 0.2s;
+        border: 1px solid transparent;
+      }
+
+      .candidate-row.is-user-match {
+        background: var(--color-user-bg);
+        border-color: var(--color-user-border);
+      }
+
+      .candidate-row.is-model-pick {
+        background: var(--color-model-bg);
+        border-color: var(--color-model-border);
+      }
+
+      .candidate-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 5px;
+        font-size: 0.9rem;
+      }
+
+      .candidate-word {
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .candidate-prob {
+        color: var(--ink-muted);
+        font-size: 0.85rem;
+        font-weight: 500;
+      }
+
+      .user-match-badge {
+        font-size: 0.72rem;
+        padding: 1px 7px;
+        background: var(--color-user);
+        color: #fff;
+        border-radius: 10px;
+        font-weight: normal;
+      }
+
+      .model-pick-badge {
+        font-size: 0.72rem;
+        padding: 1px 7px;
+        background: var(--color-model);
+        color: #fff;
+        border-radius: 10px;
+        font-weight: normal;
+      }
+
+      .candidate-bar-bg {
+        height: 7px;
+        background: #e2e8f0;
+        border-radius: 4px;
+        overflow: hidden;
+      }
+
+      .candidate-bar-fill {
+        height: 100%;
+        background: var(--action);
+        border-radius: 4px;
+        width: 0%;
+        transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .candidate-bar-fill.fill-user {
+        background: var(--color-user);
+      }
+
+      .candidate-bar-fill.fill-model {
+        background: var(--color-model);
+      }
+
+      .verdict-banner {
+        margin-top: 12px;
+        padding: 10px 14px;
+        border-radius: 8px;
+        font-size: 0.86rem;
+        line-height: 1.7;
+      }
+
+      .verdict-user {
+        background: #dbeafe;
+        color: #1e40af;
+        border-right: 4px solid var(--color-user);
+      }
+
+      .verdict-model {
+        background: #fef3c7;
+        color: #92400e;
+        border-right: 4px solid var(--color-model);
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      .loading-placeholder {
+        padding: 18px 10px;
+        text-align: center;
+        color: var(--ink-muted);
+        font-size: 0.88rem;
+      }
+
+      .error-placeholder {
+        padding: 14px;
+        text-align: center;
+        color: var(--danger);
+        font-size: 0.88rem;
+      }
+
+      @media (max-width: 600px) {
+        .app-header {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 8px;
+        }
+        .header-main {
+          justify-content: space-between;
+        }
+        .inline-word-input {
+          width: 90px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-container">
+      <header class="app-header">
+        <div class="header-main">
+          <h1 class="app-title">پیش‌بینی کلمهٔ بعدی</h1>
+          <div class="color-legend">
+            <span class="legend-item">
+              <span class="badge-dot dot-user"></span>حدس شما
+            </span>
+            <span class="legend-item">
+              <span class="badge-dot dot-model"></span>انتخاب مدل
+            </span>
+          </div>
+        </div>
+        <button
+          type="button"
+          id="resetBtn"
+          class="icon-btn"
+          title="پاک‌کردن متن"
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+            <path d="M3 3v5h5" />
+          </svg>
+          <span>بازنشانی</span>
+        </button>
+      </header>
+
+      <section class="card">
+        <div class="card-header-line">
+          <span>متن ورودی (قابل ویرایش):</span>
+        </div>
+        <div
+          id="editorBox"
+          class="editor-box"
+          contenteditable="true"
+          spellcheck="false"
+          dir="rtl"
+          role="textbox"
+          aria-multiline="true"
+        ></div>
+      </section>
+
+      <section class="card stream-card">
+        <div class="stream-flow" id="streamFlow">
+          <span id="streamWords" class="stream-words"></span>
+          <span class="inline-slot">
+            <input
+              type="text"
+              id="nextWordInput"
+              class="inline-word-input"
+              placeholder="کلمه بعدی..."
+              maxlength="30"
+              autocomplete="off"
+              autocorrect="off"
+              autocapitalize="off"
+              spellcheck="false"
+            />
+            <button type="button" id="checkBtn" class="check-btn">
+              <span id="checkBtnText">چک</span>
+              <span id="checkSpinner" class="spinner hidden"></span>
+            </button>
+          </span>
+        </div>
+      </section>
+
+      <section id="checkingCard" class="card checking-card hidden">
+        <div class="checking-header">
+          <span class="checking-title">احتمال کلمات بعدی</span>
+          <span id="statusBadge" class="status-badge status-loading"></span>
+        </div>
+        <div id="candidatesList" class="candidates-list"></div>
+        <div id="verdictBanner" class="verdict-banner hidden"></div>
+      </section>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="../shared/config.js"></script>
+    <script src="../shared/api/client.js"></script>
+    <script>
+      const DEFAULT_SEED_TEXT = '';
+      const PASS_THRESHOLD = 0.1; // حداقل درصد برای پذیرش کلمه کاربر
+      // پاسخ‌های ثبت‌شده از API برای مسیر ثابت:
+      // ۱۹۷۷ ← در ← تهران ← متولد
+      const FIXED_PREDICTIONS = Object.freeze({
+        'مریم میرزاخانی در سال': [
+          { word: '۱۳۵۶', prob: 30 },
+          { word: '۲۰۱۷', prob: 25 },
+          { word: '۱۹۷۷', prob: 25 },
+          { word: '۲۰۱۴', prob: 15 },
+          { word: '۱۳۷۳', prob: 5 },
+        ],
+        'مریم میرزاخانی در سال ۱۹۷۷': [
+          { word: 'در', prob: 35 },
+          { word: 'در شهر', prob: 20 },
+          { word: 'متولد', prob: 25 },
+          { word: 'در تهران', prob: 15 },
+          { word: 'به', prob: 5 },
+        ],
+        'مریم میرزاخانی در سال ۱۹۷۷ در': [
+          { word: 'تهران', prob: 75 },
+          { word: 'ایران', prob: 12 },
+          { word: 'شهر', prob: 6 },
+          { word: 'خانواده', prob: 4 },
+          { word: 'یک', prob: 3 },
+        ],
+        'مریم میرزاخانی در سال ۱۹۷۷ در تهران': [
+          { word: 'به', prob: 40 },
+          { word: 'متولد', prob: 35 },
+          { word: 'زاده', prob: 10 },
+          { word: 'دنیا', prob: 10 },
+          { word: 'چشم', prob: 5 },
+        ],
+      });
+
+      const editorBox = document.getElementById('editorBox');
+      const streamWords = document.getElementById('streamWords');
+      const nextWordInput = document.getElementById('nextWordInput');
+      const checkBtn = document.getElementById('checkBtn');
+      const checkBtnText = document.getElementById('checkBtnText');
+      const checkSpinner = document.getElementById('checkSpinner');
+      const resetBtn = document.getElementById('resetBtn');
+      const checkingCard = document.getElementById('checkingCard');
+      const statusBadge = document.getElementById('statusBadge');
+      const candidatesList = document.getElementById('candidatesList');
+      const verdictBanner = document.getElementById('verdictBanner');
+
+      let isBusy = false;
+      let requestController = null;
+
+      function parseEditorTokens() {
+        const tokens = [];
+        function walk(node) {
+          if (node.nodeType === Node.TEXT_NODE) {
+            const parts = node.textContent.split(/\s+/).filter(Boolean);
+            for (const p of parts) {
+              tokens.push({ text: p, type: 'seed' });
+            }
+          } else if (node.nodeType === Node.ELEMENT_NODE) {
+            if (node.classList.contains('token-user')) {
+              const text = node.textContent.trim();
+              if (text) tokens.push({ text, type: 'user' });
+            } else if (node.classList.contains('token-model')) {
+              const text = node.textContent.trim();
+              if (text) tokens.push({ text, type: 'model' });
+            } else {
+              for (const child of node.childNodes) {
+                walk(child);
+              }
+            }
+          }
+        }
+        for (const child of editorBox.childNodes) {
+          walk(child);
+        }
+        return tokens;
+      }
+
+      function syncStream() {
+        const tokens = parseEditorTokens();
+        streamWords.replaceChildren();
+
+        tokens.forEach((token) => {
+          const span = document.createElement('span');
+          span.className = `stream-token stream-${token.type}`;
+          span.textContent = token.text;
+          streamWords.appendChild(span);
+        });
+      }
+
+      function appendWordToEditor(word, type) {
+        const currentText = editorBox.textContent;
+        if (currentText.length > 0 && !/\s$/.test(currentText)) {
+          editorBox.appendChild(document.createTextNode(' '));
+        }
+
+        const span = document.createElement('span');
+        span.className = type === 'user' ? 'token-user' : 'token-model';
+        span.textContent = word;
+        editorBox.appendChild(span);
+        editorBox.appendChild(document.createTextNode(' '));
+
+        syncStream();
+      }
+
+      function initDefaultText() {
+        editorBox.replaceChildren();
+        editorBox.textContent = DEFAULT_SEED_TEXT;
+        syncStream();
+        checkingCard.classList.add('hidden');
+        nextWordInput.value = '';
+        autoResizeInput();
+      }
+
+      function autoResizeInput() {
+        const val = nextWordInput.value || '';
+        const len = Math.max(val.length, 8);
+        nextWordInput.style.width = `${Math.min(Math.max(len * 12 + 20, 95), 180)}px`;
+      }
+
+      function setBusy(busy) {
+        isBusy = busy;
+        checkBtn.disabled = busy;
+        nextWordInput.disabled = busy;
+        if (busy) {
+          checkBtnText.classList.add('hidden');
+          checkSpinner.classList.remove('hidden');
+        } else {
+          checkBtnText.classList.remove('hidden');
+          checkSpinner.classList.add('hidden');
+        }
+      }
+
+      function fixedPredictionsFor(contextText) {
+        const normalizedContext = contextText.replace(/\s+/g, ' ').trim();
+        const predictions = FIXED_PREDICTIONS[normalizedContext];
+        return predictions
+          ? predictions.map((prediction) => ({ ...prediction }))
+          : null;
+      }
+
+      function weightedRandomPick(predictions) {
+        const total = predictions.reduce(
+          (sum, item) => sum + Number(item.prob),
+          0
+        );
+        if (total <= 0) return predictions[0];
+        let r = Math.random() * total;
+        for (const prediction of predictions) {
+          r -= Number(prediction.prob);
+          if (r <= 0) return prediction;
+        }
+        return predictions[predictions.length - 1];
+      }
+
+      function renderCandidates(predictions, userWord) {
+        candidatesList.replaceChildren();
+        predictions.forEach((item, index) => {
+          const isUser = item.word === userWord;
+          const row = document.createElement('div');
+          row.className = `candidate-row ${isUser ? 'is-user-match' : ''}`;
+          row.dataset.word = item.word;
+
+          const info = document.createElement('div');
+          info.className = 'candidate-info';
+
+          const wordEl = document.createElement('span');
+          wordEl.className = 'candidate-word';
+          wordEl.textContent = `«${item.word}»`;
+
+          if (isUser) {
+            const matchBadge = document.createElement('span');
+            matchBadge.className = 'user-match-badge';
+            matchBadge.textContent = 'حدس شما';
+            wordEl.appendChild(matchBadge);
+          }
+
+          const probEl = document.createElement('span');
+          probEl.className = 'candidate-prob';
+          probEl.textContent = `${item.prob}٪`;
+
+          info.append(wordEl, probEl);
+
+          const barBg = document.createElement('div');
+          barBg.className = 'candidate-bar-bg';
+
+          const barFill = document.createElement('div');
+          barFill.className = `candidate-bar-fill ${isUser ? 'fill-user' : ''}`;
+          barFill.style.width = '0%';
+          barBg.appendChild(barFill);
+
+          row.append(info, barBg);
+          candidatesList.appendChild(row);
+
+          requestAnimationFrame(() => {
+            setTimeout(() => {
+              barFill.style.width = `${Math.min(Number(item.prob), 100)}%`;
+            }, index * 35);
+          });
+        });
+      }
+
+      function markModelPick(modelWord) {
+        const rows = candidatesList.querySelectorAll('.candidate-row');
+        rows.forEach((row) => {
+          if (row.dataset.word === modelWord) {
+            row.classList.add('is-model-pick');
+            const wordEl = row.querySelector('.candidate-word');
+            if (wordEl && !wordEl.querySelector('.model-pick-badge')) {
+              const badge = document.createElement('span');
+              badge.className = 'model-pick-badge';
+              badge.textContent = 'انتخاب مدل';
+              wordEl.appendChild(badge);
+            }
+            const bar = row.querySelector('.candidate-bar-fill');
+            if (bar) bar.classList.add('fill-model');
+          }
+        });
+      }
+
+      async function handleCheck() {
+        if (isBusy) return;
+
+        const userWord = nextWordInput.value.trim();
+        if (!userWord) {
+          nextWordInput.classList.add('error-shake');
+          setTimeout(() => nextWordInput.classList.remove('error-shake'), 400);
+          nextWordInput.focus();
+          return;
+        }
+
+        const contextText = editorBox.textContent.trim();
+        if (!contextText) {
+          editorBox.focus();
+          return;
+        }
+
+        setBusy(true);
+        checkingCard.classList.remove('hidden');
+        statusBadge.textContent = 'در حال برآورد...';
+        statusBadge.className = 'status-badge status-loading';
+        candidatesList.innerHTML =
+          '<div class="loading-placeholder">در حال محاسبهٔ احتمالات کلمات بعدی...</div>';
+        verdictBanner.classList.add('hidden');
+
+        let predictions;
+        try {
+          predictions = fixedPredictionsFor(contextText);
+          if (!predictions) {
+            requestController = new AbortController();
+            const response = await MinigameApi.respond(
+              'next-token-prediction',
+              'predict',
+              { prompt: contextText },
+              { timeoutMs: 60000, signal: requestController?.signal }
+            );
+            predictions = response?.data?.predictions;
+          }
+          if (!Array.isArray(predictions) || predictions.length !== 5) {
+            throw new Error('ساختار پاسخ نامعتبر است.');
+          }
+        } catch (error) {
+          if (error?.name === 'AbortError') return;
+          console.error(error);
+          statusBadge.textContent = 'خطا در ارتباط';
+          statusBadge.className = 'status-badge status-error';
+          candidatesList.innerHTML = `<div class="error-placeholder">${error?.message || 'ارتباط با مدل برقرار نشد.'}</div>`;
+          setBusy(false);
+          nextWordInput.focus();
+          return;
+        } finally {
+          requestController = null;
+        }
+
+        renderCandidates(predictions, userWord);
+
+        const matched = predictions.find((item) => item.word === userWord);
+        const userProb = matched ? Number(matched.prob) : null;
+        const passed = userProb !== null && userProb > PASS_THRESHOLD;
+
+        let selectedWord = '';
+        let selectedType = '';
+
+        if (passed) {
+          selectedWord = userWord;
+          selectedType = 'user';
+          statusBadge.textContent = 'پذیرفته شد';
+          statusBadge.className = 'status-badge status-success';
+          verdictBanner.className = 'verdict-banner verdict-user';
+          verdictBanner.innerHTML = `کلمهٔ <strong>«${userWord}»</strong> با احتمال <strong>${userProb}٪</strong> تأیید شد و به متن پیوست.`;
+          verdictBanner.classList.remove('hidden');
+        } else {
+          const modelPick = weightedRandomPick(predictions);
+          selectedWord = modelPick.word;
+          selectedType = 'model';
+          statusBadge.textContent = 'انتخاب مدل';
+          statusBadge.className = 'status-badge status-model';
+          verdictBanner.className = 'verdict-banner verdict-model';
+
+          const probDisplay =
+            userProb !== null ? `${userProb}٪` : 'کمتر از ۰.۱٪';
+          verdictBanner.innerHTML = `احتمال کلمهٔ شما (${probDisplay}) کافی نبود؛ مدل کلمهٔ <strong>«${modelPick.word}»</strong> را با احتمال <strong>${modelPick.prob}٪</strong> انتخاب کرد.`;
+          verdictBanner.classList.remove('hidden');
+
+          markModelPick(modelPick.word);
+        }
+
+        appendWordToEditor(selectedWord, selectedType);
+
+        nextWordInput.value = '';
+        autoResizeInput();
+        setBusy(false);
+        nextWordInput.focus();
+      }
+
+      // Event Listeners
+      editorBox.addEventListener('input', () => {
+        syncStream();
+      });
+
+      editorBox.addEventListener('paste', (e) => {
+        e.preventDefault();
+        const text = (e.clipboardData || window.clipboardData).getData(
+          'text/plain'
+        );
+        const selection = window.getSelection();
+        if (!selection || !selection.rangeCount) return;
+        selection.deleteFromDocument();
+        const textNode = document.createTextNode(text);
+        selection.getRangeAt(0).insertNode(textNode);
+        selection.collapseToEnd();
+        syncStream();
+      });
+
+      nextWordInput.addEventListener('keydown', (e) => {
+        if (e.key === ' ') {
+          e.preventDefault();
+          return;
+        }
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          if (!checkBtn.disabled) {
+            handleCheck();
+          }
+        }
+      });
+
+      nextWordInput.addEventListener('input', () => {
+        if (/\s/.test(nextWordInput.value)) {
+          nextWordInput.value = nextWordInput.value.replace(/\s+/g, '');
+        }
+        autoResizeInput();
+      });
+
+      checkBtn.addEventListener('click', handleCheck);
+
+      resetBtn.addEventListener('click', () => {
+        if (requestController) {
+          requestController.abort();
+          requestController = null;
+        }
+        setBusy(false);
+        initDefaultText();
+        nextWordInput.focus();
+      });
+
+      document.addEventListener('DOMContentLoaded', () => {
+        initDefaultText();
+        nextWordInput.focus();
+      });
+    </script>
+  </body>
+</html>

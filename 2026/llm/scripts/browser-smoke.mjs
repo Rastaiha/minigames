@@ -23,6 +23,7 @@ const pages = [
   'jailbreak/level2.html',
   'model-lab/index.html',
   'next-token-prediction2/index.html',
+  'next-token-prediction3/index.html',
   'pretrained-llm/index.html',
   'pretraining-box/index.html',
   'random-llm/index.html',

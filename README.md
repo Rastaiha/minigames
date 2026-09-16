@@ -29,6 +29,7 @@
         ├── 📁 jailbreak/
         ├── 📁 model-lab/
         ├── 📁 next-token-prediction2/
+        ├── 📁 next-token-prediction3/
         ├── 📁 pretrained-llm/
         ├── 📁 pretraining-box/
         ├── 📁 random-llm/
@@ -58,6 +59,7 @@
 | 📁 `2026/llm/jailbreak/` | **نگهبان | Jailbreak Challenge** | `level2.html` | [🌐 مشاهده و اجرا](https://rastaiha.github.io/minigames/2026/llm/jailbreak/level2.html) |
 | 📁 `2026/llm/model-lab/` | **آزمایشگاه مدل‌ها** | `index.html` | [🌐 مشاهده و اجرا](https://rastaiha.github.io/minigames/2026/llm/model-lab/index.html) |
 | 📁 `2026/llm/next-token-prediction2/` | **پیش‌بینی کلمهٔ بعدی** | `index.html` | [🌐 مشاهده و اجرا](https://rastaiha.github.io/minigames/2026/llm/next-token-prediction2/index.html) |
+| 📁 `2026/llm/next-token-prediction3/` | **پیش‌بینی کلمهٔ بعدی با مسیر ثابت** | `index.html` | [🌐 مشاهده و اجرا](https://rastaiha.github.io/minigames/2026/llm/next-token-prediction3/index.html) |
 | 📁 `2026/llm/pretrained-llm/` | **مدل پایه | گفت‌وگوی فارسی** | `index.html` | [🌐 مشاهده و اجرا](https://rastaiha.github.io/minigames/2026/llm/pretrained-llm/index.html) |
 | 📁 `2026/llm/pretraining-box/` | **جعبه‌ی یادگیرنده** | `index.html` | [🌐 مشاهده و اجرا](https://rastaiha.github.io/minigames/2026/llm/pretraining-box/index.html) |
 | 📁 `2026/llm/random-llm/` | **مدل خام** | `index.html` | [🌐 مشاهده و اجرا](https://rastaiha.github.io/minigames/2026/llm/random-llm/index.html) |
