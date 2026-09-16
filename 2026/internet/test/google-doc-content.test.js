@@ -122,3 +122,40 @@ test('converts Roboto Mono text to inline code', async () => {
   assert.equal(plainText(root), 'دستور ping را اجرا کنید.')
   assert.equal(stringifyMdast(root), 'دستور **`ping`** را اجرا کنید.\n')
 })
+
+test('drops Google Docs spaces at paragraph boundaries', async () => {
+  const documentTab = {
+    body: {
+      content: [
+        {
+          paragraph: {
+            elements: [{textRun: {content: '  پرسش؟ \n'}}],
+          },
+        },
+        {
+          paragraph: {
+            elements: [
+              {
+                textRun: {
+                  content: 'پایان تأکیدی \n',
+                  textStyle: {bold: true},
+                },
+              },
+            ],
+          },
+        },
+      ],
+    },
+  }
+
+  const root = await documentTabToMdast({
+    documentTab,
+    assetsDirectory: '/tmp/unused-rasta-assets',
+    auth: null,
+  })
+
+  assert.equal(plainText(root.children[0]), 'پرسش؟')
+  assert.equal(plainText(root.children[1]), 'پایان تأکیدی')
+  assert.equal(stringifyMdast(root), 'پرسش؟\n\n**پایان تأکیدی**\n')
+  assert.doesNotMatch(stringifyMdast(root), /&#x20;/)
+})

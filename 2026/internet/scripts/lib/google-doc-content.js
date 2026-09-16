@@ -30,6 +30,52 @@ function textNodes(value) {
   })
 }
 
+function trimLeadingParagraphWhitespace(nodes) {
+  while (nodes.length) {
+    const first = nodes[0]
+    if (first.type === 'text') {
+      first.value = first.value.replace(/^[ \t]+/, '')
+      if (!first.value) {
+        nodes.shift()
+        continue
+      }
+    } else if (Array.isArray(first.children)) {
+      trimLeadingParagraphWhitespace(first.children)
+      if (!first.children.length) {
+        nodes.shift()
+        continue
+      }
+    }
+    return
+  }
+}
+
+function trimTrailingParagraphWhitespace(nodes) {
+  while (nodes.length) {
+    const last = nodes.at(-1)
+    if (last.type === 'text') {
+      last.value = last.value.replace(/[ \t]+$/, '')
+      if (!last.value) {
+        nodes.pop()
+        continue
+      }
+    } else if (Array.isArray(last.children)) {
+      trimTrailingParagraphWhitespace(last.children)
+      if (!last.children.length) {
+        nodes.pop()
+        continue
+      }
+    }
+    return
+  }
+}
+
+function trimParagraphBoundaryWhitespace(nodes) {
+  trimLeadingParagraphWhitespace(nodes)
+  trimTrailingParagraphWhitespace(nodes)
+  return nodes
+}
+
 function wrapTextStyle(nodes, style = {}) {
   let wrapped =
     style.weightedFontFamily?.fontFamily === INLINE_CODE_FONT_FAMILY
@@ -131,7 +177,7 @@ async function paragraphChildren(paragraph, context) {
     }
   }
 
-  return children
+  return trimParagraphBoundaryWhitespace(children)
 }
 
 function headingDepth(namedStyleType) {
