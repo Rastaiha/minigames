@@ -152,6 +152,7 @@ vite.config.ts.timestamp-*
 temp/
 tmp/
 output/
+artifacts/
 
 # Generated Astro staging and output
 /site/public/games/
