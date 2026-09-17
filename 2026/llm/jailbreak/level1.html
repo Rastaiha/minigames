@@ -582,18 +582,15 @@
       // =====================================================
       // درخواست به سرویس
       // =====================================================
-      async function askGuard(levelNumber, signal) {
-        const history = state.levels[levelNumber].messages;
+      async function askGuard(levelNumber, userText, signal) {
+        const messages = [{ role: 'user', content: userText }];
         if (window.MinigameApi && window.MinigameApi.respond) {
           const response = await MinigameApi.respond(
             'jailbreak',
             'challenge',
             {
               level: levelNumber,
-              messages: history.map((message) => ({
-                role: message.role,
-                content: message.text,
-              })),
+              messages,
             },
             { signal }
           );
@@ -616,10 +613,7 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             level: levelNumber,
-            messages: history.map((message) => ({
-              role: message.role,
-              content: message.text,
-            })),
+            messages,
           }),
           signal,
         });
@@ -656,7 +650,7 @@
         try {
           const controller = new AbortController();
           currentController = controller;
-          const answer = await askGuard(levelNumber, controller.signal);
+          const answer = await askGuard(levelNumber, text, controller.signal);
           hideTyping();
           // ذخیره پاسخ
           levelState.messages.push({

@@ -1104,16 +1104,16 @@ ${examples}
       // =====================================================
       // درخواست به Worker
       // =====================================================
-      async function askGuard(secret, signal) {
+      async function askGuard(secret, userText, signal) {
         const modelMessages = [
           {
             role: 'system',
             content: buildSystemPrompt(secret),
           },
-          ...state.messages.map((message) => ({
-            role: message.role,
-            content: message.text,
-          })),
+          {
+            role: 'user',
+            content: userText,
+          },
         ];
 
         const response = await fetch(API_URL, {
@@ -1187,6 +1187,7 @@ ${examples}
 
           const rawAnswer = await askGuard(
             secretForThisTurn,
+            text,
             controller.signal
           );
 
