@@ -558,16 +558,14 @@
 
       <section class="card">
         <div class="card-header-line">
-          <span>متن ورودی (قابل ویرایش):</span>
+          <span>متن ورودی:</span>
         </div>
         <div
           id="editorBox"
           class="editor-box"
-          contenteditable="true"
-          spellcheck="false"
+          contenteditable="false"
           dir="rtl"
-          role="textbox"
-          aria-multiline="true"
+          aria-live="polite"
         ></div>
       </section>
 
@@ -881,24 +879,6 @@
       }
 
       // Event Listeners
-      editorBox.addEventListener('input', () => {
-        syncStream();
-      });
-
-      editorBox.addEventListener('paste', (e) => {
-        e.preventDefault();
-        const text = (e.clipboardData || window.clipboardData).getData(
-          'text/plain'
-        );
-        const selection = window.getSelection();
-        if (!selection || !selection.rangeCount) return;
-        selection.deleteFromDocument();
-        const textNode = document.createTextNode(text);
-        selection.getRangeAt(0).insertNode(textNode);
-        selection.collapseToEnd();
-        syncStream();
-      });
-
       nextWordInput.addEventListener('keydown', (e) => {
         if (e.key === ' ') {
           e.preventDefault();
