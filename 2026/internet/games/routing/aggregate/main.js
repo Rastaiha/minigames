@@ -2,7 +2,7 @@ import '@fontsource-variable/vazirmatn'
 import '../src/styles.css'
 import './styles.css'
 import {NETWORK_COLORS} from '../src/topology.js'
-import {allRouteTests, createTopologyIndex, RouteOutcome, simulateRoute} from '../src/routing.js'
+import {allRouteTests, createTopologyIndex, ReportVerdict, RouteOutcome, routeReportVerdict, simulateRoute} from '../src/routing.js'
 import {AGGREGATE_TOPOLOGY} from './topology.js'
 
 const SVG_NS = 'http://www.w3.org/2000/svg'
@@ -21,6 +21,7 @@ const nodesLayer = document.querySelector('#network-nodes')
 const packetLayer = document.querySelector('#packet-layer')
 const overviewEl = document.querySelector('.overview-layout')
 const mapScrollEl = document.querySelector('.aggregate-map-scroll')
+const reportVerdictEl = document.querySelector('#report-verdict')
 
 let running = false
 let latestResults = new Map()
@@ -293,6 +294,19 @@ function updateSummary() {
   summaryEl.innerHTML = items.map(([outcome, icon, label]) =>
     `<span class="summary-item ${outcome}"><b aria-hidden="true">${icon}</b>${label}: ${faNumber(counts[outcome])}</span>`,
   ).join('')
+  updateReportVerdict()
+}
+
+function updateReportVerdict() {
+  const verdict = routeReportVerdict(latestResults.values(), tests.length)
+  const copy = {
+    [ReportVerdict.PENDING]: ['…', 'گزارش‌ها در حال اجرا هستند؛ نتیجهٔ نهایی هنوز مشخص نیست.'],
+    [ReportVerdict.ALL_OPTIMAL]: ['✓', 'همهٔ گزارش‌ها سبزند؛ همهٔ مسیرها بهینه‌اند.'],
+    [ReportVerdict.NEEDS_WORK]: ['!', 'همهٔ گزارش‌ها سبز نیستند؛ دست‌کم یک مسیر ناموفق یا نابهینه است.'],
+  }[verdict]
+  reportVerdictEl.className = `report-verdict ${verdict}`
+  reportVerdictEl.querySelector('.report-verdict-icon').textContent = copy[0]
+  reportVerdictEl.querySelector('.report-verdict-copy').textContent = copy[1]
 }
 
 async function animateResult(result) {

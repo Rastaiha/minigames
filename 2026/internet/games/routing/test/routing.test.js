@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {TOPOLOGY} from '../src/topology.js'
 import {AGGREGATE_TOPOLOGY} from '../aggregate/topology.js'
-import {allRouteTests, lookupNextHop, matchingPrefixSpecificity, RouteOutcome, simulateRoute} from '../src/routing.js'
+import {allRouteTests, lookupNextHop, matchingPrefixSpecificity, ReportVerdict, RouteOutcome, routeReportVerdict, simulateRoute} from '../src/routing.js'
 
 const completeTables = {
   A: {'net-b': 'B', 'net-c': 'C', 'net-d': 'D'},
@@ -128,4 +128,16 @@ test('the compact harder tables route all reports optimally', () => {
     )
     assert.equal(result.outcome, RouteOutcome.OPTIMAL, routeTest.id)
   }
+})
+
+test('report verdict distinguishes pending, all-optimal, and failing suites', () => {
+  assert.equal(routeReportVerdict([], 2), ReportVerdict.PENDING)
+  assert.equal(
+    routeReportVerdict([{outcome: RouteOutcome.OPTIMAL}, {outcome: RouteOutcome.OPTIMAL}], 2),
+    ReportVerdict.ALL_OPTIMAL,
+  )
+  assert.equal(
+    routeReportVerdict([{outcome: RouteOutcome.OPTIMAL}, {outcome: RouteOutcome.INCOMPLETE}], 2),
+    ReportVerdict.NEEDS_WORK,
+  )
 })

@@ -5,6 +5,12 @@ export const RouteOutcome = Object.freeze({
   INCOMPLETE: 'incomplete',
 })
 
+export const ReportVerdict = Object.freeze({
+  PENDING: 'pending',
+  ALL_OPTIMAL: 'all-optimal',
+  NEEDS_WORK: 'needs-work',
+})
+
 export function createTopologyIndex(topology) {
   const routers = new Map(topology.routers.map((router) => [router.id, router]))
   const networks = new Map(topology.networks.map((network) => [network.id, network]))
@@ -121,6 +127,14 @@ export function lookupNextHop(table, destination) {
     }
   }
   return bestMatch
+}
+
+export function routeReportVerdict(results, expectedCount) {
+  const completed = [...results]
+  if (completed.length < expectedCount) return ReportVerdict.PENDING
+  return completed.every((result) => result.outcome === RouteOutcome.OPTIMAL)
+    ? ReportVerdict.ALL_OPTIMAL
+    : ReportVerdict.NEEDS_WORK
 }
 
 export function matchingPrefixSpecificity(prefix, address) {

@@ -9,6 +9,6 @@ test('the همه column uses the stopwatch time for a delayed message', () => {
 })
 
 test('each split packet pays the fixed header overhead', () => {
-  assert.equal(packetWireBits(64, 8), 72)
-  assert.equal(packetWireBits(32, 8) * 2, 80)
+  assert.equal(packetWireBits(64, 2), 66)
+  assert.equal(packetWireBits(32, 2) * 2, 68)
 })
