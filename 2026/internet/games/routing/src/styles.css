@@ -46,6 +46,8 @@ button { -webkit-tap-highlight-color: transparent; }
   background: var(--paper);
 }
 
+.overview-layout { background: var(--canvas); }
+
 .map-stage {
   position: relative;
   width: min(100%, 1000px);
@@ -385,10 +387,38 @@ button:disabled { opacity: 0.58; }
 }
 
 .report-network {
-  overflow: hidden;
-  text-overflow: ellipsis;
+  flex: 0 0 auto;
+  overflow: visible;
+  text-overflow: clip;
   direction: ltr;
 }
+
+.replay-dock {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.basic-game .overview-layout.has-results .replay-dock .test-list {
+  display: flex;
+  grid-template-columns: none;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 5px;
+  scroll-snap-type: inline proximity;
+}
+
+.basic-game .overview-layout.has-results .replay-dock .test-card {
+  flex: 0 0 min(350px, calc(100vw - 48px));
+  scroll-snap-align: start;
+}
+
+.replay-dock .test-card {
+  grid-template-columns: minmax(0, 1fr) 34px;
+}
+
+.replay-dock .test-route { grid-column: 1 / -1; }
 
 .test-outcome {
   min-width: 74px;
@@ -464,6 +494,58 @@ button:disabled { opacity: 0.58; }
 
 @media (max-width: 1050px) {
   .test-list { grid-template-columns: repeat(2, minmax(280px, 1fr)); }
+}
+
+@media (min-width: 960px) {
+  .basic-game .overview-layout.has-results {
+    max-height: 620px;
+    display: grid;
+    grid-template-columns: minmax(0, 1.75fr) minmax(360px, 0.85fr);
+    aspect-ratio: 2.48 / 1;
+    direction: ltr;
+  }
+
+  .basic-game .overview-layout.has-results .map-scroll {
+    min-width: 0;
+    height: 100%;
+    border-inline-end: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .basic-game .overview-layout.has-results .map-stage {
+    width: 100%;
+    min-width: 650px;
+    height: 100%;
+    aspect-ratio: auto;
+    border-inline: 0;
+  }
+
+  .basic-game .overview-layout.has-results .replay-dock {
+    min-width: 0;
+    height: 100%;
+    overflow-y: auto;
+    direction: rtl;
+  }
+
+  .basic-game .overview-layout.has-results .replay-dock .results-heading {
+    position: sticky;
+    z-index: 2;
+    top: -14px;
+    padding-block: 2px 10px;
+    background: var(--deep-paper);
+  }
+
+  .basic-game .overview-layout.has-results .replay-dock .test-list {
+    display: grid;
+    grid-template-columns: 1fr;
+    overflow: visible;
+    padding-bottom: 0;
+  }
+
+  .basic-game .overview-layout.has-results .replay-dock .test-card {
+    width: 100%;
+    min-width: 0;
+  }
 }
 
 @media (max-width: 620px) {

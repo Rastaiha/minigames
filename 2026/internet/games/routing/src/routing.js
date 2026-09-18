@@ -65,7 +65,7 @@ export function simulateRoute(topology, tables, sourceId, destinationId) {
   const visited = new Set(routerPath)
 
   while (current !== destination.router) {
-    const next = tables[current]?.[destination.id] ?? null
+    const next = lookupNextHop(tables[current], destination)
     if (!next || !index.neighbors.get(current).includes(next)) {
       return {
         outcome: RouteOutcome.INCOMPLETE,
@@ -106,6 +106,41 @@ export function simulateRoute(topology, tables, sourceId, destinationId) {
     hopCount,
     optimalHopCount,
   }
+}
+
+export function lookupNextHop(table, destination) {
+  if (!Array.isArray(table)) return table?.[destination.id] ?? null
+
+  let bestMatch = null
+  let bestSpecificity = -1
+  for (const entry of table) {
+    const specificity = matchingPrefixSpecificity(entry.prefix, destination.label)
+    if (specificity > bestSpecificity) {
+      bestMatch = entry.nextHop || null
+      bestSpecificity = specificity
+    }
+  }
+  return bestMatch
+}
+
+export function matchingPrefixSpecificity(prefix, address) {
+  if (!prefix || !address) return -1
+  const prefixOctets = prefix.split('.')
+  const addressOctets = address.split('.')
+  if (prefixOctets.length !== 4 || addressOctets.length !== 4) return -1
+
+  let specificity = 0
+  let wildcardReached = false
+  for (let index = 0; index < 4; index += 1) {
+    if (prefixOctets[index] === '*') {
+      wildcardReached = true
+      continue
+    }
+    if (wildcardReached) return -1
+    if (prefixOctets[index] !== addressOctets[index]) return -1
+    specificity += 1
+  }
+  return specificity
 }
 
 export function shortestHopCount(index, sourceRouter, destinationRouter) {

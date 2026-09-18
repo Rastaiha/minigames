@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <title>مسیریابی در شبکهٔ بزرگ‌تر</title>
+</head>
+<body class="aggregate-game">
+  <main class="game-shell">
+    <section class="network-panel" aria-label="شبکه و جدول‌های مسیریابی">
+      <div class="overview-layout">
+        <div class="map-scroll aggregate-map-scroll">
+          <div class="aggregate-map-stage">
+            <svg id="network" viewBox="0 0 1200 760" role="img" aria-label="مسیریاب‌های A تا E؛ مسیریاب C دروازهٔ دو شبکه با پیشوند مشترک است">
+              <g id="network-links"></g>
+              <g id="network-nodes"></g>
+              <g id="packet-layer"></g>
+            </svg>
+          </div>
+        </div>
+
+        <section id="results" class="results replay-dock" aria-labelledby="results-title" hidden>
+          <div class="results-heading">
+            <h2 id="results-title">آخرین اجرا</h2>
+            <div id="summary" class="summary" aria-label="خلاصهٔ نتیجه‌ها"></div>
+          </div>
+          <div id="test-list" class="test-list"></div>
+        </section>
+      </div>
+
+      <p class="prefix-hint">
+        <span class="prefix-hint-icon" aria-hidden="true">!</span>
+        <span>اگر دو پیشوند با یک بستهٔ دریافتی تطبیق داشته باشند، پیشوندِ بلندتر برنده می‌شود.</span>
+      </p>
+      <section id="tables" class="aggregate-tables" aria-label="جدول‌های مسیریابی"></section>
+
+      <div class="run-bar">
+        <p id="run-status" aria-live="polite">با دکمهٔ «افزودن ردیف» جدول‌ها را بسازید؛ تعداد جای هر جدول محدود است.</p>
+        <button id="run-all" class="run-button" type="button">
+          <span aria-hidden="true">▶</span>
+          اجرای گزارش
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

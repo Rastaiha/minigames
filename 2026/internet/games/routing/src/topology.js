@@ -38,4 +38,5 @@ export const NETWORK_COLORS = {
   gold: {base: '#E8B33A', foreground: '#2C2318'},
   turquoise: {base: '#35AFB8', foreground: '#2C2318'},
   green: {base: '#185A3A', foreground: '#FFFFFF'},
+  violet: {base: '#7A4E9D', foreground: '#FFFFFF'},
 }

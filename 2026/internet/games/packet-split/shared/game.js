@@ -5,12 +5,22 @@ export function completedStopwatchTime(firstDeliveredAt, secondDeliveredAt, stop
   return stopwatchTime;
 }
 
+export function packetWireBits(payloadBits, headerBits = 0) {
+  return payloadBits + headerBits;
+}
+
 export function initGame(config) {
   const NS = 'http://www.w3.org/2000/svg';
   const BITS_PER_SECOND = 8;
   const BIT_TIME = 1 / BITS_PER_SECOND;
-  const GREEN_BITS   = config.greenBits;
-  const ORANGE_BITS = config.orangeBits;
+  const HEADER_BITS = Math.max(0, config.headerBits || 0);
+  const configuredPackets = Array.isArray(config.initialPackets) ? config.initialPackets : null;
+  const GREEN_BITS = config.greenBits ?? configuredPackets
+    ?.filter(packet => packet.color === 'green')
+    .reduce((sum, packet) => sum + packet.size, 0);
+  const ORANGE_BITS = config.orangeBits ?? configuredPackets
+    ?.filter(packet => packet.color === 'orange')
+    .reduce((sum, packet) => sum + packet.size, 0);
   const SPLITTING = config.splitting !== false;
   const EVENT_PAUSES = config.eventPauses === true;
   const ITEM_NOUN = config.itemNoun || 'بسته';
@@ -196,11 +206,19 @@ export function initGame(config) {
   function allDelivered()       { return packets.every(isAtDestination); }
   function isAvailable(pkt, at = totalTime) { return !EVENT_PAUSES || pkt.availableAt <= at + 1e-9; }
   function isInTransit(pkt) { return activeTransfers.some(transfer => transfer.packet === pkt); }
+  function transmissionBits(pkt) { return packetWireBits(pkt.size, HEADER_BITS); }
+  function packetVisibleLabel(pkt) {
+    return HEADER_BITS > 0 ? `${pkt.size}+${HEADER_BITS}` : String(pkt.size);
+  }
+  function packetSizePhrase(pkt) {
+    if (HEADER_BITS === 0) return `${pkt.size} بیتی`;
+    return `${pkt.size} بیت داده و ${HEADER_BITS} بیت اطلاعات نشانی فرستنده و گیرنده؛ ${transmissionBits(pkt)} بیت در مجموع`;
+  }
 
   function memoryUsage(device) {
     return packets
       .filter(packet => packet.location === device)
-      .reduce((sum, packet) => sum + packet.size, 0);
+      .reduce((sum, packet) => sum + transmissionBits(packet), 0);
   }
 
   function updateMemoryPeaks() {
@@ -211,10 +229,18 @@ export function initGame(config) {
 
   function initialState() {
     nextId = 1;
-    packets = [
-      { id: nextId++, size: GREEN_BITS,   color: 'green',   location: 'PC1', selected: false, availableAt: GREEN_AVAILABLE_AT },
-      { id: nextId++, size: ORANGE_BITS, color: 'orange', location: 'PC2', selected: false, availableAt: 0 },
+    const seeds = configuredPackets || [
+      { size: GREEN_BITS, color: 'green', location: 'PC1', availableAt: GREEN_AVAILABLE_AT },
+      { size: ORANGE_BITS, color: 'orange', location: 'PC2', availableAt: 0 },
     ];
+    packets = seeds.map(packet => ({
+      id: nextId++,
+      size: packet.size,
+      color: packet.color,
+      location: packet.location,
+      selected: false,
+      availableAt: EVENT_PAUSES ? (packet.availableAt || 0) : 0,
+    }));
     totalTime = 0;
     round = 1;
     animating = false;
@@ -245,8 +271,11 @@ export function initGame(config) {
     const half = Math.floor(pkt.size / 2);
     const pop = document.createElement('div');
     pop.className = 'split-popover';
+    const splitPreview = HEADER_BITS > 0
+      ? `<b class="lval">${half}</b>+${HEADER_BITS} و <b class="rval">${pkt.size - half}</b>+${HEADER_BITS} بیت`
+      : `<b class="lval">${half}</b> + <b class="rval">${pkt.size - half}</b>`;
     pop.innerHTML = `
-      <div class="preview">${ITEM_NOUN_WITH_EZAFE} <b>${pkt.size}</b> بیتی را به <b class="lval">${half}</b> + <b class="rval">${pkt.size - half}</b> تقسیم کنید</div>
+      <div class="preview">${HEADER_BITS > 0 ? `${pkt.size} بیت داده را تقسیم کنید؛ حاصل با ${HEADER_BITS} بیت اطلاعات نشانی برای هر بسته: ${splitPreview}` : `${ITEM_NOUN_WITH_EZAFE} <b>${pkt.size}</b> بیتی را به ${splitPreview} تقسیم کنید`}</div>
       <input type="range" min="1" max="${pkt.size - 1}" value="${half}" aria-label="اندازهٔ بخش اول ${ITEM_NOUN}">
       <div class="btn-row">
         <button class="do" type="button">تقسیم</button>
@@ -369,7 +398,8 @@ export function initGame(config) {
     const unavailable = !isAvailable(pkt);
     const canInteract = interactive && !unavailable && (!EVENT_PAUSES || !atDest);
     const isSelected = pkt.selected && !atDest;
-    const w = 30, h = 22;
+    const w = HEADER_BITS > 0 ? 48 : 30;
+    const h = 22;
 
     const cls = ['chip-svg', pkt.color];
     if (!canInteract) cls.push('locked');
@@ -379,12 +409,12 @@ export function initGame(config) {
     if (canInteract) {
       attrs.tabindex = '0';
       attrs.role = 'button';
-      attrs['aria-label'] = `${ITEM_NOUN_WITH_EZAFE} ${pkt.size} بیتی ${palette.name}؛ ${isSelected ? 'انتخاب شده' : 'انتخاب نشده'}`;
+      attrs['aria-label'] = `${ITEM_NOUN_WITH_EZAFE} ${packetSizePhrase(pkt)} ${palette.name}؛ ${isSelected ? 'انتخاب شده' : 'انتخاب نشده'}`;
     } else if (unavailable) {
       attrs.tabindex = '0';
       attrs.role = 'button';
       attrs['aria-disabled'] = 'true';
-      attrs['aria-label'] = `${ITEM_NOUN_WITH_EZAFE} ${pkt.size} بیتی ${palette.name}؛ اکنون در دسترس نیست و در ${pkt.availableAt.toFixed(1)} s آماده می‌شود`;
+      attrs['aria-label'] = `${ITEM_NOUN_WITH_EZAFE} ${packetSizePhrase(pkt)} ${palette.name}؛ اکنون در دسترس نیست و در ${pkt.availableAt.toFixed(1)} s آماده می‌شود`;
     }
     const g = el('g', attrs);
     if (unavailable) {
@@ -394,7 +424,7 @@ export function initGame(config) {
       g.addEventListener('focus', showTooltip);
       g.addEventListener('blur', hideAvailabilityTooltip);
     }
-    g.appendChild(el('rect', { x: -17, y: -14, width: 34, height: 28, rx: 5, fill: 'transparent', stroke: 'transparent', class: 'focus-ring' }));
+    g.appendChild(el('rect', { x: -w / 2 - 2, y: -14, width: w + 4, height: 28, rx: 5, fill: 'transparent', stroke: 'transparent', class: 'focus-ring' }));
 
     envelopeShape(g, w, h, {
       fill:        isSelected ? (palette.solid || palette.base) : palette.soft,
@@ -408,7 +438,7 @@ export function initGame(config) {
       'text-anchor': 'middle', 'dominant-baseline': 'middle',
       'font-size': '12', 'font-weight': '800',
       fill: isSelected ? palette.onBase : '#2c2318',
-    }, String(pkt.size)));
+    }, packetVisibleLabel(pkt)));
 
     if (atDest) g.setAttribute('opacity', '0.85');
 
@@ -482,7 +512,8 @@ export function initGame(config) {
       const col = i % MAX_PER_ROW;
       const rowStart = row * MAX_PER_ROW;
       const rowN = Math.min(MAX_PER_ROW, n - rowStart);
-      const x = dock.x + (col - (rowN - 1) / 2) * dock.dx;
+      const spacing = HEADER_BITS > 0 ? Math.max(dock.dx, 52) : dock.dx;
+      const x = dock.x + (col - (rowN - 1) / 2) * spacing;
       const y = dock.y + row * dock.dy;
       renderChip(pkt, x, y, interactive);
     });
@@ -504,7 +535,7 @@ export function initGame(config) {
     const { x, y, angle } = pointOnWire(evt.link, p);
     const palette = PACKET_COLORS[evt.packet.color];
     const color = palette.solid || palette.base;
-    const rectW = Math.max(30, Math.min(84, evt.packet.size * 5 + 18));
+    const rectW = Math.max(HEADER_BITS > 0 ? 48 : 30, Math.min(84, transmissionBits(evt.packet) * 5 + 18));
     const rectH = 26;
     const g = el('g', {
       class: `packet-anim${paused ? ' paused' : ''}`,
@@ -522,7 +553,7 @@ export function initGame(config) {
       'font-size': '12', 'font-weight': '800', fill: palette.onBase,
       // Flip text upright if the packet moves right-to-left (angle > 90°)
       transform: (Math.abs(angle) > 90) ? 'rotate(180)' : '',
-    }, String(evt.packet.size)));
+    }, packetVisibleLabel(evt.packet)));
     packetAnimG.appendChild(g);
   }
 
@@ -625,7 +656,7 @@ export function initGame(config) {
       let t = 0;
       for (const p of pkts) {
         const hop = nextHop(p);
-        const dur = p.size * BIT_TIME;
+        const dur = transmissionBits(p) * BIT_TIME;
         events.push({ packet: p, link, from: p.location, to: hop.to, start: t, end: t + dur });
         t += dur;
       }
@@ -660,7 +691,7 @@ export function initGame(config) {
     for (const packet of selected) {
       const hop = nextHop(packet);
       if (occupiedLinks.has(hop.link)) continue;
-      const duration = packet.size * BIT_TIME;
+      const duration = transmissionBits(packet) * BIT_TIME;
       activeTransfers.push({
         packet,
         link: hop.link,
@@ -770,7 +801,7 @@ export function initGame(config) {
     timerEl.textContent = `زمان: ${totalTime.toFixed(1)} s`;
     if (becameAvailable.length > 0) {
       const packet = becameAvailable[0];
-      statusMsg.textContent = `${ITEM_NOUN_WITH_EZAFE} ${packet.size} بیتی آمادهٔ ارسال شد؛ حالا می‌توانید انتخابش کنید.`;
+      statusMsg.textContent = `${ITEM_NOUN_WITH_EZAFE} ${packetSizePhrase(packet)} آمادهٔ ارسال شد؛ حالا می‌توانید انتخابش کنید.`;
     } else if (arrivedAtSwitch) {
       const names = [...new Set(completed
         .filter(transfer => DEVICES[transfer.to]?.kind === 'switch')

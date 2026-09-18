@@ -17,6 +17,8 @@ const statusEl = document.querySelector('#run-status')
 const linksLayer = document.querySelector('#network-links')
 const nodesLayer = document.querySelector('#network-nodes')
 const packetLayer = document.querySelector('#packet-layer')
+const overviewEl = document.querySelector('.overview-layout')
+const mapScrollEl = document.querySelector('.map-scroll')
 
 const diagram = renderTopology()
 renderTables()
@@ -168,6 +170,7 @@ async function runAllTests() {
   latestResults = new Map()
   renderTestList()
   resultsEl.hidden = false
+  overviewEl.classList.add('has-results')
   updateSummary()
   setRunning(true)
   const tables = readTables()
@@ -183,9 +186,21 @@ async function runAllTests() {
 async function runSingleTest(test) {
   if (running) return
   setRunning(true)
+  await bringDiagramIntoView()
   await runTest(test, readTables())
   statusEl.textContent = 'این مسیر دوباره اجرا شد؛ فقط نتیجهٔ تازه نگه داشته شده است.'
   setRunning(false)
+}
+
+async function bringDiagramIntoView() {
+  const bounds = mapScrollEl.getBoundingClientRect()
+  const visibleTop = Math.max(bounds.top, 0)
+  const visibleBottom = Math.min(bounds.bottom, window.innerHeight)
+  const visibleHeight = Math.max(0, visibleBottom - visibleTop)
+  if (visibleHeight >= Math.min(bounds.height * 0.72, 420)) return
+
+  mapScrollEl.scrollIntoView({behavior: reducedMotion ? 'auto' : 'smooth', block: 'start'})
+  if (!reducedMotion) await wait(420)
 }
 
 async function runTest(test, tables) {

@@ -74,6 +74,9 @@ html, body {
 .hub-card.orange { border-color: var(--gold); background: var(--gold-tint); }
 .hub-card.orange:hover, .hub-card.orange:focus-visible { border-color: var(--gold); }
 
+.hub-card.gold { border-color: var(--gold); background: var(--gold-tint); }
+.hub-card.gold:hover, .hub-card.gold:focus-visible { border-color: var(--gold); }
+
 .hub-card h2 {
   margin: 0;
   font-size: 1.15rem;

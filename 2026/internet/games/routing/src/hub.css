@@ -1,0 +1,93 @@
+:root {
+  font-family: "Vazirmatn Variable", Vazirmatn, sans-serif;
+  color: #2c2318;
+  background: #fcfaf4;
+  font-synthesis: none;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: #fcfaf4;
+}
+
+.hub-shell {
+  width: min(760px, calc(100% - 32px));
+  padding: clamp(28px, 7vw, 64px);
+  border: 1px solid #cbbd9f;
+  border-radius: 8px;
+  background: #fbf3df;
+}
+
+header { margin-bottom: 28px; }
+
+.eyebrow {
+  margin: 0 0 4px;
+  color: #6b5d4a;
+  font-size: 0.86rem;
+  font-weight: 750;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(1.45rem, 5vw, 2.1rem);
+}
+
+nav { display: grid; gap: 12px; }
+
+.version-card {
+  min-height: 88px;
+  padding: 14px;
+  display: grid;
+  grid-template-columns: 52px 1fr auto;
+  align-items: center;
+  gap: 14px;
+  border: 2px solid var(--accent);
+  border-radius: 7px;
+  color: #2c2318;
+  background: #fcfaf4;
+  text-decoration: none;
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+
+.version-card.basic { --accent: #35afb8; }
+.version-card.aggregate { --accent: #b82a31; }
+
+.version-card:hover,
+.version-card:focus-visible {
+  outline: 0;
+  transform: translateY(-2px);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.card-mark {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #fff;
+  background: var(--accent);
+  font: 900 1.15rem ui-monospace, monospace;
+}
+
+.version-card span:nth-child(2) { display: grid; gap: 3px; }
+.version-card strong { font-size: 1.05rem; }
+.version-card small { color: #6b5d4a; }
+.arrow { color: var(--accent); font-size: 1.4rem; font-weight: 900; }
+
+@media (max-width: 520px) {
+  .hub-shell { padding: 22px 16px; }
+  .version-card { grid-template-columns: 44px 1fr; }
+  .card-mark { width: 42px; height: 42px; }
+  .arrow { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .version-card { transition: none; }
+}

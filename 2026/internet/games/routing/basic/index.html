@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <title>جدول‌های مسیریابی ایستا</title>
+</head>
+<body class="basic-game">
+  <main class="game-shell">
+    <section class="network-panel" aria-label="نقشهٔ شبکه">
+      <div class="overview-layout">
+        <div class="map-scroll">
+          <div class="map-stage">
+            <svg id="network" viewBox="0 0 1200 720" role="img" aria-label="چهار جدول مسیریابی که با اتصال‌های شبکه به هم وصل شده‌اند">
+              <g id="network-links"></g>
+              <g class="mountains" aria-hidden="true" transform="translate(450 410) scale(.88)">
+                <polygon class="mountain-back" points="8,50 32,14 56,50"></polygon>
+                <polygon class="mountain-back" points="30,50 56,8 82,50"></polygon>
+                <polygon class="mountain-back" points="58,50 82,12 106,50"></polygon>
+                <polygon class="mountain-front" points="0,50 20,26 40,50"></polygon>
+                <polygon class="mountain-front" points="36,50 62,20 88,50"></polygon>
+                <polygon class="mountain-front" points="82,50 102,28 120,50"></polygon>
+                <polygon class="mountain-snow" points="17,29 20,26 23,29"></polygon>
+                <polygon class="mountain-snow" points="59,23 62,20 65,23"></polygon>
+                <polygon class="mountain-snow" points="99,31 102,28 105,31"></polygon>
+              </g>
+              <g id="network-nodes"></g>
+              <g id="packet-layer"></g>
+            </svg>
+            <section id="tables" class="tables" aria-label="جدول‌های مسیریابی"></section>
+          </div>
+        </div>
+
+        <section id="results" class="results replay-dock" aria-labelledby="results-title" hidden>
+          <div class="results-heading">
+            <h2 id="results-title">آخرین اجرا</h2>
+            <div id="summary" class="summary" aria-label="خلاصهٔ نتیجه‌ها"></div>
+          </div>
+          <div id="test-list" class="test-list"></div>
+        </section>
+      </div>
+      <div class="run-bar">
+        <p id="run-status" aria-live="polite">جدول‌ها را پر کنید و همهٔ مسیرها را اجرا کنید.</p>
+        <button id="run-all" class="run-button" type="button">
+          <span aria-hidden="true">▶</span>
+          اجرا
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="../src/main.js"></script>
+</body>
+</html>
