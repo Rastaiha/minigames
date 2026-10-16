@@ -6,4 +6,5 @@
 
 ## صفحه‌های اصلی
 
+- `2026/internet/`: [https://rastaiha.github.io/minigames/2026/internet/](https://rastaiha.github.io/minigames/2026/internet/)
 - `2026/llm/`: [https://rastaiha.github.io/minigames/2026/llm/](https://rastaiha.github.io/minigames/2026/llm/)

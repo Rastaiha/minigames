@@ -17,7 +17,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '')
 const introHref = versionEntryHref(`${base}/intro/slides.html`, introVersion)
 ---
 
-<WorkshopLayout title="گام‌های کارگاه">
+<WorkshopLayout title={steps.length ? 'گام‌های کارگاه' : 'کارگاه اینترنت'}>
   <header class="home-hero">
     <p class="eyebrow"><span aria-hidden="true">●</span> کارگاه اینترنت رستا</p>
     <div class="hero-copy">
@@ -30,9 +30,9 @@ const introHref = versionEntryHref(`${base}/intro/slides.html`, introVersion)
         خودتون بسازین.
       </p>
     </div>
-    <div class="hero-stat" aria-label={`${steps.length} گام در کارگاه`}>
-      <strong>{new Intl.NumberFormat('fa-IR').format(steps.length)}</strong>
-      <span>گام برای کشف‌کردن</span>
+    <div class="hero-stat" aria-label={steps.length ? `${steps.length} گام در کارگاه` : `${games.length} مینی‌گیم در کارگاه`}>
+      <strong>{new Intl.NumberFormat('fa-IR').format(steps.length || games.length)}</strong>
+      <span>{steps.length ? 'گام برای کشف‌کردن' : 'مینی‌گیم برای کشف‌کردن'}</span>
     </div>
   </header>
 
@@ -41,8 +41,8 @@ const introHref = versionEntryHref(`${base}/intro/slides.html`, introVersion)
   <section class="home-section" aria-labelledby="steps-title">
     <div class="section-heading">
       <div>
-        <p class="section-kicker">مسیر کارگاه</p>
-        <h2 id="steps-title">گام‌ها</h2>
+        <p class="section-kicker">{steps.length ? 'مسیر کارگاه' : 'شروع کارگاه'}</p>
+        <h2 id="steps-title">{steps.length ? 'گام‌ها' : 'مقدمه'}</h2>
       </div>
       <span class="signal-mark" aria-hidden="true">⌁</span>
     </div>

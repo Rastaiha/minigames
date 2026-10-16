@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import {fileURLToPath} from 'node:url'
 import {unified} from 'unified'
 import remarkGfm from 'remark-gfm'
 import remarkParse from 'remark-parse'
@@ -7,7 +8,7 @@ import remarkRehype from 'remark-rehype'
 import rehypeStringify from 'rehype-stringify'
 
 const repositoryRoot = path.resolve(
-  process.env.WORKSHOP_ROOT || process.env.INIT_CWD || path.join(process.cwd(), '..'),
+  process.env.WORKSHOP_ROOT || fileURLToPath(new URL('../../../', import.meta.url)),
 )
 const stepsDirectory = path.join(repositoryRoot, 'steps')
 const gamesDirectory = path.join(repositoryRoot, 'games')
@@ -81,8 +82,13 @@ export async function renderStudentMarkdown(markdown) {
 }
 
 export async function readStepIndex() {
-  const value = await fs.readFile(path.join(stepsDirectory, '.order.json'), 'utf8')
-  return JSON.parse(value)
+  try {
+    const value = await fs.readFile(path.join(stepsDirectory, '.order.json'), 'utf8')
+    return JSON.parse(value)
+  } catch (error) {
+    if (error.code === 'ENOENT') return []
+    throw error
+  }
 }
 
 function displayNameFromSlug(slug) {
