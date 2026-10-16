@@ -2,6 +2,14 @@
 
 This guide applies to `2026/llm/` and its descendants. It describes the source inspected on 2026-09-14. Recheck the relevant implementation before changing a contract; deployed service availability was not verified.
 
+## Homepage and compatibility
+
+- `README.md` is the original repository README, moved here unchanged. Its generated list is maintained by this collection's own `scripts/update-readme.js`; root catalog automation must not rewrite it. Preserve hand-authored content outside the generated markers.
+- From the repository root, run `node 2026/llm/scripts/update-readme.js`; from this directory, run `node scripts/update-readme.js`. The generator scans only this collection and writes only this README.
+- `../../.github/workflows/update-llm-readme.yml` updates and commits this README after LLM HTML changes and dispatches Pages deployment when it changes. The workshop build also regenerates it before staging, so a deployment never depends on the bot commit's timing.
+- `workshop.json` opts into GitHub Pages' Jekyll rendering through `publish.readmeHomepage`. This serves the README at `/minigames/2026/llm/` without adding any project dependency.
+- Preserve every existing `/minigames/2026/llm/**` game and archive URL, relative asset, font, and storage contract. The homepage is an additional entry point, not a replacement for any existing game.
+
 ## Required API boundary
 
 **All minigame model/API calls must go through the shared Cloudflare Worker** at `https://minigames-backend.llmminigamesback.workers.dev`. Games use its public endpoint URLs only. Do not call model providers or upstream gateways directly from the browser, and do not add alternate Flask/direct-provider fallback routes.
@@ -19,7 +27,7 @@ The documentation records these exceptions; it does not mean the game implementa
 
 - The Git repository root is two directories above this directory. Run `rtk git status --short` before editing and preserve unrelated changes. Follow the personal shell instructions in `/home/ali/.codex/RTK.md`: prefix shell commands with `rtk` (`rtk proxy <command>` passes through commands without filtering).
 - This is a local, static website project. TAPSI JupyterHub is unrelated to ordinary work here.
-- Games are independent directories, usually with `index.html`. Most contain inline CSS and JavaScript; some have separate assets. There is no shared frontend framework, root package manifest, bundler, router, or global frontend build.
+- Games are independent directories, usually with `index.html`. Most contain inline CSS and JavaScript; some have separate assets. This collection has no frontend bundler or router. The repository's root tooling reads `workshop.json`, runs this collection's own commands here, and copies its declared public files without changing their paths or bytes. Other workshops own their stacks independently.
 - `minigames-backend/src/index.js` is the entire shared backend: an ES-module Cloudflare Worker exporting `fetch(request, env)`. It proxies model requests, selects educational behavior, and normalizes responses. There is no database, account system, durable conversation store, or server-side scoring in this source.
 - `llm2.html` is a large workshop page containing a `states` data array, embedded images, and iframe media. Its iframe renderer uses `sandbox="allow-scripts allow-same-origin"`. Avoid dumping or reformatting the whole file. Inspect the relevant state/media entry if a task includes workshop integration; a standalone game does not need registration in a central router.
 - Keep existing URL spellings and capitalization, notably `Dimensions/`, `contexual-embedding/`, `wordembedding/`, and `word-embedding/`. Similar names are distinct games, not aliases.
@@ -183,6 +191,6 @@ For a change, verify in proportion to its scope:
 
 ## Deployment
 
-- `../../.github/workflows/deploy-pages.yml` uploads the repository root directly to GitHub Pages on pushes to `main` or manual dispatch; there is no frontend build step. Keep secrets out of published content.
+- `../../.github/workflows/deploy-pages.yml` runs the declared checks in an isolated workshop job, stages the public files declared in `workshop.json`, and deploys the combined `.pages/` output on pushes to `main` or manual dispatch. Pull requests run the same checks/build without deploying. All existing `/minigames/2026/llm/**` paths, including archives, remain unchanged. Backend source and repository tooling are excluded from publication.
 - `../../.github/workflows/deploy-worker.yml` deploys the Worker on pushes to `main` affecting `2026/llm/minigames-backend/**` or the workflow, or on manual dispatch. It uses `CLOUDFLARE_API_TOKEN`, injects `LLM_API_KEY`, and runs from the backend directory using the latest Wrangler action version.
 - Backend package scripts include `deploy` (`wrangler deploy`) and `deploy:first` (`wrangler deploy --secrets-file .dev.vars`). They publish real changes; local verification does not require deployment. A frontend config edit alone does not deploy changed Worker code.

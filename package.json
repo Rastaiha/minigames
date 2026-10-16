@@ -1,0 +1,15 @@
+{
+  "name": "rasta-minigames",
+  "private": true,
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "workshops": "node scripts/workshops.mjs list",
+    "workshop": "node scripts/workshops.mjs",
+    "build": "node scripts/workshops.mjs build",
+    "check": "node scripts/workshops.mjs check",
+    "catalog": "node scripts/update-readme.js"
+  }
+}
