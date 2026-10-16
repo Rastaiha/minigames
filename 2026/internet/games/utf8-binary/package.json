@@ -1,0 +1,18 @@
+{
+  "name": "rasta-utf8-binary-game",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@fontsource-variable/vazirmatn": "^5.2.0"
+  },
+  "devDependencies": {
+    "vite": "^8.0.13"
+  }
+}

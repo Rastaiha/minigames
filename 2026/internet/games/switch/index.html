@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#FCFAF4">
+    <title>بازی سوئیچ شبکه</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <main class="stage">
+      <section class="play-area" aria-label="شبکهٔ رایانه‌ها و سوئیچ">
+        <svg
+          id="scene"
+          viewBox="0 0 900 700"
+          preserveAspectRatio="xMidYMid meet"
+          role="group"
+          aria-label="ده رایانه پیرامون یک سوئیچ شبکه"
+        >
+          <defs>
+            <clipPath id="switchClip">
+              <circle cx="450" cy="350" r="80"></circle>
+            </clipPath>
+          </defs>
+          <circle class="orbit-ring" cx="450" cy="350" r="265" aria-hidden="true"></circle>
+          <g id="wires" aria-hidden="true"></g>
+          <g id="switchBg" aria-hidden="true"></g>
+          <g id="innerWires" clip-path="url(#switchClip)" aria-hidden="true"></g>
+          <g id="switchPorts" aria-hidden="true"></g>
+          <g id="pcs"></g>
+          <g id="packets" aria-hidden="true"></g>
+        </svg>
+      </section>
+
+      <footer class="controls">
+        <p id="interactionStatus" class="status" aria-live="polite">یک رایانه را انتخاب کن.</p>
+        <button id="clearBtn" type="button">قطع همهٔ ارتباط‌ها</button>
+      </footer>
+    </main>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

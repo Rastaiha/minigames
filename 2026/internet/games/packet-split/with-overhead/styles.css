@@ -1,0 +1,33 @@
+@import '../with-split/styles.css';
+
+.header-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  margin: 0 0 8px;
+  padding: 10px 12px;
+  border: 1px solid #7a4e9d;
+  border-inline-start-width: 5px;
+  border-radius: 6px;
+  background: #f1eaf5;
+  color: var(--ink);
+  font-size: 1rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.header-note-icon {
+  display: inline-grid;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  place-items: center;
+  border-radius: 50%;
+  background: #7a4e9d;
+  color: var(--canvas);
+  font-family: ui-monospace, "SF Mono", Monaco, monospace;
+  font-size: 1rem;
+  font-weight: 900;
+  line-height: 1;
+}

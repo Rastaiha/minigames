@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light">
+    <title>تبدیل دودویی UTF-8</title>
+    <script type="module" src="./main.js"></script>
+  </head>
+  <body>
+    <main class="converter" aria-label="تبدیل دودویی UTF-8 به متن">
+      <label class="panel input-panel" for="binary-input">
+        <span class="panel-mark" aria-hidden="true">01</span>
+        <span class="sr-only">دودویی UTF-8</span>
+        <textarea
+          id="binary-input"
+          dir="ltr"
+          inputmode="text"
+          autocomplete="off"
+          autocapitalize="off"
+          spellcheck="false"
+          placeholder="11011000 10110011"
+        ></textarea>
+      </label>
+
+      <button id="decode-button" type="button" aria-label="تبدیل به متن">
+        <span aria-hidden="true">↓</span>
+      </button>
+
+      <section class="panel output-panel" aria-label="متن تبدیل‌شده">
+        <span class="panel-mark" aria-hidden="true">«»</span>
+        <output id="text-output" dir="auto" aria-live="polite"></output>
+      </section>
+    </main>
+  </body>
+</html>
