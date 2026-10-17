@@ -1,0 +1,107 @@
+---
+import WorkshopLayout from '../layouts/WorkshopLayout.astro'
+import EventCountdown from '../components/EventCountdown.astro'
+import {
+  readGameIndex,
+  readIntroEntryVersion,
+  readStepIndex,
+  versionEntryHref,
+} from '../lib/steps.js'
+
+const [steps, games, introVersion] = await Promise.all([
+  readStepIndex(),
+  readGameIndex(),
+  readIntroEntryVersion(),
+])
+const base = import.meta.env.BASE_URL.replace(/\/$/, '')
+const introHref = versionEntryHref(`${base}/intro/slides.html`, introVersion)
+---
+
+<WorkshopLayout title={steps.length ? 'گام‌های کارگاه' : 'کارگاه اینترنت'}>
+  <header class="home-hero">
+    <p class="eyebrow"><span aria-hidden="true">●</span> کارگاه اینترنت رستا</p>
+    <div class="hero-copy">
+      <h1>
+        <span class="title-line">اینترنت چطور</span>
+        <span class="title-line accent-line">کار می‌کنه؟</span>
+      </h1>
+      <p class="hero-description">
+        قدم‌به‌قدم شبکه رو کشف کنین، ایده‌هاتون رو آزمایش کنین و راه اینترنت رو
+        خودتون بسازین.
+      </p>
+    </div>
+    <div class="hero-stat" aria-label={steps.length ? `${steps.length} گام در کارگاه` : `${games.length} مینی‌گیم در کارگاه`}>
+      <strong>{new Intl.NumberFormat('fa-IR').format(steps.length || games.length)}</strong>
+      <span>{steps.length ? 'گام برای کشف‌کردن' : 'مینی‌گیم برای کشف‌کردن'}</span>
+    </div>
+  </header>
+
+  <EventCountdown variant="large" />
+
+  <section class="home-section" aria-labelledby="steps-title">
+    <div class="section-heading">
+      <div>
+        <p class="section-kicker">{steps.length ? 'مسیر کارگاه' : 'شروع کارگاه'}</p>
+        <h2 id="steps-title">{steps.length ? 'گام‌ها' : 'مقدمه'}</h2>
+      </div>
+      <span class="signal-mark" aria-hidden="true">⌁</span>
+    </div>
+  <ol class="step-list">
+    <li>
+      <a href={introHref}>
+        <span class="step-number">۰۰</span>
+        <span class="step-list-title">مقدمه</span>
+        <span class="card-arrow" aria-hidden="true">←</span>
+      </a>
+    </li>
+    {steps.map((step, index) => (
+      <li>
+        <a href={`${base}/steps/${step.name}/`}>
+          <span class="step-number">{new Intl.NumberFormat('fa-IR', {minimumIntegerDigits: 2}).format(index + 1)}</span>
+          <span class="step-list-title">{step.title}</span>
+          <span class="card-arrow" aria-hidden="true">←</span>
+        </a>
+      </li>
+    ))}
+  </ol>
+  </section>
+
+  <section class="home-section games-section" aria-labelledby="games-title">
+    <div class="section-heading">
+      <div>
+        <p class="section-kicker">آزمایشگاه شبکه</p>
+        <h2 id="games-title">مینی‌گیم‌ها</h2>
+      </div>
+      <span class="game-count">{new Intl.NumberFormat('fa-IR').format(games.length)} بازی</span>
+    </div>
+
+    {games.length ? (
+      <ul class="game-list">
+        {games.map((game, index) => (
+          <li>
+            <a href={`${base}/games/${game.name}/index.html${game.version ? `?v=${game.version}` : ''}`}>
+              <span class="game-icon" aria-hidden="true">
+                <i></i><i></i><i></i>
+              </span>
+              <span>
+                <strong>{game.title}</strong>
+                <small>اجرای مستقل بازی</small>
+              </span>
+              <span class="game-index" aria-hidden="true">
+                {new Intl.NumberFormat('fa-IR', {minimumIntegerDigits: 2}).format(index + 1)}
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <div class="games-empty">
+        <span class="empty-network" aria-hidden="true"><i></i><i></i><i></i></span>
+        <div>
+          <strong>آزمایشگاه هنوز خالیه</strong>
+          <p>به‌محض اضافه‌شدن اولین مینی‌گیم، لینک اجرای مستقلش اینجا ظاهر می‌شه.</p>
+        </div>
+      </div>
+    )}
+  </section>
+</WorkshopLayout>

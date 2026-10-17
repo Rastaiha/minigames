@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "title": "کارگاه اینترنت رستا",
+  "commands": {
+    "install": [["npm", "ci"]],
+    "check": [["npm", "test"]],
+    "build": [["npm", "run", "build"]],
+    "dev": [["npm", "run", "dev"]]
+  },
+  "publish": {"directory": "site/dist"},
+  "entries": ["index.html", "intro/slides.html"]
+}

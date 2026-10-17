@@ -1,0 +1,68 @@
+:root {
+    --bg-color: #0b0c10;
+    --panel-bg: #1f2833;
+    --primary: #66fcf1;
+    --primary-dark: #45a29e;
+    --success: #00ff88;
+    --danger: #ff4757;
+    --scope-bg: #030a0f;
+    --text-light: #c5c6c7;
+}
+
+* { box-sizing: border-box; touch-action: manipulation; }
+body { font-family: 'Vazirmatn', sans-serif; background-color: var(--bg-color); color: var(--text-light); margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow-x: hidden; }
+.container { width: 100%; max-width: 1200px; display: flex; flex-direction: column; gap: 12px; }
+
+.oscilloscope-wrapper { background: var(--scope-bg); border: 3px solid #232b32; border-radius: 12px; width: 100%; height: 35vh; min-height: 260px; position: relative; box-shadow: inset 0 0 40px rgba(0,0,0,1), 0 5px 15px rgba(0,0,0,0.5); display: flex; overflow: hidden; margin-top: 5px; }
+#canvas-div { width: 100%; height: 100%; }
+.scope-hint { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); color: var(--primary); font-size: clamp(0.7rem, 2vw, 0.95rem); pointer-events: none; background: rgba(0, 0, 0, 0.85); padding: 6px 15px; border-radius: 12px; border: 1px solid var(--primary-dark); font-weight: bold; z-index: 5; direction: ltr; text-align: center; width: max-content; max-width: 95%; line-height: 1.5; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+.scope-hint span.up { color: #00ff88; }
+.scope-hint span.down { color: #ff4757; }
+
+.toolbar { display: flex; justify-content: center; background: var(--panel-bg); padding: 8px 15px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.4); border: 1px solid #2a3540; }
+.controls { display: flex; gap: 8px; direction: ltr; flex-wrap: wrap; justify-content: center; }
+.controls button { background: #2b3744; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-size: clamp(0.85rem, 2.5vw, 1rem); transition: 0.2s; font-family: 'Vazirmatn'; font-weight: bold; }
+.controls button:hover { background: var(--primary-dark); color: #fff; box-shadow: 0 0 10px var(--primary-dark); }
+
+.network-layout { display: flex; align-items: center; justify-content: space-between; width: 100%; margin-top: 10px; direction: ltr; }
+.computer-wrapper { flex: 1; display: flex; flex-direction: column; align-items: center; max-width: 450px; position: relative; width: 100%; }
+.physical-wire-container { flex: 0.5; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; z-index: 0; padding-top: 25px; }
+.wire-label { background: #111; color: var(--primary); padding: 3px 10px; border-radius: 10px; font-size: 0.8rem; font-weight: bold; font-family: monospace; border: 1px solid var(--primary-dark); margin-bottom: -10px; z-index: 2; }
+.wire-line { width: 100%; height: 10px; background: linear-gradient(to bottom, #304a5e, #1a2733); border-top: 1px solid #5a7b96; border-bottom: 1px solid #000; box-shadow: 0 8px 10px rgba(0,0,0,0.5); position: relative; border-radius: 2px; }
+.wire-pulse { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(102, 252, 241, 0.8), transparent); background-size: 200% 100%; animation: pulse-move 2s infinite linear; display: none; }
+@keyframes pulse-move { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+.playing .wire-pulse { display: block; }
+
+.monitor-frame { background: #d1d8e0; border-radius: 10px; padding: 10px; width: 100%; box-shadow: 0 10px 20px rgba(0,0,0,0.6); border: 2px solid #a5b1c2; position: relative; z-index: 2; }
+.monitor-screen { background: #05080c; border-radius: 6px; min-height: 140px; padding: 12px; box-shadow: inset 0 0 15px rgba(0,0,0,0.9); display: flex; flex-direction: column; border: 3px solid #2d3436; }
+.monitor-stand { background: linear-gradient(to bottom, #a5b1c2, #778ca3); width: 40px; height: 15px; z-index: 1; }
+.monitor-base { background: #778ca3; width: 90px; height: 8px; border-radius: 4px 4px 0 0; z-index: 1; box-shadow: 0 4px 8px rgba(0,0,0,0.5); }
+.comp-label { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--panel-bg); padding: 3px 12px; border-radius: 10px; font-size: clamp(0.7rem, 2vw, 0.8rem); font-weight: bold; direction: rtl; white-space: nowrap; z-index: 15; box-shadow: 0 4px 8px rgba(0,0,0,0.5); }
+.tx-label { border: 2px solid var(--primary); color: var(--primary); }
+.rx-label { border: 2px solid var(--success); color: var(--success); }
+
+.config-row { display: flex; gap: 6px; margin-bottom: 10px; direction: rtl; align-items: center; }
+.config-row input { flex: 1; padding: 5px; border-radius: 4px; border: 1px solid #444; background: #111; color: var(--primary); text-align: center; font-size: clamp(0.8rem, 2.5vw, 0.9rem); font-weight: bold; font-family: 'Vazirmatn'; }
+.btn-send { background: var(--primary-dark); color: white; border: none; padding: 6px 10px; border-radius: 4px; font-family: 'Vazirmatn'; font-size: clamp(0.8rem, 2.5vw, 0.9rem); font-weight: bold; cursor: pointer; width: 100%; transition: 0.2s; }
+.btn-send:hover { background: var(--primary); color: #000; }
+
+.binary-display { font-family: 'Courier New', monospace; font-size: clamp(0.85rem, 3vw, 1rem); letter-spacing: 1px; direction: ltr; text-align: left; flex: 1; line-height: 1.5; margin-top: 5px; word-break: break-all; }
+.byte-block { display: inline-block; margin-right: 8px; }
+.active-tx-bit { background: var(--primary); color: #000 !important; padding: 0 2px; border-radius: 3px; font-weight: bold; box-shadow: 0 0 8px var(--primary); }
+.new-rx-correct { background: rgba(0, 255, 136, 0.3); font-weight: bold; border-radius: 2px; }
+.final-text { text-align: center; font-size: clamp(1.1rem, 4vw, 1.3rem); color: var(--success); font-weight: bold; margin-top: 5px; }
+
+@media (max-width: 768px) {
+    body { padding: 5px; }
+    .oscilloscope-wrapper { height: 30vh; min-height: 220px; }
+    .scope-hint { white-space: normal; line-height: 1.6; padding: 4px 10px; width: 90%; }
+    .network-layout { flex-direction: column; gap: 10px; margin-top: 15px; }
+    .computer-wrapper { max-width: 100%; width: 95%; }
+    .physical-wire-container { flex: none; width: 100%; height: 50px; padding: 0; flex-direction: row; justify-content: center; align-items: center; }
+    .wire-line { width: 10px; height: 100%; background: linear-gradient(to right, #304a5e, #1a2733); border: none; border-left: 1px solid #5a7b96; border-right: 1px solid #000; }
+    .wire-label { position: absolute; margin: 0; left: calc(50% + 15px); }
+    .wire-pulse { background: linear-gradient(180deg, transparent, rgba(102, 252, 241, 0.8), transparent); background-size: 100% 200%; animation: pulse-move-v 2s infinite linear; }
+    @keyframes pulse-move-v { 0% { background-position: 0 200%; } 100% { background-position: 0 -200%; } }
+    .monitor-frame { padding: 8px; }
+    .monitor-screen { min-height: 120px; padding: 10px; }
+}

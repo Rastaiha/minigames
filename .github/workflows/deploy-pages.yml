@@ -1,6 +1,7 @@
-name: Deploy GitHub Pages
+name: Workshop checks and GitHub Pages
 
 on:
+  pull_request:
   push:
     branches:
       - main
@@ -8,31 +9,138 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
-  group: "pages"
+  group: "pages-${{ github.ref }}"
   cancel-in-progress: false
 
 jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.workshops.outputs.matrix }}
+      has-pages: ${{ steps.workshops.outputs.has-pages }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Test repository infrastructure
+        run: npm test
+      - name: Discover independent workshops
+        id: workshops
+        run: |
+          echo "matrix=$(node scripts/workshops.mjs matrix)" >> "$GITHUB_OUTPUT"
+          echo "has-pages=$(node scripts/workshops.mjs has-pages)" >> "$GITHUB_OUTPUT"
+
+  workshops:
+    needs: plan
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install workshop dependencies
+        run: node scripts/workshops.mjs install '${{ matrix.id }}'
+      - name: Prepare workshop CI tools
+        id: ci-setup
+        continue-on-error: ${{ matrix.continueOnError }}
+        run: node scripts/workshops.mjs ciSetup '${{ matrix.id }}'
+      - name: Run workshop checks
+        id: checks
+        continue-on-error: ${{ matrix.continueOnError }}
+        run: node scripts/workshops.mjs check '${{ matrix.id }}'
+      - name: Run workshop CI checks
+        id: ci-checks
+        continue-on-error: ${{ matrix.continueOnError }}
+        run: node scripts/workshops.mjs ciCheck '${{ matrix.id }}'
+      - name: Report non-blocking check failures
+        if: >-
+          ${{ matrix.continueOnError &&
+              (steps.ci-setup.outcome == 'failure' ||
+               steps.checks.outcome == 'failure' ||
+               steps.ci-checks.outcome == 'failure') }}
+        env:
+          WORKSHOP_ID: ${{ matrix.id }}
+          CI_SETUP_OUTCOME: ${{ steps.ci-setup.outcome }}
+          CHECKS_OUTCOME: ${{ steps.checks.outcome }}
+          CI_CHECKS_OUTCOME: ${{ steps.ci-checks.outcome }}
+        run: |
+          printf '::warning::%s checks failed. This project has continueOnError=true; build and publication will continue.\n' "$WORKSHOP_ID"
+          {
+            printf '## ⚠️ Checks failed; continuing — %s\n\n' "$WORKSHOP_ID"
+            printf 'This project sets `continueOnError: true`. These check failures do not block merging or publication. Build and publication must still succeed.\n\n'
+            printf '| Validation step | Result |\n| --- | --- |\n'
+            printf '| Prepare workshop CI tools | %s |\n' "$CI_SETUP_OUTCOME"
+            printf '| Run workshop checks | %s |\n' "$CHECKS_OUTCOME"
+            printf '| Run workshop CI checks | %s |\n' "$CI_CHECKS_OUTCOME"
+            printf '\nSee the failed steps in this job’s logs for details.\n'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Build and stage workshop public output
+        run: node scripts/workshops.mjs build '${{ matrix.id }}'
+        env:
+          PAGES_SITE_URL: https://${{ github.repository_owner }}.github.io
+          PAGES_BASE_PATH: /${{ github.event.repository.name }}
+      - name: Save workshop public output
+        if: matrix.pages
+        uses: actions/upload-artifact@v4
+        with:
+          name: pages-${{ strategy.job-index }}
+          path: .pages/
+          include-hidden-files: true
+          if-no-files-found: error
+
+  assemble:
+    if: needs.plan.outputs.has-pages == 'true'
+    needs: [plan, workshops]
+    runs-on: ubuntu-latest
+    env:
+      PAGES_SITE_URL: https://${{ github.repository_owner }}.github.io
+      PAGES_BASE_PATH: /${{ github.event.repository.name }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: pages-*
+          merge-multiple: true
+          path: .pages/
+      - name: Verify assembled public entries
+        run: node scripts/workshops.mjs verify
+      - name: Generate current project homepage directory
+        run: npm run catalog
+      - name: Prepare opt-in README homepages
+        run: node scripts/workshops.mjs prepare-readmes
+      - name: Render README homepages with GitHub Pages Jekyll
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: .readme-pages
+          destination: .readme-site
+      - name: Merge homepages without overwriting workshop output
+        run: node scripts/workshops.mjs merge-readmes
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .pages/
+
   deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: assemble
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: '.'
-
-      - name: Deploy to GitHub Pages
+      - uses: actions/configure-pages@v5
+      - name: Deploy combined static frontends
         id: deployment
         uses: actions/deploy-pages@v4

@@ -1,0 +1,74 @@
+<script>
+  const fullscreenDocument = document
+
+  function currentFullscreenElement() {
+    return fullscreenDocument.fullscreenElement
+      || fullscreenDocument.webkitFullscreenElement
+      || null
+  }
+
+  function requestFullscreen(element) {
+    const request = element.requestFullscreen || element.webkitRequestFullscreen
+    return request?.call(element)
+  }
+
+  function exitFullscreen() {
+    const exit = fullscreenDocument.exitFullscreen || fullscreenDocument.webkitExitFullscreen
+    return exit?.call(fullscreenDocument)
+  }
+
+  const miniGames = document.querySelectorAll('iframe.mini-game')
+  const controls = []
+
+  for (const iframe of miniGames) {
+    const shell = iframe.closest('.mini-game-shell')
+    if (!shell || shell.querySelector('.mini-game-fullscreen-toggle')) continue
+
+    const button = document.createElement('button')
+    button.className = 'mini-game-fullscreen-toggle'
+    button.type = 'button'
+    button.setAttribute('aria-pressed', 'false')
+    button.setAttribute('aria-label', `نمایش «${iframe.title || 'بازی'}» در حالت تمام‌صفحه`)
+    button.textContent = '⛶ تمام‌صفحه'
+    shell.append(button)
+
+    const canUseFullscreen = Boolean(
+      (shell.requestFullscreen || shell.webkitRequestFullscreen)
+      && (fullscreenDocument.exitFullscreen || fullscreenDocument.webkitExitFullscreen),
+    )
+    if (!canUseFullscreen) button.hidden = true
+
+    button.addEventListener('click', async () => {
+      try {
+        if (currentFullscreenElement() === shell) {
+          await exitFullscreen()
+        } else {
+          await requestFullscreen(shell)
+        }
+      } catch {
+        // A browser or embedding policy may reject fullscreen without changing state.
+      }
+    })
+
+    controls.push({button, iframe, shell})
+  }
+
+  function syncFullscreenControls() {
+    const activeElement = currentFullscreenElement()
+    for (const {button, iframe, shell} of controls) {
+      const active = activeElement === shell
+      shell.classList.toggle('is-fullscreen', active)
+      button.setAttribute('aria-pressed', String(active))
+      button.setAttribute(
+        'aria-label',
+        active
+          ? `خروج «${iframe.title || 'بازی'}» از حالت تمام‌صفحه`
+          : `نمایش «${iframe.title || 'بازی'}» در حالت تمام‌صفحه`,
+      )
+      button.textContent = active ? '× خروج از تمام‌صفحه' : '⛶ تمام‌صفحه'
+    }
+  }
+
+  fullscreenDocument.addEventListener('fullscreenchange', syncFullscreenControls)
+  fullscreenDocument.addEventListener('webkitfullscreenchange', syncFullscreenControls)
+</script>
